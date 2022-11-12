@@ -1,1 +1,1 @@
-export { router as AdminRouter } from "./AdminRouter.js";
+export { router as CountryRouter } from "./CountryRouter.js";

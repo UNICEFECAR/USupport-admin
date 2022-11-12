@@ -18,8 +18,7 @@ app.use(helmet());
 
 /*------------- Admin Service Endpoints -------------*/
 
-// Example router
-app.use("/admin/v1/", v1.AdminRouter);
+app.use("/admin/v1/country", v1.CountryRouter);
 
 /*------------- Error middleware -------------*/
 
