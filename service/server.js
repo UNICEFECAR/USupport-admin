@@ -1,6 +1,7 @@
 import express from "express";
 import helmet from "helmet";
 import dotenv from "dotenv";
+import passport from "passport";
 
 import v1 from "#routes/index";
 import middleware from "#middlewares/index";
@@ -15,10 +16,12 @@ const PORT = process.env.PORT || 3007;
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(helmet());
+app.use(passport.initialize());
 
 /*------------- Admin Service Endpoints -------------*/
 
 app.use("/admin/v1/country", v1.CountryRouter);
+app.use("/admin/v1/auth", v1.AuthRouter);
 
 /*------------- Error middleware -------------*/
 
