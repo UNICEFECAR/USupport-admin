@@ -3,7 +3,7 @@ import { getDBPool } from "#utils/dbConfig";
 export const getAdminUserByEmail = async (poolCountry, email) =>
   await getDBPool("masterDb", poolCountry).query(
     `
-        SELECT * 
+        SELECT admin_id, name, surname, phone_prefix, phone, email, role, password 
         FROM admin
         WHERE email = $1
         ORDER BY created_at DESC
@@ -15,7 +15,7 @@ export const getAdminUserByEmail = async (poolCountry, email) =>
 export const getAdminUserByID = async (poolCountry, admin_id) =>
   await getDBPool("masterDb", poolCountry).query(
     `
-        SELECT *
+        SELECT admin_id, name, surname, phone_prefix, phone, email, role
         FROM admin
         WHERE admin_id = $1
         ORDER BY created_at DESC
@@ -30,13 +30,13 @@ export const createAdminUser = async (props) =>
       WITH newAdmin AS (
 
           INSERT INTO admin (name, surname, phone_prefix, phone, email, password, role)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
           RETURNING * 
 
       ), adminCountryLink AS (
 
-          INSERT INTO admin_country_links 
-          SELECT admin_id, $9 FROM newAdmin
+          INSERT INTO admin_country_links (admin_id, country_id)
+          SELECT admin_id, $8 FROM newAdmin
           RETURNING * 
 
       )

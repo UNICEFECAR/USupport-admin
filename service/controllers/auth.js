@@ -46,7 +46,13 @@ export const refreshAccessToken = async ({
   refreshToken,
 }) => {
   const refreshTokenData = await getRefreshToken(country, refreshToken)
-    .then((res) => res.rows[0])
+    .then((res) => {
+      if (res.rowCount === 0) {
+        throw invalidRefreshToken(language);
+      } else {
+        return res.rows[0];
+      }
+    })
     .catch((err) => {
       throw err;
     });

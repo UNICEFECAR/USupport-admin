@@ -86,6 +86,8 @@ passport.use(
             throw err;
           });
 
+        delete newAdmin.password;
+
         return done(null, newAdmin);
       } catch (error) {
         done(error);
@@ -106,7 +108,7 @@ passport.use(
       try {
         const language = req.header("x-language-alpha-2");
         const country = req.header("x-country-alpha-2");
-        const { email, password } = await adminLoginSchema(language)
+        const { email, password } = await adminLoginSchema
           .noUnknown(true)
           .strict()
           .validate({
@@ -135,6 +137,8 @@ passport.use(
         if (!validatePassword) {
           return done(incorrectPassword(language));
         }
+
+        delete adminUser.password;
 
         return done(null, adminUser);
       } catch (error) {

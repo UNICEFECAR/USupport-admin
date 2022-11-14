@@ -29,5 +29,5 @@ export const createAdminSchema = (language) =>
       .matches(PASSWORD_REGEX)
       .required()
       .label(t("password_validation_error", language)),
-    role: yup.string().oneOf(["global, country, regional"]).required(),
+    role: yup.string().oneOf(["global", "country", "regional"]).required(),
   });
