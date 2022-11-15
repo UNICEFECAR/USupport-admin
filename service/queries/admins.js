@@ -1,7 +1,7 @@
 import { getDBPool } from "#utils/dbConfig";
 
-export const getAdminUserByEmail = async (poolCountry, email) =>
-  await getDBPool("masterDb", poolCountry).query(
+export const getAdminUserByEmail = async (email) =>
+  await getDBPool("masterDb").query(
     `
         SELECT admin_id, name, surname, phone_prefix, phone, email, role, password 
         FROM admin
@@ -12,8 +12,8 @@ export const getAdminUserByEmail = async (poolCountry, email) =>
     [email]
   );
 
-export const getAdminUserByID = async (poolCountry, admin_id) =>
-  await getDBPool("masterDb", poolCountry).query(
+export const getAdminUserByID = async (admin_id) =>
+  await getDBPool("masterDb").query(
     `
         SELECT admin_id, name, surname, phone_prefix, phone, email, role
         FROM admin
@@ -25,23 +25,11 @@ export const getAdminUserByID = async (poolCountry, admin_id) =>
   );
 
 export const createAdminUser = async (props) =>
-  await getDBPool("masterDb", props.poolCountry).query(
+  await getDBPool("masterDb").query(
     `
-      WITH newAdmin AS (
-
           INSERT INTO admin (name, surname, phone_prefix, phone, email, password, role)
           VALUES ($1, $2, $3, $4, $5, $6, $7)
           RETURNING * 
-
-      ), adminCountryLink AS (
-
-          INSERT INTO admin_country_links (admin_id, country_id)
-          SELECT admin_id, $8 FROM newAdmin
-          RETURNING * 
-
-      )
-
-      SELECT * FROM newAdmin;
     `,
     [
       props.name,
@@ -51,6 +39,25 @@ export const createAdminUser = async (props) =>
       props.email,
       props.hashedPass,
       props.role,
-      props.adminCountryId,
     ]
+  );
+
+export const createAdminToCountryLink = async ({ adminId, countryId }) =>
+  await getDBPool("masterDb").query(
+    `
+        INSERT INTO admin_country_links (admin_id, country_id)
+        VALUES ($1, $2)
+        RETURNING *;
+    `,
+    [adminId, countryId]
+  );
+
+export const createAdminToRegionLink = async ({ adminId, regionId }) =>
+  await getDBPool("masterDb").query(
+    `
+        INSERT INTO admin_region_links (admin_id, region_id)
+        VALUES ($1, $2)
+        RETURNING *;
+    `,
+    [adminId, regionId]
   );

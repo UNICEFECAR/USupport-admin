@@ -2,8 +2,8 @@ import { getAdminUserByID } from "#queries/admins";
 
 import { adminNotFound } from "#utils/errors";
 
-export const getAdminUser = async ({ country, language, admin_id }) => {
-  return await getAdminUserByID({ country, admin_id })
+export const getAdminUser = async ({ language, admin_id }) => {
+  return await getAdminUserByID({ admin_id })
     .then((res) => {
       if (res.rowCount === 0) {
         throw adminNotFound(language);

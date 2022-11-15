@@ -7,6 +7,8 @@ import {
   getAdminUserByEmail,
   getAdminUserByID,
   createAdminUser,
+  createAdminToCountryLink,
+  createAdminToRegionLink,
 } from "#queries/admins";
 
 import { adminLoginSchema, createAdminSchema } from "#schemas/authSchemas";
@@ -40,6 +42,7 @@ passport.use(
           email,
           password,
           adminCountryId,
+          adminRegionId,
           name,
           surname,
           phonePrefix,
@@ -57,12 +60,13 @@ passport.use(
             throw err;
           });
 
-        const currentAdmin = await getAdminUserByEmail(country, email)
+        const currentAdmin = await getAdminUserByEmail(email)
           .then((res) => res.rows[0])
           .catch((err) => {
             throw err;
           });
 
+        // Change that check in case we want to allow admins with same email but different country or region
         if (currentAdmin && currentAdmin.email) {
           return done(emailUsed(language));
         }
@@ -73,6 +77,7 @@ passport.use(
         let newAdmin = await createAdminUser({
           poolCountry: country,
           adminCountryId,
+          adminRegionId,
           hashedPass,
           name,
           surname,
@@ -81,7 +86,23 @@ passport.use(
           email,
           role,
         })
-          .then(async (res) => res.rows[0])
+          .then(async (res) => {
+            const admin = res.rows[0];
+
+            if (role === "country") {
+              await createAdminToCountryLink({
+                countryId: adminCountryId,
+                adminId: res.rows[0].admin_id,
+              });
+            } else if (role === "regional") {
+              await createAdminToRegionLink({
+                regionId: adminRegionId,
+                adminId: res.rows[0].admin_id,
+              });
+            }
+
+            return admin;
+          })
           .catch((err) => {
             throw err;
           });
@@ -107,7 +128,6 @@ passport.use(
     async (req, emailIn, passwordIn, done) => {
       try {
         const language = req.header("x-language-alpha-2");
-        const country = req.header("x-country-alpha-2");
         const { email, password } = await adminLoginSchema
           .noUnknown(true)
           .strict()
@@ -119,7 +139,7 @@ passport.use(
             throw err;
           });
 
-        const adminUser = await getAdminUserByEmail(country, email)
+        const adminUser = await getAdminUserByEmail(email)
           .then((res) => res.rows[0])
           .catch((err) => {
             throw err;
@@ -161,9 +181,8 @@ passport.use(
     },
     async (req, jwt_payload, done) => {
       try {
-        const country = req.header("x-country-alpha-2");
         const admin_id = jwt_payload.sub;
-        const admin = await getAdminUserByID(country, admin_id)
+        const admin = await getAdminUserByID(admin_id)
           .then((res) => res.rows[0])
           .catch((err) => {
             throw err;

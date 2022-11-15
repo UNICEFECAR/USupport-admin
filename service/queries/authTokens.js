@@ -1,7 +1,7 @@
 import { getDBPool } from "#utils/dbConfig";
 
-export const storeRefreshToken = async (poolCountry, admin_id, refreshToken) =>
-  await getDBPool("masterDb", poolCountry).query(
+export const storeRefreshToken = async (admin_id, refreshToken) =>
+  await getDBPool("masterDb").query(
     `
       INSERT INTO refresh_token (admin_id, token, expires_at)
       VALUES ($1, $2, NOW() + INTERVAL '7 DAYS')
@@ -10,10 +10,10 @@ export const storeRefreshToken = async (poolCountry, admin_id, refreshToken) =>
     [admin_id, refreshToken]
   );
 
-export const getRefreshToken = async (poolCountry, token) =>
-  await getDBPool("masterDb", poolCountry).query(
+export const getRefreshToken = async (token) =>
+  await getDBPool("masterDb").query(
     `
-      SELECT refresh_token.admin_id, expires_at, used
+      SELECT refresh_token.admin_id, expires_at, used, admin.role as admin_role
       FROM refresh_token
         JOIN admin ON admin.admin_id = refresh_token.admin_id
       WHERE token = $1
@@ -23,8 +23,8 @@ export const getRefreshToken = async (poolCountry, token) =>
     [token]
   );
 
-export const invalidateRefreshToken = async (poolCountry, token) =>
-  await getDBPool("masterDb", poolCountry).query(
+export const invalidateRefreshToken = async (token) =>
+  await getDBPool("masterDb").query(
     `
       UPDATE refresh_token
       SET used = true
