@@ -1,6 +1,9 @@
+import bcrypt from "bcryptjs";
+
 import { getAdminUserByID } from "#queries/admins";
 
-import { adminNotFound } from "#utils/errors";
+import { updatePassword } from "#utils/helperFunctions";
+import { adminNotFound, incorrectPassword } from "#utils/errors";
 
 export const getAdminUser = async ({ country, language, admin_id }) => {
   return await getAdminUserByID({ country, admin_id })
@@ -14,4 +17,30 @@ export const getAdminUser = async ({ country, language, admin_id }) => {
     .catch((err) => {
       throw err;
     });
+};
+
+export const changeAdminUserPassword = async ({
+  country,
+  language,
+  admin_id,
+  oldPassword,
+  newPassword,
+}) => {
+  const adminData = await getAdminUser({ country, language, admin_id });
+  const validatePassword = await bcrypt.compare(
+    oldPassword,
+    adminData.password
+  );
+
+  if (!validatePassword) {
+    throw incorrectPassword(language);
+  }
+
+  await updatePassword({
+    poolCountry: country,
+    admin_id,
+    password: newPassword,
+  });
+
+  return { success: true };
 };

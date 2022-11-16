@@ -54,3 +54,17 @@ export const createAdminUser = async (props) =>
       props.adminCountryId,
     ]
   );
+
+export const updateAdminUserPassword = async ({
+  poolCountry,
+  password,
+  admin_id,
+}) =>
+  await getDBPool("masterDb", poolCountry).query(
+    `
+      UPDATE admin
+      SET password = $1
+      WHERE admin_id = $2;        
+    `,
+    [password, admin_id]
+  );
