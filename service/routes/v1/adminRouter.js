@@ -29,7 +29,7 @@ router.patch("/password", securedRoute, async (req, res, next) => {
   return await changePasswordSchema
     .noUnknown(true)
     .strict(true)
-    .validate({ country, language, admin_id, ...payload })
+    .validate({ ...payload, country, language, admin_id })
     .then(changeAdminUserPassword)
     .then((result) => res.status(200).send(result))
     .catch(next);

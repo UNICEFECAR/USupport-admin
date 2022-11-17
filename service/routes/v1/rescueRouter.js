@@ -8,7 +8,7 @@ import {
 import {
   initForgotPasswordSchema,
   resetForgotPasswordSchema,
-} from "#schemas/rescueSchema";
+} from "#schemas/rescueSchemas";
 
 const router = express.Router();
 
@@ -23,12 +23,11 @@ router
     const language = req.header("x-language-alpha-2");
 
     const { email } = req.query;
-    const { type } = req.query;
 
     return await initForgotPasswordSchema
       .noUnknown(true)
       .strict(true)
-      .validate({ country, language, email, type })
+      .validate({ country, language, email })
       .then(sendForgotPasswordEmail)
       .then((result) => res.status(200).send(result))
       .catch(next);

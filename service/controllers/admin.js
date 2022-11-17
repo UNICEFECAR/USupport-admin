@@ -6,7 +6,7 @@ import { updatePassword } from "#utils/helperFunctions";
 import { adminNotFound, incorrectPassword } from "#utils/errors";
 
 export const getAdminUser = async ({ country, language, admin_id }) => {
-  return await getAdminUserByID({ country, admin_id })
+  return await getAdminUserByID(country, admin_id)
     .then((res) => {
       if (res.rowCount === 0) {
         throw adminNotFound(language);

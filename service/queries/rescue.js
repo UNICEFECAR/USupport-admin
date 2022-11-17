@@ -7,7 +7,7 @@ export const storeForgotPasswordTokenQuery = async ({
 }) =>
   await getDBPool("masterDb", poolCountry).query(
     `
-        INSERT INTO password_reset (admin, reset_token, expires_at)
+        INSERT INTO password_reset (admin_id, reset_token, expires_at)
         VALUES ($1, $2, NOW() + INTERVAL '1 DAY')
         RETURNING *;
     `,

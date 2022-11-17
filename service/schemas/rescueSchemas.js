@@ -1,6 +1,6 @@
 import * as yup from "yup";
 
-import { PASSWORD_REGEX } from "./adminSchemas.js";
+import { PASSWORD_REGEX } from "./authSchemas.js";
 
 export const initForgotPasswordSchema = yup.object().shape({
   country: yup.string().required(),

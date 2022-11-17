@@ -55,3 +55,11 @@ export const invalidRefreshToken = (language) => {
   error.status = 401;
   return error;
 };
+
+export const invalidResetPasswordToken = (language) => {
+  const error = new Error();
+  error.message = t("invalid_reset_password_token_error", language);
+  error.name = "INVALID RESET PASSWORD TOKEN";
+  error.status = 409;
+  return error;
+};

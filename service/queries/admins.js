@@ -15,7 +15,7 @@ export const getAdminUserByEmail = async (poolCountry, email) =>
 export const getAdminUserByID = async (poolCountry, admin_id) =>
   await getDBPool("masterDb", poolCountry).query(
     `
-        SELECT admin_id, name, surname, phone_prefix, phone, email, role
+        SELECT admin_id, name, surname, phone_prefix, phone, email, role, password
         FROM admin
         WHERE admin_id = $1
         ORDER BY created_at DESC
