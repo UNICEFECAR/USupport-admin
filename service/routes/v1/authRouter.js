@@ -19,14 +19,13 @@ router.post(
      * #route   POST /user/v1/auth/signup
      * #desc    Create a new user and create a JWT session
      */
-    const country = req.header("x-country-alpha-2");
     const adminUser = req.user;
 
     const accessToken = await issueAccessToken({
       admin_id: adminUser.admin_id,
+      adminRole: adminUser.role,
     });
     const refreshToken = await issueRefreshToken({
-      country,
       admin_id: adminUser.admin_id,
     });
 
@@ -47,14 +46,13 @@ router.post(
      * #route   POST /admin/v1/auth/login
      * #desc    Login an admin using JWT token
      */
-    const country = req.header("x-country-alpha-2");
     const adminUser = req.user;
 
     const accessToken = await issueAccessToken({
       admin_id: adminUser.admin_id,
+      adminRole: adminUser.role,
     });
     const refreshToken = await issueRefreshToken({
-      country,
       admin_id: adminUser.admin_id,
     });
 
@@ -72,7 +70,6 @@ router.post("/refresh-token", async (req, res, next) => {
    * #route   POST /admin/v1/auth/refresh-token
    * #desc    Refresh access token
    */
-  const country = req.header("x-country-alpha-2");
   const language = req.header("x-language-alpha-2");
 
   const payload = req.body;
@@ -80,7 +77,7 @@ router.post("/refresh-token", async (req, res, next) => {
   return await refreshAccessTokenSchema
     .noUnknown(true)
     .strict()
-    .validate({ country, language, ...payload })
+    .validate({ language, ...payload })
     .then(refreshAccessToken)
     .then((result) => res.status(200).send(result))
     .catch(next);

@@ -11,9 +11,10 @@ import { invalidRefreshToken } from "#utils/errors";
 
 const JWT_KEY = process.env.JWT_KEY;
 
-export const issueAccessToken = async ({ admin_id }) => {
+export const issueAccessToken = async ({ admin_id, adminRole }) => {
   const payload = {
     sub: admin_id,
+    adminRole,
     iat: Math.floor(Date.now() / 1000),
   };
 
@@ -30,22 +31,18 @@ export const issueAccessToken = async ({ admin_id }) => {
   };
 };
 
-export const issueRefreshToken = async ({ country, admin_id }) => {
+export const issueRefreshToken = async ({ admin_id }) => {
   const refreshToken = uuidv4();
 
-  storeRefreshToken(country, admin_id, refreshToken).catch((err) => {
+  storeRefreshToken(admin_id, refreshToken).catch((err) => {
     throw err;
   });
 
   return refreshToken;
 };
 
-export const refreshAccessToken = async ({
-  country,
-  language,
-  refreshToken,
-}) => {
-  const refreshTokenData = await getRefreshToken(country, refreshToken)
+export const refreshAccessToken = async ({ language, refreshToken }) => {
+  const refreshTokenData = await getRefreshToken(refreshToken)
     .then((res) => {
       if (res.rowCount === 0) {
         throw invalidRefreshToken(language);
@@ -63,19 +60,19 @@ export const refreshAccessToken = async ({
   if (!refreshTokenData || refreshTokenData.used) {
     throw invalidRefreshToken(language);
   } else if (expiresIn < now) {
-    await invalidateRefreshToken(country, refreshToken).catch((err) => {
+    await invalidateRefreshToken(refreshToken).catch((err) => {
       throw err;
     });
     throw invalidRefreshToken(language);
   } else {
-    await invalidateRefreshToken(country, refreshToken).catch((err) => {
+    await invalidateRefreshToken(refreshToken).catch((err) => {
       throw err;
     });
     const newAccessToken = await issueAccessToken({
       admin_id: refreshTokenData.admin_id,
+      adminRole: refreshTokenData.admin_role,
     });
     const newRefreshToken = await issueRefreshToken({
-      country,
       admin_id: refreshTokenData.admin_id,
     });
 
