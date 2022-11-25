@@ -42,6 +42,38 @@ export const createAdminUser = async (props) =>
     ]
   );
 
+export const checkIfEmailIsUsedQuery = async ({ email }) =>
+  await getDBPool("masterDb").query(
+    `
+    SELECT email
+    FROM admin
+    WHERE email = $1
+    `,
+    [email]
+  );
+
+export const updateAdminDataQuery = async ({
+  admin_id,
+  name,
+  surname,
+  email,
+  phonePrefix,
+  phone,
+}) =>
+  await getDBPool("masterDb").query(
+    `
+      UPDATE admin
+      SET name = $1, 
+          surname = $2, 
+          email = $3, 
+          phone_prefix = $4,
+          phone = $5
+      WHERE admin_id = $6
+      RETURNING *;
+    `,
+    [name, surname, email, phonePrefix, phone, admin_id]
+  );
+
 export const updateAdminUserPassword = async ({ password, admin_id }) =>
   await getDBPool("masterDb").query(
     `
