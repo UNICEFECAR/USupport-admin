@@ -15,7 +15,7 @@ export const getAdminUserByEmail = async (email) =>
 export const getAdminUserByID = async (admin_id) =>
   await getDBPool("masterDb").query(
     `
-        SELECT admin_id, name, surname, phone_prefix, phone, email, role
+        SELECT admin_id, name, surname, phone_prefix, phone, email, role, password
         FROM admin
         WHERE admin_id = $1
         ORDER BY created_at DESC
@@ -27,9 +27,9 @@ export const getAdminUserByID = async (admin_id) =>
 export const createAdminUser = async (props) =>
   await getDBPool("masterDb").query(
     `
-          INSERT INTO admin (name, surname, phone_prefix, phone, email, password, role)
-          VALUES ($1, $2, $3, $4, $5, $6, $7)
-          RETURNING * 
+      INSERT INTO admin (name, surname, phone_prefix, phone, email, password, role)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *;
     `,
     [
       props.name,
@@ -40,6 +40,16 @@ export const createAdminUser = async (props) =>
       props.hashedPass,
       props.role,
     ]
+  );
+
+export const updateAdminUserPassword = async ({ password, admin_id }) =>
+  await getDBPool("masterDb").query(
+    `
+      UPDATE admin
+      SET password = $1
+      WHERE admin_id = $2;        
+    `,
+    [password, admin_id]
   );
 
 export const createAdminToCountryLink = async ({ adminId, countryId }) =>

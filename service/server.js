@@ -23,6 +23,7 @@ app.use(passport.initialize());
 app.use("/admin/v1/country", v1.CountryRouter);
 app.use("/admin/v1/auth", v1.AuthRouter);
 app.use("/admin/v1/admin", v1.AdminRouter);
+app.use("/admin/v1/rescue", v1.RescueRouter);
 
 /*------------- Error middleware -------------*/
 
