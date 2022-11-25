@@ -5,8 +5,8 @@ import { getAdminUserByID } from "#queries/admins";
 import { updatePassword } from "#utils/helperFunctions";
 import { adminNotFound, incorrectPassword } from "#utils/errors";
 
-export const getAdminUser = async ({ country, language, admin_id }) => {
-  return await getAdminUserByID(country, admin_id)
+export const getAdminUser = async ({ language, admin_id }) => {
+  return await getAdminUserByID(admin_id)
     .then((res) => {
       if (res.rowCount === 0) {
         throw adminNotFound(language);
@@ -20,13 +20,12 @@ export const getAdminUser = async ({ country, language, admin_id }) => {
 };
 
 export const changeAdminUserPassword = async ({
-  country,
   language,
   admin_id,
   oldPassword,
   newPassword,
 }) => {
-  const adminData = await getAdminUser({ country, language, admin_id });
+  const adminData = await getAdminUser({ language, admin_id });
   const validatePassword = await bcrypt.compare(
     oldPassword,
     adminData.password
@@ -37,7 +36,6 @@ export const changeAdminUserPassword = async ({
   }
 
   await updatePassword({
-    poolCountry: country,
     admin_id,
     password: newPassword,
   });

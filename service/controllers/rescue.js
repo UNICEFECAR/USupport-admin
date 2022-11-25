@@ -11,8 +11,8 @@ import { updatePassword } from "#utils/helperFunctions";
 
 import { adminNotFound, invalidResetPasswordToken } from "#utils/errors";
 
-export const sendForgotPasswordEmail = async ({ country, language, email }) => {
-  const adminUser = await getAdminUserByEmail(country, email)
+export const sendForgotPasswordEmail = async ({ language, email }) => {
+  const adminUser = await getAdminUserByEmail(email)
     .then((raw) => {
       if (raw.rowCount === 0) {
         throw adminNotFound(language);
@@ -27,7 +27,6 @@ export const sendForgotPasswordEmail = async ({ country, language, email }) => {
   const forgotPassToken = nanoid(16);
 
   await storeForgotPasswordTokenQuery({
-    poolCountry: country,
     admin_id: adminUser.admin_id,
     forgotPassToken,
   });
@@ -37,14 +36,8 @@ export const sendForgotPasswordEmail = async ({ country, language, email }) => {
   return { forgotPassToken };
 };
 
-export const resetForgotPassword = async ({
-  country,
-  language,
-  token,
-  password,
-}) => {
+export const resetForgotPassword = async ({ language, token, password }) => {
   const tokenData = await getForgotPasswordTokenQuery({
-    poolCountry: country,
     forgotPassToken: token,
   })
     .then((raw) => raw.rows[0])
@@ -60,12 +53,11 @@ export const resetForgotPassword = async ({
   }
 
   await updatePassword({
-    poolCountry: country,
     admin_id: tokenData.admin_id,
     password,
   });
 
-  await invalidatePasswordResetTokenQuery({ poolCountry: country, token });
+  await invalidatePasswordResetTokenQuery({ token });
 
   return { success: true };
 };

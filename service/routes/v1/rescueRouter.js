@@ -19,7 +19,6 @@ router
      * #route   GET /admin/v1/rescue/forgot-password
      * #desc    Send forgot password email
      */
-    const country = req.header("x-country-alpha-2");
     const language = req.header("x-language-alpha-2");
 
     const { email } = req.query;
@@ -27,7 +26,7 @@ router
     return await initForgotPasswordSchema
       .noUnknown(true)
       .strict(true)
-      .validate({ country, language, email })
+      .validate({ language, email })
       .then(sendForgotPasswordEmail)
       .then((result) => res.status(200).send(result))
       .catch(next);
@@ -37,7 +36,6 @@ router
      * #route   POST /admin/v1/rescue/forgot-password
      * #desc    Reset forgot password with token
      */
-    const country = req.header("x-country-alpha-2");
     const language = req.header("x-language-alpha-2");
 
     const payload = req.body;
@@ -45,7 +43,7 @@ router
     return await resetForgotPasswordSchema
       .noUnknown(true)
       .strict(true)
-      .validate({ country, language, ...payload })
+      .validate({ language, ...payload })
       .then(resetForgotPassword)
       .then((result) => res.status(200).send(result))
       .catch(next);

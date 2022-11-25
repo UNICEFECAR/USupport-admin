@@ -20,7 +20,6 @@ router.patch("/password", securedRoute, async (req, res, next) => {
    * #route   PATCH /admin/v1/admin/password
    * #desc    Update admin user's password
    */
-  const country = req.header("x-country-alpha-2");
   const language = req.header("x-language-alpha-2");
 
   const admin_id = req.user.admin_id;
@@ -29,7 +28,7 @@ router.patch("/password", securedRoute, async (req, res, next) => {
   return await changePasswordSchema
     .noUnknown(true)
     .strict(true)
-    .validate({ ...payload, country, language, admin_id })
+    .validate({ ...payload, language, admin_id })
     .then(changeAdminUserPassword)
     .then((result) => res.status(200).send(result))
     .catch(next);

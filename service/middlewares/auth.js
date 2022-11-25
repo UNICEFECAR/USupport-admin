@@ -37,7 +37,6 @@ passport.use(
     async (req, emailIn, passwordIn, done) => {
       try {
         const language = req.header("x-language-alpha-2");
-        const country = req.header("x-country-alpha-2");
         const {
           email,
           password,
@@ -75,7 +74,6 @@ passport.use(
         const hashedPass = await bcrypt.hash(password, salt);
 
         let newAdmin = await createAdminUser({
-          poolCountry: country,
           adminCountryId,
           adminRegionId,
           hashedPass,
