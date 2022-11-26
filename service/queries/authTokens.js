@@ -4,7 +4,7 @@ export const storeRefreshToken = async (admin_id, refreshToken) =>
   await getDBPool("masterDb").query(
     `
       INSERT INTO refresh_token (admin_id, token, expires_at)
-      VALUES ($1, $2, NOW() + INTERVAL '7 DAYS')
+      VALUES ($1, $2, NOW() + INTERVAL '60 MINUTE')
       RETURNING *;
     `,
     [admin_id, refreshToken]

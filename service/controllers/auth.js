@@ -19,7 +19,7 @@ export const issueAccessToken = async ({ admin_id, adminRole }) => {
   };
 
   const signedToken = jwt.sign(payload, JWT_KEY, {
-    expiresIn: "1h",
+    expiresIn: "30m",
     issuer: "online.usupport.adminApi",
     audience: "online.usupport.app",
     algorithm: "HS256",
@@ -27,7 +27,7 @@ export const issueAccessToken = async ({ admin_id, adminRole }) => {
 
   return {
     token: signedToken,
-    expiresIn: new Date(new Date().getTime() + 60 * 60000), // 1h expiration
+    expiresIn: new Date(new Date().getTime() + 30 * 60000), // 30m expiration
   };
 };
 
@@ -55,7 +55,7 @@ export const refreshAccessToken = async ({ language, refreshToken }) => {
     });
 
   const now = new Date().getTime();
-  const expiresIn = new Date(refreshTokenData.expires_at).getTime(); // valid for 7 days
+  const expiresIn = new Date(refreshTokenData.expires_at).getTime(); // valid for 1 hour
 
   if (!refreshTokenData || refreshTokenData.used) {
     throw invalidRefreshToken(language);
