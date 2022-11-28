@@ -14,9 +14,10 @@ import {
   getCountryArticlesQuery,
   addCountryArticlesQuery,
   deleteCountryArticlesQuery,
+  updateCountryMinMaxClientAgeQuery,
 } from "#queries/countries";
 
-import { platformNotFound } from "#utils/errors";
+import { platformNotFound, countryNotFound } from "#utils/errors";
 
 export const getCountryFaqs = async ({ country, language, platform }) => {
   let platformSpecificQuery = "";
@@ -155,6 +156,30 @@ export const deleteCountryArticles = async ({ country, id }) => {
   return await deleteCountryArticlesQuery({ country, id })
     .then((res) => {
       return res.rows[0][`article_ids`];
+    })
+    .catch((err) => {
+      throw err;
+    });
+};
+
+export const updateCountryMinMaxClientAge = async ({
+  country,
+  language,
+  minClientAge,
+  maxClientAge,
+}) => {
+  return await updateCountryMinMaxClientAgeQuery({
+    country,
+    language,
+    minClientAge,
+    maxClientAge,
+  })
+    .then((res) => {
+      if (res.rowCount === 0) {
+        throw countryNotFound(language);
+      } else {
+        return res.rows[0];
+      }
     })
     .catch((err) => {
       throw err;

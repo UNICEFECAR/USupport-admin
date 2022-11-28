@@ -10,6 +10,7 @@ import {
   getCountryArticles,
   addCountryArticles,
   deleteCountryArticles,
+  updateCountryMinMaxClientAge,
 } from "#controllers/countries";
 
 import {
@@ -22,6 +23,7 @@ import {
   getCountryArticlesSchema,
   addCountryArticlesSchema,
   deleteCountryArticlesSchema,
+  updateCountryMinMaxClientAgeSchema,
 } from "#schemas/countrySchemas";
 
 const router = express.Router();
@@ -49,7 +51,7 @@ router
   .put(async (req, res, next) => {
     /**
      * #route   PUT /admin/v1/country/faqs
-     * #desc    Add given faqs to a country
+     * #desc    Add an faq to a country
      */
     const country = req.header("x-country-alpha-2");
     const language = req.header("x-language-alpha-2");
@@ -67,7 +69,7 @@ router
   .delete(async (req, res, next) => {
     /**
      * #route   DELETE /admin/v1/country/faqs
-     * #desc    Delete given faqs to a country
+     * #desc    Delete an FAQ from a country
      */
     const country = req.header("x-country-alpha-2");
     const language = req.header("x-language-alpha-2");
@@ -103,7 +105,7 @@ router
   .put(async (req, res, next) => {
     /**
      * #route   PUT /admin/v1/country/soscenters
-     * #desc    Add given sos centers to a country
+     * #desc    Add given sos center to a country
      */
     const country = req.header("x-country-alpha-2");
 
@@ -120,7 +122,7 @@ router
   .delete(async (req, res, next) => {
     /**
      * #route   DELETE /admin/v1/country/sos-centers
-     * #desc    Delete given sos centers to a country
+     * #desc    Delete given sos center from a country
      */
     const country = req.header("x-country-alpha-2");
 
@@ -186,5 +188,25 @@ router
       .then((result) => res.status(200).send(result))
       .catch(next);
   });
+
+router.put("/min-max-client-age", async (req, res, next) => {
+  /**
+   * #route   PUT /admin/v1/country/min-max-client-age
+   * #desc    Update the country min and max client age
+   */
+
+  const country = req.header("x-country-alpha-2");
+  const language = req.header("x-language-alpha-2");
+
+  const payload = req.body;
+
+  return await updateCountryMinMaxClientAgeSchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({ country, language, ...payload })
+    .then(updateCountryMinMaxClientAge)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
 
 export { router };
