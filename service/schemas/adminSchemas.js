@@ -41,6 +41,11 @@ export const updateAdminDataByIdSchema = yup.object().shape({
   isActive: yup.boolean().required(),
 });
 
+export const deleteAdminDataByIdSchema = yup.object().shape({
+  language: yup.string().required(),
+  adminId: yup.string().uuid().required(),
+});
+
 export const getAllAdminsSchema = yup.object().shape({
   type: yup.string().oneOf(["global", "country", "regional"]).required(),
   countryId: yup.string().when("type", {

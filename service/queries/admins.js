@@ -99,6 +99,22 @@ export const updateAdminDataByIdQuery = async ({
     [name, surname, email, phonePrefix, phone, isActive, adminId]
   );
 
+export const deleteAdminDataByIdQuery = async ({ adminId }) =>
+  await getDBPool("masterDb").query(
+    `
+      UPDATE admin
+      SET name = 'DELETED',
+          surname = 'DELETED',
+          phone_prefix = 'DELETED',
+          phone = 'DELETED',
+          email = 'DELETED',
+          is_active = false
+      WHERE admin_id = $1
+      RETURNING *;
+    `,
+    [adminId]
+  );
+
 export const updateAdminUserPassword = async ({ password, admin_id }) =>
   await getDBPool("masterDb").query(
     `

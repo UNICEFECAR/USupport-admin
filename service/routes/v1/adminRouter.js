@@ -6,6 +6,7 @@ import {
   getAdminUser,
   updateAdminDataById,
   getAllAdmins,
+  deleteAdminDataById,
 } from "#controllers/admin";
 
 import {
@@ -14,6 +15,7 @@ import {
   getAdminByIdSchema,
   updateAdminDataByIdSchema,
   getAllAdminsSchema,
+  deleteAdminDataByIdSchema,
 } from "#schemas/adminSchemas";
 import { securedRoute } from "#middlewares/auth";
 
@@ -84,6 +86,24 @@ router.put("/by-id", securedRoute, async (req, res, next) => {
     .strict()
     .validate({ language, ...payload })
     .then(updateAdminDataById)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.delete("/by-id", securedRoute, async (req, res, next) => {
+  /**
+   * #route   DELETE /admin/v1/admin/by-id
+   * #desc    Delete admin data by id
+   */
+  const language = req.header("x-language-alpha-2");
+
+  const payload = req.body;
+
+  return await deleteAdminDataByIdSchema
+    .noUnknown(true)
+    .strict()
+    .validate({ language, ...payload })
+    .then(deleteAdminDataById)
     .then((result) => res.status(200).send(result))
     .catch(next);
 });

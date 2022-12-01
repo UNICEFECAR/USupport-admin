@@ -7,6 +7,7 @@ import {
   updateAdminDataByIdQuery,
   getAllGlobalAdminsQuery,
   getAllCountryAdminsQuery,
+  deleteAdminDataByIdQuery,
 } from "#queries/admins";
 
 import { updatePassword } from "#utils/helperFunctions";
@@ -130,6 +131,22 @@ export const updateAdminDataById = async ({
     isActive,
   })
     .then((res) => {
+      if (res.rowCount === 0) {
+        throw adminNotFound(language);
+      } else {
+        return res.rows[0];
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
+};
+
+export const deleteAdminDataById = async ({ language, adminId }) => {
+  return await deleteAdminDataByIdQuery({
+    adminId,
+  })
+    .then(async (res) => {
       if (res.rowCount === 0) {
         throw adminNotFound(language);
       } else {
