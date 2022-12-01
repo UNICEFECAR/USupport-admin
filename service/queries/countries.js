@@ -1,5 +1,27 @@
 import { getDBPool } from "#utils/dbConfig";
 
+export const getAllActiveCountries = async () =>
+  await getDBPool("masterDb").query(
+    `
+      SELECT * 
+      FROM "country"
+      WHERE "is_active" = true
+      ORDER BY "name" DESC
+        
+    `
+  );
+
+export const getCountryAlpha2CodeByIdQuery = async ({ countryId }) =>
+  await getDBPool("masterDb").query(
+    `
+      SELECT alpha2 
+      FROM "country"
+      WHERE country_id = $1
+      LIMIT 1;
+    `,
+    [countryId]
+  );
+
 export const getWebsiteCountryFaqsQuery = async ({ country }) => {
   return await getDBPool("masterDb").query(
     `
