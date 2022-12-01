@@ -1,15 +1,15 @@
 import { getDBPool } from "#utils/dbConfig";
 
-export const getAdminUserByEmail = async (email) =>
+export const getAdminUserByEmail = async (email, role) =>
   await getDBPool("masterDb").query(
     `
         SELECT admin_id, name, surname, phone_prefix, phone, email, role, password, is_active
         FROM admin
-        WHERE email = $1
+        WHERE email = $1 AND role = $2
         ORDER BY created_at DESC
         LIMIT 1;
     `,
-    [email]
+    [email, role]
   );
 
 export const getAdminUserByID = async (admin_id) =>

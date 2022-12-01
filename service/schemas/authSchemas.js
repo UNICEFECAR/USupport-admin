@@ -13,6 +13,7 @@ export const refreshAccessTokenSchema = yup.object().shape({
 export const adminLoginSchema = yup.object().shape({
   email: yup.string().email().required(),
   password: yup.string().required(),
+  role: yup.string().oneOf(["global", "country", "regional"]).required(),
 });
 
 export const createAdminSchema = (language) =>

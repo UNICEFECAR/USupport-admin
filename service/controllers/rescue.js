@@ -12,8 +12,8 @@ import { produceRaiseNotification } from "#utils/kafkaProducers";
 
 import { adminNotFound, invalidResetPasswordToken } from "#utils/errors";
 
-export const sendForgotPasswordEmail = async ({ language, email }) => {
-  const adminUser = await getAdminUserByEmail(email)
+export const sendForgotPasswordEmail = async ({ language, email, role }) => {
+  const adminUser = await getAdminUserByEmail(email, role)
     .then((raw) => {
       if (raw.rowCount === 0) {
         throw adminNotFound(language);

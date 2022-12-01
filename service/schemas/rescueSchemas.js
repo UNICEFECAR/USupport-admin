@@ -5,6 +5,7 @@ import { PASSWORD_REGEX } from "./authSchemas.js";
 export const initForgotPasswordSchema = yup.object().shape({
   language: yup.string().required(),
   email: yup.string().email().required(),
+  role: yup.string().oneOf(["global", "country", "regional"]).required(),
 });
 
 export const resetForgotPasswordSchema = yup.object().shape({

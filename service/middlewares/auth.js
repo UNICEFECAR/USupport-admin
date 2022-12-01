@@ -61,7 +61,7 @@ passport.use(
             throw err;
           });
 
-        const currentAdmin = await getAdminUserByEmail(email)
+        const currentAdmin = await getAdminUserByEmail(email, role)
           .then((res) => res.rows[0])
           .catch((err) => {
             throw err;
@@ -129,18 +129,22 @@ passport.use(
     async (req, emailIn, passwordIn, done) => {
       try {
         const language = req.header("x-language-alpha-2");
+
+        const role = req.body.role;
+
         const { email, password } = await adminLoginSchema
           .noUnknown(true)
           .strict()
           .validate({
             password: passwordIn,
             email: emailIn,
+            role,
           })
           .catch((err) => {
             throw err;
           });
 
-        const adminUser = await getAdminUserByEmail(email)
+        const adminUser = await getAdminUserByEmail(email, role)
           .then((res) => res.rows[0])
           .catch((err) => {
             throw err;
