@@ -70,14 +70,26 @@ export const getGlobalStatistics = async ({ language }) => {
     })
   );
 
-  let globalStatistics = {};
+  let globalStatistics = {
+    clientsNo: 0,
+    providersNo: 0,
+    publishedArticlesNo: 0,
+    scheduledConsultationsNo: 0,
+  };
 
   for (let i = 0; i < activeCountries.length; i++) {
     const country = activeCountries[i];
-    globalStatistics[country.alpha2] = await getCountryStatistics({
+    const currentCountryStatistics = await getCountryStatistics({
       language,
       countryId: country.countryId,
     });
+
+    globalStatistics.clientsNo += currentCountryStatistics.clientsNo;
+    globalStatistics.providersNo += currentCountryStatistics.providersNo;
+    globalStatistics.publishedArticlesNo +=
+      currentCountryStatistics.publishedArticlesNo;
+    globalStatistics.scheduledConsultationsNo +=
+      currentCountryStatistics.scheduledConsultationsNo;
   }
 
   return globalStatistics;
