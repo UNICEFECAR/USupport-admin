@@ -84,12 +84,16 @@ export const getGlobalStatistics = async ({ language }) => {
       countryId: country.countryId,
     });
 
-    globalStatistics.clientsNo += currentCountryStatistics.clientsNo;
-    globalStatistics.providersNo += currentCountryStatistics.providersNo;
-    globalStatistics.publishedArticlesNo +=
-      currentCountryStatistics.publishedArticlesNo;
-    globalStatistics.scheduledConsultationsNo +=
-      currentCountryStatistics.scheduledConsultationsNo;
+    globalStatistics.clientsNo += Number(currentCountryStatistics.clientsNo);
+    globalStatistics.providersNo += Number(
+      currentCountryStatistics.providersNo
+    );
+    globalStatistics.publishedArticlesNo += Number(
+      currentCountryStatistics.publishedArticlesNo
+    );
+    globalStatistics.scheduledConsultationsNo += Number(
+      currentCountryStatistics.scheduledConsultationsNo
+    );
   }
 
   return globalStatistics;
