@@ -28,7 +28,7 @@ export const createAdminUser = async (props) =>
   await getDBPool("masterDb").query(
     `
       INSERT INTO admin (name, surname, phone_prefix, phone, email, password, role, is_active)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *;
     `,
     [
