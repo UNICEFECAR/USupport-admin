@@ -18,6 +18,7 @@ import {
   incorrectEmail,
   incorrectPassword,
   notAuthenticated,
+  accountDeactivated,
 } from "#utils/errors";
 
 const localStrategy = passportLocal.Strategy;
@@ -47,6 +48,7 @@ passport.use(
           phonePrefix,
           phone,
           role,
+          isActive,
         } = await createAdminSchema(language)
           .noUnknown(true)
           .strict()
@@ -83,6 +85,7 @@ passport.use(
           phone,
           email,
           role,
+          isActive,
         })
           .then(async (res) => {
             const admin = res.rows[0];
@@ -154,6 +157,10 @@ passport.use(
 
         if (!validatePassword) {
           return done(incorrectPassword(language));
+        }
+
+        if (!adminUser.is_active) {
+          return done(accountDeactivated(language));
         }
 
         delete adminUser.password;

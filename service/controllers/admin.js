@@ -4,6 +4,9 @@ import {
   getAdminUserByID,
   checkIfEmailIsUsedQuery,
   updateAdminDataQuery,
+  updateAdminDataByIdQuery,
+  getAllGlobalAdminsQuery,
+  getAllCountryAdminsQuery,
 } from "#queries/admins";
 
 import { updatePassword } from "#utils/helperFunctions";
@@ -21,6 +24,16 @@ export const getAdminUser = async ({ language, admin_id }) => {
     .catch((err) => {
       throw err;
     });
+};
+
+export const getAllAdmins = async ({ type, countryId }) => {
+  if (type === "global") {
+    return await getAllGlobalAdminsQuery().then((res) => res.rows);
+  } else if (type === "country") {
+    return await getAllCountryAdminsQuery({ countryId }).then(
+      (res) => res.rows
+    );
+  }
 };
 
 export const updateAdminData = async ({
@@ -56,6 +69,65 @@ export const updateAdminData = async ({
     phone,
     phonePrefix,
     email,
+  })
+    .then((res) => {
+      if (res.rowCount === 0) {
+        throw adminNotFound(language);
+      } else {
+        return res.rows[0];
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
+};
+
+export const updateAdminDataById = async ({
+  language,
+  adminId,
+  name,
+  surname,
+  email,
+  phonePrefix,
+  phone,
+  isActive,
+}) => {
+  const currentEmail = await getAdminUserByID(adminId)
+    .then((res) => {
+      if (res.rowCount === 0) {
+        throw adminNotFound(language);
+      } else {
+        return res.rows[0].email;
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
+
+  // Check if email is changed
+  if (email !== currentEmail) {
+    // Check if email is already taken
+    await checkIfEmailIsUsedQuery({
+      email,
+    })
+      .then((res) => {
+        if (res.rowCount > 0) {
+          throw emailUsed(language);
+        }
+      })
+      .catch((err) => {
+        throw err;
+      });
+  }
+
+  return await updateAdminDataByIdQuery({
+    adminId,
+    name,
+    surname,
+    email,
+    phonePrefix,
+    phone,
+    isActive,
   })
     .then((res) => {
       if (res.rowCount === 0) {

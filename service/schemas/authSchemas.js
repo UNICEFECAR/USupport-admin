@@ -37,6 +37,7 @@ export const createAdminSchema = (language) =>
         .required()
         .label(t("password_validation_error", language)),
       role: yup.string().oneOf(["global", "country", "regional"]).required(),
+      isActive: yup.boolean().required(),
     },
     ["adminCountryId", "adminRegionId"]
   );

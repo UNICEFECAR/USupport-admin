@@ -10,4 +10,5 @@ export default {
     "Admin needs to authenticate to access this resource",
   invalid_refresh_token_error: "Refresh token invalid or already used",
   invalid_reset_password_token_error: "Invalid or expired reset password token",
+  account_deactivated_error: "Your account has been deactivated",
 };

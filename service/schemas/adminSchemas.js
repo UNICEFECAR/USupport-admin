@@ -24,3 +24,27 @@ export const updateAdminDataSchema = yup.object().shape({
   email: yup.string().email().required(),
   currentEmail: yup.string().email().required(),
 });
+
+export const getAdminByIdSchema = yup.object().shape({
+  language: yup.string().required(),
+  admin_id: yup.string().uuid().required(),
+});
+
+export const updateAdminDataByIdSchema = yup.object().shape({
+  language: yup.string().required(),
+  adminId: yup.string().uuid().required(),
+  name: yup.string().required(),
+  surname: yup.string().required(),
+  email: yup.string().email().required(),
+  phonePrefix: yup.string(),
+  phone: yup.string(),
+  isActive: yup.boolean().required(),
+});
+
+export const getAllAdminsSchema = yup.object().shape({
+  type: yup.string().oneOf(["global", "country", "regional"]).required(),
+  countryId: yup.string().when("type", {
+    is: "country",
+    then: yup.string().required(),
+  }),
+});

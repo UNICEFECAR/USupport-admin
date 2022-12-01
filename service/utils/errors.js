@@ -71,3 +71,11 @@ export const countryNotFound = (language) => {
   error.status = 404;
   return error;
 };
+
+export const accountDeactivated = (language) => {
+  const error = new Error();
+  error.message = t("account_deactivated_error", language);
+  error.name = "ACCOUNT DEACTIVATED";
+  error.status = 401;
+  return error;
+};

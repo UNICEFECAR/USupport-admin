@@ -1,10 +1,19 @@
 import express from "express";
 
-import { changeAdminUserPassword, updateAdminData } from "#controllers/admin";
+import {
+  changeAdminUserPassword,
+  updateAdminData,
+  getAdminUser,
+  updateAdminDataById,
+  getAllAdmins,
+} from "#controllers/admin";
 
 import {
   changePasswordSchema,
   updateAdminDataSchema,
+  getAdminByIdSchema,
+  updateAdminDataByIdSchema,
+  getAllAdminsSchema,
 } from "#schemas/adminSchemas";
 import { securedRoute } from "#middlewares/auth";
 
@@ -35,6 +44,67 @@ router.put("/", securedRoute, async (req, res, next) => {
     .strict()
     .validate({ language, admin_id, currentEmail, ...payload })
     .then(updateAdminData)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.get("/by-id", securedRoute, async (req, res, next) => {
+  /**
+   * #route   GET /admin/v1/admin/by-id
+   * #desc    Get admin by id
+   */
+
+  const language = req.header("x-language-alpha-2");
+
+  const admin_id = req.query.adminId;
+
+  return await getAdminByIdSchema
+    .noUnknown(true)
+    .strict()
+    .validate({
+      language,
+      admin_id,
+    })
+    .then(getAdminUser)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.put("/by-id", securedRoute, async (req, res, next) => {
+  /**
+   * #route   PUT /admin/v1/admin/by-id
+   * #desc    Update admin data by id
+   */
+  const language = req.header("x-language-alpha-2");
+
+  const payload = req.body;
+
+  return await updateAdminDataByIdSchema
+    .noUnknown(true)
+    .strict()
+    .validate({ language, ...payload })
+    .then(updateAdminDataById)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.get("/all", securedRoute, async (req, res, next) => {
+  /**
+   * #route   GET /admin/v1/admin/all
+   * #desc    Get all all global admins or country admins for a given country
+   */
+  const type = req.query.type;
+
+  const countryId = req.query.countryId;
+
+  return await getAllAdminsSchema
+    .noUnknown(true)
+    .strict()
+    .validate({
+      type,
+      countryId,
+    })
+    .then(getAllAdmins)
     .then((result) => res.status(200).send(result))
     .catch(next);
 });
