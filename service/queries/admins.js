@@ -43,14 +43,14 @@ export const createAdminUser = async (props) =>
     ]
   );
 
-export const checkIfEmailIsUsedQuery = async ({ email }) =>
+export const checkIfEmailIsUsedQuery = async ({ email, role }) =>
   await getDBPool("masterDb").query(
     `
     SELECT email
     FROM admin
-    WHERE email = $1
+    WHERE email = $1 AND role = $2
     `,
-    [email]
+    [email, role]
   );
 
 export const updateAdminDataQuery = async ({

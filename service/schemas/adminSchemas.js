@@ -17,6 +17,7 @@ export const changePasswordSchema = yup.object().shape({
 export const updateAdminDataSchema = yup.object().shape({
   language: yup.string().required(),
   admin_id: yup.string().uuid().required(),
+  role: yup.string().oneOf(["global", "country", "regional"]).required(),
   name: yup.string().required(),
   surname: yup.string().required(),
   phonePrefix: yup.string(),
@@ -33,6 +34,7 @@ export const getAdminByIdSchema = yup.object().shape({
 export const updateAdminDataByIdSchema = yup.object().shape({
   language: yup.string().required(),
   adminId: yup.string().uuid().required(),
+  role: yup.string().oneOf(["global", "country", "regional"]).required(),
   name: yup.string().required(),
   surname: yup.string().required(),
   email: yup.string().email().required(),

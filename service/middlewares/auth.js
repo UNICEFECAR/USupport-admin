@@ -67,7 +67,6 @@ passport.use(
             throw err;
           });
 
-        // Change that check in case we want to allow admins with same email but different country or region
         if (currentAdmin && currentAdmin.email) {
           return done(emailUsed(language));
         }

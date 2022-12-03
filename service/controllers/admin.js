@@ -40,6 +40,7 @@ export const getAllAdmins = async ({ type, countryId }) => {
 export const updateAdminData = async ({
   language,
   admin_id,
+  role,
   name,
   surname,
   email,
@@ -52,6 +53,7 @@ export const updateAdminData = async ({
     // Check if email is already taken
     await checkIfEmailIsUsedQuery({
       email,
+      role,
     })
       .then((res) => {
         if (res.rowCount > 0) {
@@ -86,6 +88,7 @@ export const updateAdminData = async ({
 export const updateAdminDataById = async ({
   language,
   adminId,
+  role,
   name,
   surname,
   email,
@@ -110,6 +113,7 @@ export const updateAdminDataById = async ({
     // Check if email is already taken
     await checkIfEmailIsUsedQuery({
       email,
+      role,
     })
       .then((res) => {
         if (res.rowCount > 0) {
