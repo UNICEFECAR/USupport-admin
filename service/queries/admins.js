@@ -108,7 +108,8 @@ export const deleteAdminDataByIdQuery = async ({ adminId }) =>
           phone_prefix = 'DELETED',
           phone = 'DELETED',
           email = 'DELETED',
-          is_active = false
+          is_active = false,
+          deleted_at = NOW()
       WHERE admin_id = $1
       RETURNING *;
     `,
@@ -150,7 +151,7 @@ export const getAllGlobalAdminsQuery = async () =>
     `
       SELECT admin_id, name, surname, phone_prefix, phone, email, role, is_active
       FROM admin
-      WHERE role = 'global'
+      WHERE role = 'global' AND deleted_at IS NULL
       ORDER BY created_at DESC;
     `
   );
@@ -161,7 +162,7 @@ export const getAllCountryAdminsQuery = async ({ countryId }) =>
       SELECT admin.admin_id, name, surname, phone_prefix, phone, email, role, is_active
       FROM admin
         INNER JOIN admin_country_links ON admin.admin_id = admin_country_links.admin_id
-      WHERE role = 'country' AND admin_country_links.country_id = $1
+      WHERE role = 'country' AND admin_country_links.country_id = $1  AND admin.deleted_at IS NULL
       ORDER BY admin.created_at DESC;
     `,
     [countryId]
