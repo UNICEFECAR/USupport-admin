@@ -8,3 +8,8 @@ export const getCountryStatisticsSchema = yup.object().shape({
 export const getGlobalStatisticsSchema = yup.object().shape({
   language: yup.string().required(),
 });
+
+export const getSecurityCheckSchema = yup.object().shape({
+  language: yup.string().required(),
+  country: yup.string().required(),
+});

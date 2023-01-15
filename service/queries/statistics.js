@@ -38,3 +38,16 @@ export const getScheduledConsultationsNoForCountryQuery = async ({
       WHERE status = 'scheduled';
     `
   );
+
+export const getSecurityCheckAnswersQuery = async ({ poolCountry }) =>
+  await getDBPool("clinicalDb", poolCountry).query(
+    `
+        SELECT consultation_security_check_id, contacts_disclosure, suggest_outside_meeting, identity_coercion, unsafe_feeling, more_details, client_detail_id, provider_detail_id, time
+        FROM consultation_security_check
+          INNER JOIN consultation ON consultation_security_check.consultation_id = consultation.consultation_id
+        WHERE contacts_disclosure = true
+        OR suggest_outside_meeting = true
+        OR identity_coercion = true
+        OR unsafe_feeling = true;
+      `
+  );
