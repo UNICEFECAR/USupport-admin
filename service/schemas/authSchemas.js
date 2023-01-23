@@ -14,6 +14,7 @@ export const adminLoginSchema = yup.object().shape({
   email: yup.string().email().required(),
   password: yup.string().required(),
   role: yup.string().oneOf(["global", "country", "regional"]).required(),
+  otp: yup.string().length(4).required(),
 });
 
 export const createAdminSchema = (language) =>
@@ -42,3 +43,8 @@ export const createAdminSchema = (language) =>
     },
     ["adminCountryId", "adminRegionId"]
   );
+
+export const admin2FARequestSchema = yup.object().shape({
+  password: yup.string().required(),
+  email: yup.string().email().required(),
+});

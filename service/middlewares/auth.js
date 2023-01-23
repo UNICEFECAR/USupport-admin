@@ -9,7 +9,14 @@ import {
   createAdminUser,
   createAdminToCountryLink,
   createAdminToRegionLink,
+  admin2FARequestSchema,
 } from "#queries/admins";
+import {
+  getAuthOTP,
+  getUserLastAuthOTP,
+  storeAuthOTP,
+  changeOTPToUsed,
+} from "#queries/authOTP";
 
 import { adminLoginSchema, createAdminSchema } from "#schemas/authSchemas";
 
@@ -19,7 +26,11 @@ import {
   incorrectPassword,
   notAuthenticated,
   accountDeactivated,
+  invalidOTP,
+  tooManyOTPRequests,
 } from "#utils/errors";
+import { produceRaiseNotification } from "#utils/kafkaProducers";
+import { generate4DigitCode } from "#utils/helperFunctions";
 
 const localStrategy = passportLocal.Strategy;
 const jwtStrategy = passportJWT.Strategy;
@@ -128,10 +139,11 @@ passport.use(
     async (req, emailIn, passwordIn, done) => {
       try {
         const language = req.header("x-language-alpha-2");
+        const country = req.header("x-country-alpha-2");
 
         const role = req.body.role;
 
-        const { email, password } = await adminLoginSchema
+        const { email, password, otp } = await adminLoginSchema
           .noUnknown(true)
           .strict()
           .validate({
@@ -166,9 +178,124 @@ passport.use(
           return done(accountDeactivated(language));
         }
 
+        const adminOTP = await getAuthOTP(
+          country,
+          otp,
+          adminUser.admin_id
+        ).then((data) => data.rows[0]);
+
+        if (adminOTP === undefined) {
+          // OTP not found or already used
+          return done(invalidOTP(language));
+        } else {
+          const OTPCreatedAt = new Date(adminOTP.created_at).getTime();
+          const now = new Date().getTime();
+
+          if ((OTPCreatedAt - now) / 1000 > 60 * 30) {
+            // OTP is valid for 30 mins
+            return done(invalidOTP(language));
+          }
+        }
+
+        // each OTP can be used only once
+        await changeOTPToUsed(country, adminOTP.id).catch((err) => {
+          throw err;
+        });
+
         delete adminUser.password;
 
         return done(null, adminUser);
+      } catch (error) {
+        return done(error);
+      }
+    }
+  )
+);
+
+passport.use(
+  "2fa-request",
+  new localStrategy(
+    {
+      usernameField: "password",
+      passwordField: "password",
+      passReqToCallback: true,
+    },
+    async (req, emailIn, passwordIn, done) => {
+      try {
+        const language = req.header("x-language-alpha-2");
+        const country = req.header("x-country-alpha-2");
+
+        const { email, password } = await admin2FARequestSchema
+          .noUnknown(true)
+          .strict()
+          .validate({ ...req.body, password: passwordIn })
+          .catch((err) => {
+            throw err;
+          });
+
+        const adminUser = await getAdminUserByEmail(country, email)
+          .then((res) => res.rows[0])
+          .catch((err) => {
+            throw err;
+          });
+
+        if (!adminUser) {
+          return done(incorrectEmail(language));
+        }
+
+        const validatePassword = await bcrypt.compare(
+          password,
+          adminUser.password
+        );
+
+        if (!validatePassword) {
+          return done(incorrectPassword(language));
+        }
+
+        if (!adminUser.is_active) {
+          return done(accountDeactivated(language));
+        }
+
+        const userLastOTP = await getUserLastAuthOTP(
+          country,
+          adminUser.admin_id
+        )
+          .then((data) => data.rows[0])
+          .catch((err) => {
+            throw err;
+          });
+
+        if (userLastOTP !== undefined) {
+          const lastOTPTime = new Date(userLastOTP.created_at).getTime();
+          const now = new Date().getTime();
+
+          if ((lastOTPTime - now) / 1000 < 60) {
+            // Users can request one OTP every 60 seconds
+            throw tooManyOTPRequests();
+          } else {
+            // invalidate last OTP generated before generating a new one
+            await changeOTPToUsed(country, userLastOTP.id).catch((err) => {
+              throw err;
+            });
+          }
+        }
+
+        const otp = generate4DigitCode();
+        await storeAuthOTP(country, adminUser.admin_id, otp).catch((err) => {
+          throw err;
+        });
+
+        produceRaiseNotification({
+          channels: ["email"],
+          emailArgs: {
+            emailType: "login-2fa-request",
+            recipientEmail: email,
+            data: { otp },
+          },
+          language,
+        }).catch(console.log);
+
+        return done(null, { success: true });
       } catch (error) {
         return done(error);
       }
