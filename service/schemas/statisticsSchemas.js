@@ -13,3 +13,23 @@ export const getSecurityCheckSchema = yup.object().shape({
   language: yup.string().required(),
   country: yup.string().required(),
 });
+
+export const getInformationPortalSuggestionsSchema = yup.object().shape({
+  language: yup.string().required(),
+  country: yup.string().required(),
+});
+
+export const getClientRatingsSchema = yup.object().shape({
+  country: yup.string().required(),
+});
+
+export const getContactFormsSchema = yup.object().shape({
+  language: yup.string().required(),
+  country: yup.string().required(),
+});
+
+export const getProviderStatisticsSchema = yup.object().shape({
+  language: yup.string().required(),
+  country: yup.string().required(),
+  providerId: yup.string().uuid().required(),
+});

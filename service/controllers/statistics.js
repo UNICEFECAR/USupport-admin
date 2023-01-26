@@ -4,6 +4,10 @@ import {
   getPublishedArticlesNoForCountryQuery,
   getScheduledConsultationsNoForCountryQuery,
   getSecurityCheckAnswersQuery,
+  getInformationPortalSuggestionsQuery,
+  getClientRatingsQuery,
+  getContactFormsQuery,
+  getProviderStatisticsQuery,
 } from "#queries/statistics";
 
 import {
@@ -11,9 +15,12 @@ import {
   getCountryAlpha2CodeByIdQuery,
 } from "#queries/countries";
 
-import { getProviderDataById } from "#queries/providers";
+import {
+  getClientDataById,
+  getMultipleClientsDataByIDs,
+} from "#queries/clients";
 
-import { getClientDataById } from "#queries/clients";
+import { getProviderDataById } from "#queries/providers";
 
 import { countryNotFound } from "#utils/errors";
 
@@ -171,4 +178,103 @@ export const getSecurityCheck = async ({ language, country }) => {
   }
 
   return securityChecks;
+};
+
+export const getInformationPortalSuggestions = async ({ country }) => {
+  const suggestions = await getInformationPortalSuggestionsQuery({
+    poolCountry: country,
+  })
+    .then((res) => {
+      if (res.rowCount === 0) {
+        return [];
+      } else {
+        return res.rows;
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
+
+  return suggestions;
+};
+
+export const getClientRatings = async ({ country }) => {
+  const clientRatings = await getClientRatingsQuery({
+    poolCountry: country,
+  })
+    .then((res) => {
+      if (res.rowCount === 0) {
+        return [];
+      } else {
+        return res.rows;
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
+
+  return clientRatings;
+};
+
+export const getContactForms = async ({ country }) => {
+  return await getContactFormsQuery({
+    poolCountry: country,
+  })
+    .then((res) => {
+      if (res.rowCount === 0) {
+        return [];
+      } else {
+        return res.rows;
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
+};
+
+export const getProviderStatistics = async ({ country, providerId }) => {
+  const consultations = await getProviderStatisticsQuery({
+    poolCountry: country,
+    providerId,
+  })
+    .then((res) => {
+      if (res.rowCount === 0) {
+        return [];
+      } else {
+        return res.rows;
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
+
+  // Make sure that there are no duplicate client id's
+  const clientDetailIds = Array.from(
+    new Set(consultations.map((x) => x.client_detail_id))
+  );
+
+  const clientDetails = await getMultipleClientsDataByIDs({
+    poolCountry: country,
+    clientDetailIds,
+  })
+    .then((res) => {
+      if (res.rowCount === 0) {
+        return [];
+      } else {
+        return res.rows;
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
+
+  consultations.forEach((consultation, index) => {
+    const clientData = clientDetails.find(
+      (x) => x.client_detail_id === consultation.client_detail_id
+    );
+    consultations[index].clientData = clientData;
+    delete consultations[index].clientData.client_detail_id;
+  });
+
+  return consultations;
 };
