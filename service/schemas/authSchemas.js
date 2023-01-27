@@ -47,4 +47,5 @@ export const createAdminSchema = (language) =>
 export const admin2FARequestSchema = yup.object().shape({
   password: yup.string().required(),
   email: yup.string().email().required(),
+  role: yup.string().oneOf(["country", "global"]).required(),
 });

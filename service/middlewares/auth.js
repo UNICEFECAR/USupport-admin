@@ -9,16 +9,20 @@ import {
   createAdminUser,
   createAdminToCountryLink,
   createAdminToRegionLink,
-  admin2FARequestSchema,
 } from "#queries/admins";
+
 import {
   getAuthOTP,
-  getUserLastAuthOTP,
+  getAdminLastAuthOTP,
   storeAuthOTP,
   changeOTPToUsed,
 } from "#queries/authOTP";
 
-import { adminLoginSchema, createAdminSchema } from "#schemas/authSchemas";
+import {
+  adminLoginSchema,
+  createAdminSchema,
+  admin2FARequestSchema,
+} from "#schemas/authSchemas";
 
 import {
   emailUsed,
@@ -142,14 +146,16 @@ passport.use(
         const country = req.header("x-country-alpha-2");
 
         const role = req.body.role;
+        const otp = req.body.otp;
 
-        const { email, password, otp } = await adminLoginSchema
+        const { email, password } = await adminLoginSchema
           .noUnknown(true)
           .strict()
           .validate({
             password: passwordIn,
             email: emailIn,
             role,
+            otp,
           })
           .catch((err) => {
             throw err;
@@ -178,11 +184,9 @@ passport.use(
           return done(accountDeactivated(language));
         }
 
-        const adminOTP = await getAuthOTP(
-          country,
-          otp,
-          adminUser.admin_id
-        ).then((data) => data.rows[0]);
+        const adminOTP = await getAuthOTP(otp, adminUser.admin_id).then(
+          (data) => data.rows[0]
+        );
 
         if (adminOTP === undefined) {
           // OTP not found or already used
@@ -198,7 +202,7 @@ passport.use(
         }
 
         // each OTP can be used only once
-        await changeOTPToUsed(country, adminOTP.id).catch((err) => {
+        await changeOTPToUsed(adminOTP.id).catch((err) => {
           throw err;
         });
 
@@ -216,24 +220,24 @@ passport.use(
   "2fa-request",
   new localStrategy(
     {
-      usernameField: "password",
+      usernameField: "email",
       passwordField: "password",
       passReqToCallback: true,
     },
     async (req, emailIn, passwordIn, done) => {
       try {
         const language = req.header("x-language-alpha-2");
-        const country = req.header("x-country-alpha-2");
+        const role = req.body.role;
 
         const { email, password } = await admin2FARequestSchema
           .noUnknown(true)
           .strict()
-          .validate({ ...req.body, password: passwordIn })
+          .validate({ ...req.body, email: emailIn, password: passwordIn })
           .catch((err) => {
             throw err;
           });
 
-        const adminUser = await getAdminUserByEmail(country, email)
+        const adminUser = await getAdminUserByEmail(email, role)
           .then((res) => res.rows[0])
           .catch((err) => {
             throw err;
@@ -256,32 +260,29 @@ passport.use(
           return done(accountDeactivated(language));
         }
 
-        const userLastOTP = await getUserLastAuthOTP(
-          country,
-          adminUser.admin_id
-        )
+        const adminLastOTP = await getAdminLastAuthOTP(adminUser.admin_id)
           .then((data) => data.rows[0])
           .catch((err) => {
             throw err;
           });
 
-        if (userLastOTP !== undefined) {
-          const lastOTPTime = new Date(userLastOTP.created_at).getTime();
+        if (adminLastOTP !== undefined) {
+          const lastOTPTime = new Date(adminLastOTP.created_at).getTime();
           const now = new Date().getTime();
 
-          if ((lastOTPTime - now) / 1000 < 60) {
-            // Users can request one OTP every 60 seconds
+          if ((now - lastOTPTime) / 1000 < 60) {
+            // Admins can request one OTP every 60 seconds
             throw tooManyOTPRequests();
           } else {
             // invalidate last OTP generated before generating a new one
-            await changeOTPToUsed(country, userLastOTP.id).catch((err) => {
+            await changeOTPToUsed(adminLastOTP.id).catch((err) => {
               throw err;
             });
           }
         }
 
         const otp = generate4DigitCode();
-        await storeAuthOTP(country, adminUser.admin_id, otp).catch((err) => {
+        await storeAuthOTP(adminUser.admin_id, otp).catch((err) => {
           throw err;
         });
 

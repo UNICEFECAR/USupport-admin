@@ -1,7 +1,7 @@
 import { getDBPool } from "#utils/dbConfig";
 
-export const storeAuthOTP = async (poolCountry, admin_id, otp) =>
-  await getDBPool("masterDb", poolCountry).query(
+export const storeAuthOTP = async (admin_id, otp) =>
+  await getDBPool("masterDb").query(
     `
         INSERT INTO auth_otp (otp, admin_id)
         VALUES ($1, $2)
@@ -10,8 +10,8 @@ export const storeAuthOTP = async (poolCountry, admin_id, otp) =>
     [otp, admin_id]
   );
 
-export const getAuthOTP = async (poolCountry, otp, admin_id) =>
-  await getDBPool("masterDb", poolCountry).query(
+export const getAuthOTP = async (otp, admin_id) =>
+  await getDBPool("masterDb").query(
     `
         SELECT *
         FROM auth_otp
@@ -22,8 +22,8 @@ export const getAuthOTP = async (poolCountry, otp, admin_id) =>
     [otp, admin_id]
   );
 
-export const getUserLastAuthOTP = async (poolCountry, admin_id) =>
-  await getDBPool("masterDb", poolCountry).query(
+export const getAdminLastAuthOTP = async (admin_id) =>
+  await getDBPool("masterDb").query(
     `
         SELECT *
         FROM auth_otp
@@ -34,8 +34,8 @@ export const getUserLastAuthOTP = async (poolCountry, admin_id) =>
     [admin_id]
   );
 
-export const changeOTPToUsed = async (poolCountry, otp_id) =>
-  await getDBPool("masterDb", poolCountry).query(
+export const changeOTPToUsed = async (otp_id) =>
+  await getDBPool("masterDb").query(
     `
         UPDATE auth_otp
         SET used = true
