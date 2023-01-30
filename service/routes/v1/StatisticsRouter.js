@@ -12,12 +12,8 @@ import {
 
 import {
   getCountryStatisticsSchema,
-  getGlobalStatisticsSchema,
-  getSecurityCheckSchema,
-  getInformationPortalSuggestionsSchema,
-  getClientRatingsSchema,
-  getContactFormsSchema,
   getProviderStatisticsSchema,
+  getStatsSchema,
 } from "#schemas/statisticsSchemas";
 
 const router = express.Router();
@@ -29,10 +25,10 @@ router.route("/global").get(async (req, res, next) => {
    */
   const language = req.header("x-language-alpha-2");
 
-  return await getGlobalStatisticsSchema
+  return await getStatsSchema
     .noUnknown(true)
     .strict(true)
-    .validate({ language })
+    .validate({ language, country: null })
     .then(getGlobalStatistics)
     .then((result) => res.status(200).send(result))
     .catch(next);
@@ -40,11 +36,10 @@ router.route("/global").get(async (req, res, next) => {
 
 router.route("/country").get(async (req, res, next) => {
   /**
-   * #route   GET /admin/v1/country/faqs
-   * #desc    Get all faqs for a country
+   * #route   GET /admin/v1/statistics/country
+   * #desc    Get all statistics for a country
    */
   const language = req.header("x-language-alpha-2");
-
   const { countryId } = req.query;
 
   return await getCountryStatisticsSchema
@@ -64,7 +59,7 @@ router.route("/security-check").get(async (req, res, next) => {
   const language = req.header("x-language-alpha-2");
   const country = req.header("x-country-alpha-2");
 
-  return await getSecurityCheckSchema
+  return await getStatsSchema
     .noUnknown(true)
     .strict(true)
     .validate({ language, country })
@@ -82,7 +77,7 @@ router.route("/information-portal-suggestions").get(async (req, res, next) => {
   const country = req.header("x-country-alpha-2");
   const language = req.header("x-language-alpha-2");
 
-  return await getInformationPortalSuggestionsSchema
+  return await getStatsSchema
     .noUnknown(true)
     .strict(true)
     .validate({ language, country })
@@ -96,14 +91,12 @@ router.route("/client-ratings").get(async (req, res, next) => {
    * #route   GET /admin/v1/statistics/client-ratings
    * #desc    Get information portal suggestions
    */
-
   const country = req.header("x-country-alpha-2");
-  // const language = req.header("x-language-alpha-2");
 
-  return await getClientRatingsSchema
+  return await getStatsSchema
     .noUnknown(true)
     .strict(true)
-    .validate({ country })
+    .validate({ country, language: null })
     .then(getClientRatings)
     .then((result) => res.status(200).send(result))
     .catch(next);
@@ -118,7 +111,7 @@ router.route("/contact-forms").get(async (req, res, next) => {
   const country = req.header("x-country-alpha-2");
   const language = req.header("x-language-alpha-2");
 
-  return await getContactFormsSchema
+  return await getStatsSchema
     .noUnknown(true)
     .strict(true)
     .validate({ country, language })

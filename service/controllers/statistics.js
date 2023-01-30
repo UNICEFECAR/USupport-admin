@@ -111,7 +111,7 @@ export const getGlobalStatistics = async ({ language }) => {
   return globalStatistics;
 };
 
-export const getSecurityCheck = async ({ language, country }) => {
+export const getSecurityCheck = async ({ country }) => {
   const securityChecks = await getSecurityCheckAnswersQuery({
     poolCountry: country,
   })

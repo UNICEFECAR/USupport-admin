@@ -35,78 +35,70 @@ router.put("/", securedRoute, async (req, res, next) => {
    * #desc    Update current admin data
    */
   const language = req.header("x-language-alpha-2");
-
   const admin_id = req.user.admin_id;
   const currentEmail = req.user.email;
-
   const payload = req.body;
 
   return await updateAdminDataSchema
     .noUnknown(true)
     .strict()
-    .validate({ language, admin_id, currentEmail, ...payload })
+    .validate({ ...payload, language, admin_id, currentEmail })
     .then(updateAdminData)
     .then((result) => res.status(200).send(result))
     .catch(next);
 });
 
-router.get("/by-id", securedRoute, async (req, res, next) => {
-  /**
-   * #route   GET /admin/v1/admin/by-id
-   * #desc    Get admin by id
-   */
+router
+  .route("/by-id")
+  .get(securedRoute, async (req, res, next) => {
+    /**
+     * #route   GET /admin/v1/admin/by-id
+     * #desc    Get admin by id
+     */
 
-  const language = req.header("x-language-alpha-2");
+    const language = req.header("x-language-alpha-2");
+    const admin_id = req.query.adminId;
 
-  const admin_id = req.query.adminId;
+    return await getAdminByIdSchema
+      .noUnknown(true)
+      .strict()
+      .validate({ language, admin_id })
+      .then(getAdminUser)
+      .then((result) => res.status(200).send(result))
+      .catch(next);
+  })
+  .put(securedRoute, async (req, res, next) => {
+    /**
+     * #route   PUT /admin/v1/admin/by-id
+     * #desc    Update admin data by id
+     */
+    const language = req.header("x-language-alpha-2");
+    const payload = req.body;
 
-  return await getAdminByIdSchema
-    .noUnknown(true)
-    .strict()
-    .validate({
-      language,
-      admin_id,
-    })
-    .then(getAdminUser)
-    .then((result) => res.status(200).send(result))
-    .catch(next);
-});
+    return await updateAdminDataByIdSchema
+      .noUnknown(true)
+      .strict()
+      .validate({ ...payload, language })
+      .then(updateAdminDataById)
+      .then((result) => res.status(200).send(result))
+      .catch(next);
+  })
+  .delete(securedRoute, async (req, res, next) => {
+    /**
+     * #route   DELETE /admin/v1/admin/by-id
+     * #desc    Delete admin data by id
+     */
+    const language = req.header("x-language-alpha-2");
+    const payload = req.body;
 
-router.put("/by-id", securedRoute, async (req, res, next) => {
-  /**
-   * #route   PUT /admin/v1/admin/by-id
-   * #desc    Update admin data by id
-   */
-  const language = req.header("x-language-alpha-2");
-
-  const payload = req.body;
-
-  return await updateAdminDataByIdSchema
-    .noUnknown(true)
-    .strict()
-    .validate({ language, ...payload })
-    .then(updateAdminDataById)
-    .then((result) => res.status(200).send(result))
-    .catch(next);
-});
-
-router.delete("/by-id", securedRoute, async (req, res, next) => {
-  /**
-   * #route   DELETE /admin/v1/admin/by-id
-   * #desc    Delete admin data by id
-   */
-  const language = req.header("x-language-alpha-2");
-
-  const payload = req.body;
-
-  return await deleteAdminDataByIdSchema
-    .noUnknown(true)
-    .strict()
-    .validate({ language, ...payload })
-    .then(deleteAdminDataById)
-    .then((result) => res.status(200).send(result))
-    .catch(next);
-});
+    return await deleteAdminDataByIdSchema
+      .noUnknown(true)
+      .strict()
+      .validate({ ...payload, language })
+      .then(deleteAdminDataById)
+      .then((result) => res.status(200).send(result))
+      .catch(next);
+  });
 
 router.get("/all", securedRoute, async (req, res, next) => {
   /**
@@ -114,7 +106,6 @@ router.get("/all", securedRoute, async (req, res, next) => {
    * #desc    Get all all global admins or country admins for a given country
    */
   const type = req.query.type;
-
   const countryId = req.query.countryId;
 
   return await getAllAdminsSchema
@@ -135,7 +126,6 @@ router.patch("/password", securedRoute, async (req, res, next) => {
    * #desc    Update admin user's password
    */
   const language = req.header("x-language-alpha-2");
-
   const admin_id = req.user.admin_id;
   const payload = req.body;
 

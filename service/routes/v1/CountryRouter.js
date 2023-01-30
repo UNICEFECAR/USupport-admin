@@ -14,15 +14,11 @@ import {
 } from "#controllers/countries";
 
 import {
-  getCountryFaqsSchema,
-  addCountryFaqsSchema,
-  deleteCountryFaqsSchema,
-  getCountrySosCentersSchema,
-  addCountrySosCentersSchema,
-  deleteCountrySosCentersSchema,
-  getCountryArticlesSchema,
-  addCountryArticlesSchema,
-  deleteCountryArticlesSchema,
+  countryFAQSchema,
+  countryFAQByIDSchema,
+  countrySchema,
+  countrySOSCentersByIDSchema,
+  countryArticlesByIDSchema,
   updateCountryMinMaxClientAgeSchema,
 } from "#schemas/countrySchemas";
 
@@ -37,10 +33,9 @@ router
      */
     const country = req.header("x-country-alpha-2");
     const language = req.header("x-language-alpha-2");
-
     const { platform } = req.query;
 
-    return await getCountryFaqsSchema
+    return await countryFAQSchema
       .noUnknown(true)
       .strict(true)
       .validate({ country, language, platform })
@@ -55,13 +50,12 @@ router
      */
     const country = req.header("x-country-alpha-2");
     const language = req.header("x-language-alpha-2");
-
     const payload = req.body;
 
-    return await addCountryFaqsSchema
+    return await countryFAQByIDSchema
       .noUnknown(true)
       .strict(true)
-      .validate({ country, language, ...payload })
+      .validate({ ...payload, country, language })
       .then(addCountryFaqs)
       .then((result) => res.status(200).send(result))
       .catch(next);
@@ -73,13 +67,12 @@ router
      */
     const country = req.header("x-country-alpha-2");
     const language = req.header("x-language-alpha-2");
-
     const payload = req.body;
 
-    return await deleteCountryFaqsSchema
+    return await countryFAQByIDSchema
       .noUnknown(true)
       .strict(true)
-      .validate({ country, language, ...payload })
+      .validate({ ...payload, country, language })
       .then(deleteCountryFaqs)
       .then((result) => res.status(200).send(result))
       .catch(next);
@@ -94,7 +87,7 @@ router
      */
     const country = req.header("x-country-alpha-2");
 
-    return await getCountrySosCentersSchema
+    return await countrySchema
       .noUnknown(true)
       .strict(true)
       .validate({ country })
@@ -104,17 +97,16 @@ router
   })
   .put(async (req, res, next) => {
     /**
-     * #route   PUT /admin/v1/country/soscenters
+     * #route   PUT /admin/v1/country/sos-centers
      * #desc    Add given sos center to a country
      */
     const country = req.header("x-country-alpha-2");
-
     const payload = req.body;
 
-    return await addCountrySosCentersSchema
+    return await countrySOSCentersByIDSchema
       .noUnknown(true)
       .strict(true)
-      .validate({ country, ...payload })
+      .validate({ ...payload, country })
       .then(addCountrySosCenters)
       .then((result) => res.status(200).send(result))
       .catch(next);
@@ -125,13 +117,12 @@ router
      * #desc    Delete given sos center from a country
      */
     const country = req.header("x-country-alpha-2");
-
     const payload = req.body;
 
-    return await deleteCountrySosCentersSchema
+    return await countrySOSCentersByIDSchema
       .noUnknown(true)
       .strict(true)
-      .validate({ country, ...payload })
+      .validate({ ...payload, country })
       .then(deleteCountrySosCenters)
       .then((result) => res.status(200).send(result))
       .catch(next);
@@ -146,7 +137,7 @@ router
      */
     const country = req.header("x-country-alpha-2");
 
-    return await getCountryArticlesSchema
+    return await countrySchema
       .noUnknown(true)
       .strict(true)
       .validate({ country })
@@ -160,13 +151,12 @@ router
      * #desc    Add given articles to a country
      */
     const country = req.header("x-country-alpha-2");
-
     const payload = req.body;
 
-    return await addCountryArticlesSchema
+    return await countryArticlesByIDSchema
       .noUnknown(true)
       .strict(true)
-      .validate({ country, ...payload })
+      .validate({ ...payload, country })
       .then(addCountryArticles)
       .then((result) => res.status(200).send(result))
       .catch(next);
@@ -177,13 +167,12 @@ router
      * #desc    Delete given articles to a country
      */
     const country = req.header("x-country-alpha-2");
-
     const payload = req.body;
 
-    return await deleteCountryArticlesSchema
+    return await countryArticlesByIDSchema
       .noUnknown(true)
       .strict(true)
-      .validate({ country, ...payload })
+      .validate({ ...payload, country })
       .then(deleteCountryArticles)
       .then((result) => res.status(200).send(result))
       .catch(next);
@@ -197,13 +186,12 @@ router.put("/min-max-client-age", async (req, res, next) => {
 
   const country = req.header("x-country-alpha-2");
   const language = req.header("x-language-alpha-2");
-
   const payload = req.body;
 
   return await updateCountryMinMaxClientAgeSchema
     .noUnknown(true)
     .strict(true)
-    .validate({ country, language, ...payload })
+    .validate({ ...payload, country, language })
     .then(updateCountryMinMaxClientAge)
     .then((result) => res.status(200).send(result))
     .catch(next);

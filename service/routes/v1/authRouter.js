@@ -71,13 +71,12 @@ router.post("/refresh-token", async (req, res, next) => {
    * #desc    Refresh access token
    */
   const language = req.header("x-language-alpha-2");
-
   const payload = req.body;
 
   return await refreshAccessTokenSchema
     .noUnknown(true)
     .strict()
-    .validate({ language, ...payload })
+    .validate({ ...payload, language })
     .then(refreshAccessToken)
     .then((result) => res.status(200).send(result))
     .catch(next);
