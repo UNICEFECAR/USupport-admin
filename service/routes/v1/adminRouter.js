@@ -21,32 +21,33 @@ import { securedRoute } from "#middlewares/auth";
 
 const router = express.Router();
 
-router.get("/", securedRoute, async (req, res) => {
-  /**
-   * #route   GET /admin/v1/admin
-   * #desc    Get current admin user
-   */
-  return res.status(200).send(req.user);
-});
+router
+  .route("/")
+  .get(securedRoute, async (req, res) => {
+    /**
+     * #route   GET /admin/v1/admin
+     * #desc    Get current admin user
+     */
+    return res.status(200).send(req.user);
+  })
+  .put(securedRoute, async (req, res, next) => {
+    /**
+     * #route   PUT /admin/v1/admin
+     * #desc    Update current admin data
+     */
+    const language = req.header("x-language-alpha-2");
+    const admin_id = req.user.admin_id;
+    const currentEmail = req.user.email;
+    const payload = req.body;
 
-router.put("/", securedRoute, async (req, res, next) => {
-  /**
-   * #route   PUT /admin/v1/admin
-   * #desc    Update current admin data
-   */
-  const language = req.header("x-language-alpha-2");
-  const admin_id = req.user.admin_id;
-  const currentEmail = req.user.email;
-  const payload = req.body;
-
-  return await updateAdminDataSchema
-    .noUnknown(true)
-    .strict()
-    .validate({ ...payload, language, admin_id, currentEmail })
-    .then(updateAdminData)
-    .then((result) => res.status(200).send(result))
-    .catch(next);
-});
+    return await updateAdminDataSchema
+      .noUnknown(true)
+      .strict()
+      .validate({ ...payload, language, admin_id, currentEmail })
+      .then(updateAdminData)
+      .then((result) => res.status(200).send(result))
+      .catch(next);
+  });
 
 router
   .route("/by-id")
