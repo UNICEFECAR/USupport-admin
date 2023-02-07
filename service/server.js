@@ -25,6 +25,7 @@ app.use("/admin/v1/auth", v1.AuthRouter);
 app.use("/admin/v1/admin", v1.AdminRouter);
 app.use("/admin/v1/rescue", v1.RescueRouter);
 app.use("/admin/v1/statistics", v1.StatisticsRouter);
+app.use("/admin/v1/sponsor", v1.SponsorsRouter);
 
 /*------------- Error middleware -------------*/
 
