@@ -95,3 +95,19 @@ export const tooManyOTPRequests = (language) => {
   error.status = 429;
   return error;
 };
+
+export const sponsorEmailAlreadyExists = (language) => {
+  const error = new Error();
+  error.message = t("sponsor_email_already_exists_error", language);
+  error.name = "SPONSOR EMAIL ALREADY EXISTS";
+  error.status = 409;
+  return error;
+};
+
+export const campaignCodeAlreadyExists = (language) => {
+  const error = new Error();
+  error.message = t("campaign_code_already_exists_error", language);
+  error.name = "CAMPAIGN CODE ALREADY EXISTS";
+  error.status = 409;
+  return error;
+};
