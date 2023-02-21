@@ -20,7 +20,6 @@ router
      * #desc    Send forgot password email
      */
     const language = req.header("x-language-alpha-2");
-
     const { email, role } = req.query;
 
     return await initForgotPasswordSchema
@@ -37,13 +36,12 @@ router
      * #desc    Reset forgot password with token
      */
     const language = req.header("x-language-alpha-2");
-
     const payload = req.body;
 
     return await resetForgotPasswordSchema
       .noUnknown(true)
       .strict(true)
-      .validate({ language, ...payload })
+      .validate({ ...payload, language })
       .then(resetForgotPassword)
       .then((result) => res.status(200).send(result))
       .catch(next);

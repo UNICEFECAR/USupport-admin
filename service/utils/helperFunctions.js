@@ -12,3 +12,7 @@ export const updatePassword = async ({ admin_id, password }) => {
     throw err;
   });
 };
+
+export const generate4DigitCode = () => {
+  return Math.floor(Math.random() * 9000 + 1000);
+};

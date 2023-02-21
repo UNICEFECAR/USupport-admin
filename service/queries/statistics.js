@@ -38,3 +38,51 @@ export const getScheduledConsultationsNoForCountryQuery = async ({
       WHERE status = 'scheduled';
     `
   );
+
+export const getSecurityCheckAnswersQuery = async ({ poolCountry }) =>
+  await getDBPool("clinicalDb", poolCountry).query(
+    `
+        SELECT consultation_security_check_id, contacts_disclosure, suggest_outside_meeting, identity_coercion, unsafe_feeling, more_details, client_detail_id, provider_detail_id, time
+        FROM consultation_security_check
+          INNER JOIN consultation ON consultation_security_check.consultation_id = consultation.consultation_id
+        WHERE contacts_disclosure = true
+        OR suggest_outside_meeting = true
+        OR identity_coercion = true
+        OR unsafe_feeling = true;
+      `
+  );
+
+export const getInformationPortalSuggestionsQuery = async ({ poolCountry }) =>
+  await getDBPool("piiDb", poolCountry).query(
+    `
+      SELECT suggestion, information_portal_suggestion.created_at, name, surname, nickname, email  
+      FROM information_portal_suggestion
+        INNER JOIN client_detail ON information_portal_suggestion.client_detail_id = client_detail.client_detail_id
+    `
+  );
+
+export const getClientRatingsQuery = async ({ poolCountry }) =>
+  await getDBPool("piiDb", poolCountry).query(
+    `
+      SELECT rating, comment, client_rating.created_at, name, surname, nickname, email 
+      FROM client_rating
+        INNER JOIN client_detail ON client_rating.client_detail_id = client_detail.client_detail_id
+    `
+  );
+
+export const getContactFormsQuery = async ({ poolCountry }) =>
+  await getDBPool("piiDb", poolCountry).query(
+    `
+      SELECT * FROM contact_form 
+    `
+  );
+
+export const getProviderStatisticsQuery = async ({ poolCountry, providerId }) =>
+  await getDBPool("clinicalDb", poolCountry).query(
+    `  
+      SELECT client_detail_id, provider_detail_id, time, status, price, type, campaign_id FROM consultation
+        INNER JOIN transaction_log ON consultation.consultation_id = transaction_log.consultation_id
+      WHERE provider_detail_id = $1 AND (status = 'finished' OR (status = 'scheduled' AND now() > time + interval '1 hour'))
+    `,
+    [providerId]
+  );

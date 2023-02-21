@@ -3,12 +3,24 @@ import {
   getProvidersNoForCountryQuery,
   getPublishedArticlesNoForCountryQuery,
   getScheduledConsultationsNoForCountryQuery,
+  getSecurityCheckAnswersQuery,
+  getInformationPortalSuggestionsQuery,
+  getClientRatingsQuery,
+  getContactFormsQuery,
+  getProviderStatisticsQuery,
 } from "#queries/statistics";
 
 import {
   getAllActiveCountries,
   getCountryAlpha2CodeByIdQuery,
 } from "#queries/countries";
+
+import {
+  getClientDataById,
+  getMultipleClientsDataByIDs,
+} from "#queries/clients";
+
+import { getProviderDataById } from "#queries/providers";
 
 import { countryNotFound } from "#utils/errors";
 
@@ -97,4 +109,172 @@ export const getGlobalStatistics = async ({ language }) => {
   }
 
   return globalStatistics;
+};
+
+export const getSecurityCheck = async ({ country }) => {
+  const securityChecks = await getSecurityCheckAnswersQuery({
+    poolCountry: country,
+  })
+    .then((res) => {
+      if (res.rowCount === 0) {
+        return [];
+      } else {
+        return res.rows;
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
+
+  const providerDetailsCache = {};
+  const clientDetailsCache = {};
+  for (let i = 0; i < securityChecks.length; i++) {
+    const securityCheck = securityChecks[i];
+    const providerId = securityCheck.provider_detail_id;
+    const clientId = securityCheck.client_detail_id;
+
+    if (providerDetailsCache[providerId]) {
+      securityChecks[i].providerData = providerDetailsCache[providerId];
+    } else {
+      const providerData = await getProviderDataById({
+        providerId,
+        poolCountry: country,
+      })
+        .then((res) => {
+          if (res.rowCount === 0) {
+            return [];
+          } else {
+            return res.rows[0];
+          }
+        })
+        .catch((err) => {
+          throw err;
+        });
+
+      providerDetailsCache[providerId] = providerData;
+      securityChecks[i].providerData = providerData;
+    }
+
+    if (clientDetailsCache[clientId]) {
+      securityChecks[i].clientData = clientDetailsCache[clientId];
+    } else {
+      const clientData = await getClientDataById({
+        clientId,
+        poolCountry: country,
+      })
+        .then((res) => {
+          if (res.rowCount === 0) {
+            return [];
+          } else {
+            return res.rows[0];
+          }
+        })
+        .catch((err) => {
+          throw err;
+        });
+      clientDetailsCache[clientId] = clientData;
+      securityChecks[i].clientData = clientData;
+    }
+  }
+
+  return securityChecks;
+};
+
+export const getInformationPortalSuggestions = async ({ country }) => {
+  const suggestions = await getInformationPortalSuggestionsQuery({
+    poolCountry: country,
+  })
+    .then((res) => {
+      if (res.rowCount === 0) {
+        return [];
+      } else {
+        return res.rows;
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
+
+  return suggestions;
+};
+
+export const getClientRatings = async ({ country }) => {
+  const clientRatings = await getClientRatingsQuery({
+    poolCountry: country,
+  })
+    .then((res) => {
+      if (res.rowCount === 0) {
+        return [];
+      } else {
+        return res.rows;
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
+
+  return clientRatings;
+};
+
+export const getContactForms = async ({ country }) => {
+  return await getContactFormsQuery({
+    poolCountry: country,
+  })
+    .then((res) => {
+      if (res.rowCount === 0) {
+        return [];
+      } else {
+        return res.rows;
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
+};
+
+export const getProviderStatistics = async ({ country, providerId }) => {
+  const consultations = await getProviderStatisticsQuery({
+    poolCountry: country,
+    providerId,
+  })
+    .then((res) => {
+      if (res.rowCount === 0) {
+        return [];
+      } else {
+        return res.rows;
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
+
+  // Make sure that there are no duplicate client id's
+  const clientDetailIds = Array.from(
+    new Set(consultations.map((x) => x.client_detail_id))
+  );
+
+  const clientDetails = await getMultipleClientsDataByIDs({
+    poolCountry: country,
+    clientDetailIds,
+  })
+    .then((res) => {
+      if (res.rowCount === 0) {
+        return [];
+      } else {
+        return res.rows;
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
+
+  consultations.forEach((consultation, index) => {
+    const clientData = clientDetails.find(
+      (x) => x.client_detail_id === consultation.client_detail_id
+    );
+    consultations[index].clientData = clientData;
+    delete consultations[index].clientData.client_detail_id;
+  });
+
+  return consultations;
 };

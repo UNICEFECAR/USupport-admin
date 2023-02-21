@@ -79,3 +79,35 @@ export const accountDeactivated = (language) => {
   error.status = 401;
   return error;
 };
+
+export const invalidOTP = (language) => {
+  const error = new Error();
+  error.message = t("invalid_admin_otp_error", language);
+  error.name = "INVALID OTP";
+  error.status = 401;
+  return error;
+};
+
+export const tooManyOTPRequests = (language) => {
+  const error = new Error();
+  error.message = t("too_many_otp_requests_error", language);
+  error.name = "TOO MANY OTP REQUESTS";
+  error.status = 429;
+  return error;
+};
+
+export const sponsorEmailAlreadyExists = (language) => {
+  const error = new Error();
+  error.message = t("sponsor_email_already_exists_error", language);
+  error.name = "SPONSOR EMAIL ALREADY EXISTS";
+  error.status = 409;
+  return error;
+};
+
+export const campaignCodeAlreadyExists = (language) => {
+  const error = new Error();
+  error.message = t("campaign_code_already_exists_error", language);
+  error.name = "CAMPAIGN CODE ALREADY EXISTS";
+  error.status = 409;
+  return error;
+};

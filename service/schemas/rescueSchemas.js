@@ -1,11 +1,11 @@
 import * as yup from "yup";
 
-import { PASSWORD_REGEX } from "./authSchemas.js";
+import { PASSWORD_REGEX, ADMIN_ROLES } from "./authSchemas.js";
 
 export const initForgotPasswordSchema = yup.object().shape({
   language: yup.string().required(),
   email: yup.string().email().required(),
-  role: yup.string().oneOf(["global", "country", "regional"]).required(),
+  role: yup.string().oneOf(ADMIN_ROLES).required(),
 });
 
 export const resetForgotPasswordSchema = yup.object().shape({

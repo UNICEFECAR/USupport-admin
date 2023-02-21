@@ -1,55 +1,29 @@
 import * as yup from "yup";
 
-export const getCountryFaqsSchema = yup.object().shape({
+export const PLATFORM_TYPES = ["website", "client", "provider"];
+
+export const countrySchema = yup.object().shape({
   country: yup.string().required(),
+});
+
+export const countryFAQSchema = countrySchema.shape({
   language: yup.string().required(),
-  platform: yup.string().oneOf(["website", "client", "provider"]).required(),
+  platform: yup.string().oneOf(PLATFORM_TYPES).required(),
 });
 
-export const addCountryFaqsSchema = yup.object().shape({
-  country: yup.string().required(),
-  language: yup.string().required(),
-  platform: yup.string().oneOf(["website", "client", "provider"]).required(),
+export const countryFAQByIDSchema = countryFAQSchema.shape({
   id: yup.string().required(),
 });
 
-export const deleteCountryFaqsSchema = yup.object().shape({
-  country: yup.string().required(),
-  language: yup.string().required(),
-  platform: yup.string().oneOf(["website", "client", "provider"]).required(),
+export const countrySOSCentersByIDSchema = countrySchema.shape({
   id: yup.string().required(),
 });
 
-export const getCountrySosCentersSchema = yup.object().shape({
-  country: yup.string().required(),
-});
-
-export const addCountrySosCentersSchema = yup.object().shape({
-  country: yup.string().required(),
+export const countryArticlesByIDSchema = countrySchema.shape({
   id: yup.string().required(),
 });
 
-export const deleteCountrySosCentersSchema = yup.object().shape({
-  country: yup.string().required(),
-  id: yup.string().required(),
-});
-
-export const getCountryArticlesSchema = yup.object().shape({
-  country: yup.string().required(),
-});
-
-export const addCountryArticlesSchema = yup.object().shape({
-  country: yup.string().required(),
-  id: yup.string().required(),
-});
-
-export const deleteCountryArticlesSchema = yup.object().shape({
-  country: yup.string().required(),
-  id: yup.string().required(),
-});
-
-export const updateCountryMinMaxClientAgeSchema = yup.object().shape({
-  country: yup.string().required(),
+export const updateCountryMinMaxClientAgeSchema = countrySchema.shape({
   language: yup.string().required(),
   minClientAge: yup.number().required(),
   maxClientAge: yup.number().required(),
