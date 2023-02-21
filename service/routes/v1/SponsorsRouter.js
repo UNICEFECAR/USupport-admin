@@ -11,13 +11,13 @@ import {
 } from "#controllers/sponsors";
 
 import {
-  getAllSponsorsSchema,
-  createSponsorSchema,
+  countrySchema,
+  sponsorSchema,
   updateSponsorSchema,
-  createCampaignForSponsorSchema,
+  createCampaignSchema,
   getSponsorDataByIdSchema,
   getCouponsDataForCampaignSchema,
-  updateCampaignDataSchema,
+  updateCampaignSchema,
 } from "#schemas/sponsorsSchemas";
 
 const router = express.Router();
@@ -27,7 +27,7 @@ router
   .get(async (req, res, next) => {
     const country = req.header("x-country-alpha-2");
 
-    return await getAllSponsorsSchema
+    return await countrySchema
       .noUnknown(true)
       .strict(true)
       .validate({ country })
@@ -41,10 +41,10 @@ router
 
     const payload = req.body;
 
-    return await createSponsorSchema
+    return await sponsorSchema
       .noUnknown(true)
       .strict(true)
-      .validate({ country, language, ...payload })
+      .validate({ ...payload, country, language })
       .then(createSponsor)
       .then((result) => res.status(200).send(result))
       .catch(next);
@@ -62,7 +62,7 @@ router
     return await updateSponsorSchema
       .noUnknown(true)
       .strict(true)
-      .validate({ country, language, sponsor_id, ...payload })
+      .validate({ ...payload, country, language, sponsor_id })
       .then(updateSponsor)
       .then((result) => res.status(200).send(result))
       .catch(next);
@@ -91,10 +91,10 @@ router.route("/create-campaign").post(async (req, res, next) => {
 
   const payload = req.body;
 
-  return await createCampaignForSponsorSchema
+  return await createCampaignSchema
     .noUnknown(true)
     .strict(true)
-    .validate({ country, language, sponsor_id, ...payload })
+    .validate({ ...payload, country, language, sponsor_id })
     .then(createCampaignForSponsor)
     .then((result) => res.status(200).send(result))
     .catch(next);
@@ -109,10 +109,10 @@ router.route("/update-campaign").put(async (req, res, next) => {
 
   const payload = req.body;
 
-  return await updateCampaignDataSchema
+  return await updateCampaignSchema
     .noUnknown(true)
     .strict(true)
-    .validate({ country, language, campaign_id, ...payload })
+    .validate({ ...payload, country, language, campaign_id })
     .then(updateCampaignData)
     .then((result) => res.status(200).send(result))
     .catch(next);
