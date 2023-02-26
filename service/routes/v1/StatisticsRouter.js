@@ -14,6 +14,8 @@ import {
   getCountryStatisticsSchema,
   getProviderStatisticsSchema,
   getStatsSchema,
+  languageSchema,
+  countrySchema,
 } from "#schemas/statisticsSchemas";
 
 const router = express.Router();
@@ -25,10 +27,10 @@ router.route("/global").get(async (req, res, next) => {
    */
   const language = req.header("x-language-alpha-2");
 
-  return await getStatsSchema
+  return await languageSchema
     .noUnknown(true)
     .strict(true)
-    .validate({ language, country: null })
+    .validate({ language })
     .then(getGlobalStatistics)
     .then((result) => res.status(200).send(result))
     .catch(next);
@@ -93,10 +95,10 @@ router.route("/client-ratings").get(async (req, res, next) => {
    */
   const country = req.header("x-country-alpha-2");
 
-  return await getStatsSchema
+  return await countrySchema
     .noUnknown(true)
     .strict(true)
-    .validate({ country, language: null })
+    .validate({ country })
     .then(getClientRatings)
     .then((result) => res.status(200).send(result))
     .catch(next);

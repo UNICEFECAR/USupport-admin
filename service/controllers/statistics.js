@@ -273,7 +273,6 @@ export const getProviderStatistics = async ({ country, providerId }) => {
       (x) => x.client_detail_id === consultation.client_detail_id
     );
     consultations[index].clientData = clientData;
-    delete consultations[index].clientData.client_detail_id;
   });
 
   return consultations;
