@@ -80,7 +80,8 @@ export const getContactFormsQuery = async ({ poolCountry }) =>
 export const getProviderStatisticsQuery = async ({ poolCountry, providerId }) =>
   await getDBPool("clinicalDb", poolCountry).query(
     `  
-      SELECT client_detail_id, provider_detail_id, time, status, price, type, campaign_id FROM consultation
+      SELECT client_detail_id, provider_detail_id, time, status, price, type, consultation.campaign_id
+      FROM consultation
         INNER JOIN transaction_log ON consultation.consultation_id = transaction_log.consultation_id
       WHERE provider_detail_id = $1 AND (status = 'finished' OR (status = 'scheduled' AND now() > time + interval '1 hour'))
     `,

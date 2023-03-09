@@ -211,3 +211,14 @@ export const updateCampaignDataQuery = async ({
     ]
   );
 };
+
+export const getCampaignNamesByIds = async ({ poolCountry, campaignIds }) => {
+  return getDBPool("piiDb", poolCountry).query(
+    `
+        SELECT campaign_id, name
+        FROM campaign
+        WHERE campaign_id = ANY($1)
+    `,
+    [campaignIds]
+  );
+};

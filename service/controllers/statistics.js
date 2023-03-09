@@ -22,6 +22,8 @@ import {
 
 import { getProviderDataById } from "#queries/providers";
 
+import { getCampaignNamesByIds } from "#queries/sponsors";
+
 import { countryNotFound } from "#utils/errors";
 
 export const getCountryStatistics = async ({ language, countryId }) => {
@@ -268,11 +270,36 @@ export const getProviderStatistics = async ({ country, providerId }) => {
       throw err;
     });
 
+  const campaignIds = Array.from(
+    new Set(consultations.map((x) => x.campaign_id))
+  );
+
+  const campaignNames = await getCampaignNamesByIds({
+    poolCountry: country,
+    campaignIds,
+  })
+    .then((res) => {
+      if (res.rowCount === 0) {
+        return [];
+      } else {
+        return res.rows;
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
+
   consultations.forEach((consultation, index) => {
     const clientData = clientDetails.find(
       (x) => x.client_detail_id === consultation.client_detail_id
     );
+
+    const campaignName = campaignNames.find(
+      (x) => x.campaign_id === consultation.campaign_id
+    )?.name;
+
     consultations[index].clientData = clientData;
+    consultations[index].campaign_name = campaignName;
   });
 
   return consultations;
