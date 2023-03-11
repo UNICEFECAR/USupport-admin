@@ -111,3 +111,11 @@ export const campaignCodeAlreadyExists = (language) => {
   error.status = 409;
   return error;
 };
+
+export const campaignNotFound = (language) => {
+  const error = new Error();
+  error.message = t("campaign_not_found_error", language);
+  error.name = "CAMPAIGN NOT FOUND";
+  error.status = 404;
+  return error;
+};

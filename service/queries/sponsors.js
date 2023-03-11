@@ -103,7 +103,7 @@ export const createCampaignForSponsorQuery = async ({
   active,
 }) => {
   const pool = getDBPool("piiDb", poolCountry);
-  const pricePerCoupon = budget / numberOfCoupons;
+  const pricePerCoupon = (budget / numberOfCoupons).toFixed(2);
   return pool.query(
     `
         INSERT INTO campaign
@@ -134,9 +134,10 @@ export const getUsedCouponsForCampaignQuery = async ({
   const pool = getDBPool("clinicalDb", poolCountry);
   return pool.query(
     `
-        SELECT campaign_id, consultation_id, COUNT(*) AS used_coupons
+        SELECT transaction_log.campaign_id, transaction_log.consultation_id, COUNT(*) AS used_coupons
         FROM transaction_log
-        WHERE campaign_id = ANY($1)
+          JOIN consultation ON consultation.consultation_id = transaction_log.consultation_id AND (consultation.status = 'finished' OR consultation.status = 'scheduled')
+        WHERE transaction_log.campaign_id = ANY($1)
         GROUP BY transaction_log.campaign_id, transaction_log.consultation_id
     `,
     [campaignIds]
@@ -152,8 +153,8 @@ export const getCouponsDataForCampaignQuery = async ({
     `
         SELECT transaction_log.consultation_id, transaction_log.created_at, type, consultation.provider_detail_id
         FROM transaction_log
-          INNER JOIN consultation on consultation.consultation_id = transaction_log.consultation_id
-        WHERE campaign_id = $1
+          INNER JOIN consultation on consultation.consultation_id = transaction_log.consultation_id AND (consultation.status = 'finished' OR consultation.status = 'scheduled')
+        WHERE transaction_log.campaign_id = $1
     `,
     [campaignId]
   );
@@ -220,5 +221,16 @@ export const getCampaignNamesByIds = async ({ poolCountry, campaignIds }) => {
         WHERE campaign_id = ANY($1)
     `,
     [campaignIds]
+  );
+};
+
+export const getCampaignDataByIdQuery = async ({ poolCountry, campaignId }) => {
+  return getDBPool("piiDb", poolCountry).query(
+    `
+        SELECT *
+        FROM campaign
+        WHERE campaign_id = $1
+    `,
+    [campaignId]
   );
 };

@@ -8,6 +8,7 @@ import {
   getSponsorDataById,
   getCouponsDataForCampaign,
   updateCampaignData,
+  getCampaignDataById,
 } from "#controllers/sponsors";
 
 import {
@@ -18,6 +19,7 @@ import {
   getSponsorDataByIdSchema,
   getCouponsDataForCampaignSchema,
   updateCampaignSchema,
+  getCampaignByIdSchema,
 } from "#schemas/sponsorsSchemas";
 
 const router = express.Router();
@@ -128,6 +130,21 @@ router.route("/coupons-data").get(async (req, res, next) => {
     .strict(true)
     .validate({ country, campaign_id })
     .then(getCouponsDataForCampaign)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.route("/campaign/by-id").get(async (req, res, next) => {
+  const country = req.header("x-country-alpha-2");
+  const language = req.header("x-language-alpha-2");
+
+  const campaign_id = req.query.campaignId;
+
+  return await getCampaignByIdSchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({ country, language, campaign_id })
+    .then(getCampaignDataById)
     .then((result) => res.status(200).send(result))
     .catch(next);
 });

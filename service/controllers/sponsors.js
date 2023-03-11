@@ -9,11 +9,13 @@ import {
   updateCampaignDataQuery,
   getSponsorByEmail,
   getCampignByCouponCode,
+  getCampaignDataByIdQuery,
 } from "#queries/sponsors";
 
 import {
   sponsorEmailAlreadyExists,
   campaignCodeAlreadyExists,
+  campaignNotFound,
 } from "#utils/errors";
 
 import { getMultipleProvidersDataByIDs } from "#queries/providers";
@@ -317,4 +319,21 @@ export const getCouponsDataForCampaign = async ({ country, campaign_id }) => {
   });
 
   return couponData;
+};
+
+export const getCampaignDataById = async ({
+  country,
+  campaign_id,
+  language,
+}) => {
+  return await getCampaignDataByIdQuery({
+    poolCountry: country,
+    campaignId: campaign_id,
+  }).then((res) => {
+    if (res.rowCount === 0) {
+      throw campaignNotFound(language);
+    } else {
+      return res.rows[0];
+    }
+  });
 };

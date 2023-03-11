@@ -18,4 +18,5 @@ export default {
     "A sponsor with this email already exists.",
   campaign_code_already_exists_error:
     "A campaign with this coupon code already exists",
+  campaign_not_found_error: "Campaign not found",
 };

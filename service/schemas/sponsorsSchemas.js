@@ -45,3 +45,8 @@ export const createCampaignSchema = campaignSchema.shape({
 export const updateCampaignSchema = campaignSchema.shape({
   campaign_id: yup.string().uuid().required(),
 });
+
+export const getCampaignByIdSchema = countrySchema.shape({
+  campaign_id: yup.string().uuid().required(),
+  language: yup.string().required(),
+});
