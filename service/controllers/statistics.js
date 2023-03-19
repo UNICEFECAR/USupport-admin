@@ -25,6 +25,7 @@ import { getProviderDataById } from "#queries/providers";
 import { getCampaignNamesByIds } from "#queries/sponsors";
 
 import { countryNotFound } from "#utils/errors";
+import { getClientInitials } from "#utils/helperFunctions";
 
 export const getCountryStatistics = async ({ language, countryId }) => {
   const country = await getCountryAlpha2CodeByIdQuery({ countryId }).then(
@@ -158,7 +159,8 @@ export const getSecurityCheck = async ({ country }) => {
     }
 
     if (clientDetailsCache[clientId]) {
-      securityChecks[i].clientData = clientDetailsCache[clientId];
+      const clientData = clientDetailsCache[clientId];
+      securityChecks[i].clientName = getClientInitials(clientData);
     } else {
       const clientData = await getClientDataById({
         clientId,
@@ -175,7 +177,7 @@ export const getSecurityCheck = async ({ country }) => {
           throw err;
         });
       clientDetailsCache[clientId] = clientData;
-      securityChecks[i].clientData = clientData;
+      securityChecks[i].clientName = getClientInitials(clientData);
     }
   }
 
@@ -298,7 +300,7 @@ export const getProviderStatistics = async ({ country, providerId }) => {
       (x) => x.campaign_id === consultation.campaign_id
     )?.name;
 
-    consultations[index].clientData = clientData;
+    consultations[index].clientName = getClientInitials(clientData);
     consultations[index].campaign_name = campaignName;
   });
 

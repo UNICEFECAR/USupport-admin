@@ -16,3 +16,9 @@ export const updatePassword = async ({ admin_id, password }) => {
 export const generate4DigitCode = () => {
   return Math.floor(Math.random() * 9000 + 1000);
 };
+
+export const getClientInitials = (clientData) => {
+  return clientData.name && clientData.surname
+    ? `${clientData.name.slice(0, 1)}.${clientData.surname.slice(0, 1)}.`
+    : clientData.nickname;
+};

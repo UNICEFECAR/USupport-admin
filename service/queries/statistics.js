@@ -64,9 +64,8 @@ export const getInformationPortalSuggestionsQuery = async ({ poolCountry }) =>
 export const getClientRatingsQuery = async ({ poolCountry }) =>
   await getDBPool("piiDb", poolCountry).query(
     `
-      SELECT rating, comment, client_rating.created_at, name, surname, nickname, email 
+      SELECT rating, comment, client_rating.created_at
       FROM client_rating
-        INNER JOIN client_detail ON client_rating.client_detail_id = client_detail.client_detail_id
     `
   );
 
