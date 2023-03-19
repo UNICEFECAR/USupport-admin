@@ -4,5 +4,5 @@ metadata:
   name: admin-config
 data:
   NODE_ENV: production
-  PORT: 3007
-  KAFKAJS_NO_PARTITIONER_WARNING: 1
+  PORT: "3007"
+  KAFKAJS_NO_PARTITIONER_WARNING: "1"
