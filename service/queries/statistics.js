@@ -42,7 +42,7 @@ export const getScheduledConsultationsNoForCountryQuery = async ({
 export const getSecurityCheckAnswersQuery = async ({ poolCountry }) =>
   await getDBPool("clinicalDb", poolCountry).query(
     `
-        SELECT consultation_security_check_id, contacts_disclosure, suggest_outside_meeting, identity_coercion, unsafe_feeling, more_details, client_detail_id, provider_detail_id, time
+        SELECT consultation_security_check_id, contacts_disclosure, suggest_outside_meeting, identity_coercion, unsafe_feeling, more_details, client_detail_id, provider_detail_id, time, consultation_security_check.created_at
         FROM consultation_security_check
           INNER JOIN consultation ON consultation_security_check.consultation_id = consultation.consultation_id
         WHERE contacts_disclosure = true
