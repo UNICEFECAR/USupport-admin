@@ -2,6 +2,10 @@ import * as yup from "yup";
 
 import { PASSWORD_REGEX, ADMIN_ROLES } from "./authSchemas.js";
 
+export const countrySchema = yup.object().shape({
+  country: yup.string().required(),
+});
+
 export const getAdminByIdSchema = yup.object().shape({
   language: yup.string().required(),
   admin_id: yup.string().uuid().required(),
@@ -45,4 +49,10 @@ export const getAllAdminsSchema = yup.object().shape({
     is: "country",
     then: yup.string().required(),
   }),
+});
+
+export const updateProviderStatusSchema = countrySchema.shape({
+  language: yup.string().required(),
+  providerDetailId: yup.string().uuid().required(),
+  status: yup.string().oneOf(["active", "inactive"]).required(),
 });

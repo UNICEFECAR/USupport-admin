@@ -167,3 +167,19 @@ export const getAllCountryAdminsQuery = async ({ countryId }) =>
     `,
     [countryId]
   );
+
+export const updateProviderStatusQuery = async ({
+  poolCountry,
+  providerDetailId,
+  status,
+}) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+        UPDATE provider_detail
+        SET status = $1
+        WHERE provider_detail_id = $2
+        RETURNING *;
+      `,
+    [status, providerDetailId]
+  );
+};

@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import fetch from "node-fetch";
 
 import {
   getAdminUserByID,
@@ -8,10 +9,22 @@ import {
   getAllGlobalAdminsQuery,
   getAllCountryAdminsQuery,
   deleteAdminDataByIdQuery,
+  updateProviderStatusQuery,
 } from "#queries/admins";
 
-import { updatePassword } from "#utils/helperFunctions";
-import { emailUsed, adminNotFound, incorrectPassword } from "#utils/errors";
+import { getAllProvidersQuery } from "#queries/providers";
+
+import { formatSpecializations, updatePassword } from "#utils/helperFunctions";
+import {
+  emailUsed,
+  adminNotFound,
+  incorrectPassword,
+  providerNotFound,
+} from "#utils/errors";
+
+const PROVIDER_LOCAL_HOST = "http://localhost:3002";
+
+const PROVIDER_URL = process.env.PROVIDER_URL;
 
 export const getAdminUser = async ({ language, admin_id }) => {
   return await getAdminUserByID(admin_id)
@@ -184,4 +197,58 @@ export const changeAdminUserPassword = async ({
   });
 
   return { success: true };
+};
+
+export const getAllProviders = async ({ country }) => {
+  return await getAllProvidersQuery({
+    poolCountry: country,
+  })
+    .then((res) => {
+      const providers = res.rows;
+
+      for (let i = 0; i < providers.length; i++) {
+        providers[i].specializations = formatSpecializations(
+          providers[i].specializations
+        );
+      }
+
+      return providers;
+    })
+    .catch((err) => {
+      throw err;
+    });
+};
+
+export const updateProviderStatus = async ({
+  language,
+  country,
+  providerDetailId,
+  status,
+}) => {
+  const response = await fetch(
+    `${PROVIDER_URL}/provider/v1/provider/update-status`,
+    {
+      method: "PUT",
+      headers: {
+        host: PROVIDER_LOCAL_HOST,
+        "x-language-alpha-2": language,
+        "x-country-alpha-2": country,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        providerDetailId,
+        status,
+      }),
+    }
+  ).catch((err) => {
+    throw err;
+  });
+
+  const result = await response.json();
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  return result;
 };

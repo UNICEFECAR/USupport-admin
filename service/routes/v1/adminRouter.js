@@ -7,6 +7,8 @@ import {
   updateAdminDataById,
   getAllAdmins,
   deleteAdminDataById,
+  getAllProviders,
+  updateProviderStatus,
 } from "#controllers/admin";
 
 import {
@@ -16,8 +18,11 @@ import {
   updateAdminDataByIdSchema,
   getAllAdminsSchema,
   deleteAdminDataByIdSchema,
+  updateProviderStatusSchema,
 } from "#schemas/adminSchemas";
+
 import { securedRoute } from "#middlewares/auth";
+import { countrySchema } from "#schemas/countrySchemas";
 
 const router = express.Router();
 
@@ -135,6 +140,41 @@ router.patch("/password", securedRoute, async (req, res, next) => {
     .strict(true)
     .validate({ ...payload, language, admin_id })
     .then(changeAdminUserPassword)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.get("/all-providers", securedRoute, async (req, res, next) => {
+  /**
+   * #route   GET /admin/v1/admin/all-providers
+   * #desc    Get all providers
+   */
+  const country = req.header("x-country-alpha-2");
+  return await countrySchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({ country })
+    .then(getAllProviders)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.put("/update-provider-status", securedRoute, async (req, res, next) => {
+  /**
+   * #route   PUT /admin/v1/admin/update-provider-status
+   * #desc    Change provider status
+   */
+
+  const language = req.header("x-language-alpha-2");
+  const country = req.header("x-country-alpha-2");
+
+  const { status, providerDetailId } = req.body;
+
+  return await updateProviderStatusSchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({ country, language, providerDetailId, status })
+    .then(updateProviderStatus)
     .then((result) => res.status(200).send(result))
     .catch(next);
 });
