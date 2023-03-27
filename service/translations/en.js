@@ -19,4 +19,5 @@ export default {
   campaign_code_already_exists_error:
     "A campaign with this coupon code already exists",
   campaign_not_found_error: "Campaign not found",
+  provider_not_found_error: "Provider not found",
 };

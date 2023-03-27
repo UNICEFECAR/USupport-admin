@@ -119,3 +119,11 @@ export const campaignNotFound = (language) => {
   error.status = 404;
   return error;
 };
+
+export const providerNotFound = (language) => {
+  const error = new Error();
+  error.message = t("provider_not_found_error", language);
+  error.name = "PROVIDER NOT FOUND";
+  error.status = 404;
+  return error;
+};

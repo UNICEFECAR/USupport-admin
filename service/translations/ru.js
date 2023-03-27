@@ -8,8 +8,10 @@ export default {
   incorrect_password_error: "Предоставленный пароль неверен",
   not_authenticated_error:
     "Администратору необходимо пройти аутентификацию для доступа к этому ресурсу",
-  invalid_refresh_token_error: "Токен обновления недействителен или уже используется",
-  invalid_reset_password_token_error: "Недействительный или просроченный токен сброса пароля",
+  invalid_refresh_token_error:
+    "Токен обновления недействителен или уже используется",
+  invalid_reset_password_token_error:
+    "Недействительный или просроченный токен сброса пароля",
   account_deactivated_error: "Ваш аккаунт был деактивирован",
   invalid_admin_otp_error: "Invalid OTP",
   too_many_otp_requests_error:
@@ -19,4 +21,5 @@ export default {
   campaign_code_already_exists_error:
     "A campaign with this coupon code already exists",
   campaign_not_found_error: "Campaign not found",
+  provider_not_found_error: "Консультант не найден",
 };

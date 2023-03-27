@@ -8,8 +8,10 @@ export default {
   incorrect_password_error: "Берілген кілтсөз дұрыс емес",
   not_authenticated_error:
     "Бұл ресурсқа қол жеткізу үшін әкімші аутентификациядан өтуі керек",
-  invalid_refresh_token_error: "Жаңарту токені жарамсыз немесе әлдеқашан қолданылып жатыр",
-  invalid_reset_password_token_error: "Кілтсөзді өзгерту токені жарамсыз немесе мерзімі өтіп кеткен",
+  invalid_refresh_token_error:
+    "Жаңарту токені жарамсыз немесе әлдеқашан қолданылып жатыр",
+  invalid_reset_password_token_error:
+    "Кілтсөзді өзгерту токені жарамсыз немесе мерзімі өтіп кеткен",
   account_deactivated_error: "Сіздің аккаунтыңыз істен шығарылды",
   invalid_admin_otp_error: "Invalid OTP",
   too_many_otp_requests_error:
@@ -19,4 +21,5 @@ export default {
   campaign_code_already_exists_error:
     "A campaign with this coupon code already exists",
   campaign_not_found_error: "Campaign not found",
+  provider_not_found_error: "Консультант табылмады",
 };
