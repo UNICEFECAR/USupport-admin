@@ -151,7 +151,7 @@ export const getCouponsDataForCampaignQuery = async ({
   const pool = getDBPool("clinicalDb", poolCountry);
   return pool.query(
     `
-        SELECT transaction_log.consultation_id, transaction_log.created_at, type, consultation.provider_detail_id
+        SELECT transaction_log.consultation_id, transaction_log.created_at, type, consultation.provider_detail_id, consultation.client_detail_id
         FROM transaction_log
           INNER JOIN consultation on consultation.consultation_id = transaction_log.consultation_id AND (consultation.status = 'finished' OR consultation.status = 'scheduled')
         WHERE transaction_log.campaign_id = $1
