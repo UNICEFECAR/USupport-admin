@@ -42,7 +42,7 @@ export const getScheduledConsultationsNoForCountryQuery = async ({
 export const getSecurityCheckAnswersQuery = async ({ poolCountry }) =>
   await getDBPool("clinicalDb", poolCountry).query(
     `
-        SELECT consultation_security_check_id, contacts_disclosure, suggest_outside_meeting, identity_coercion, unsafe_feeling, more_details, client_detail_id, provider_detail_id, time
+        SELECT consultation_security_check_id, contacts_disclosure, suggest_outside_meeting, identity_coercion, unsafe_feeling, more_details, client_detail_id, provider_detail_id, time, consultation_security_check.created_at
         FROM consultation_security_check
           INNER JOIN consultation ON consultation_security_check.consultation_id = consultation.consultation_id
         WHERE contacts_disclosure = true
@@ -64,9 +64,8 @@ export const getInformationPortalSuggestionsQuery = async ({ poolCountry }) =>
 export const getClientRatingsQuery = async ({ poolCountry }) =>
   await getDBPool("piiDb", poolCountry).query(
     `
-      SELECT rating, comment, client_rating.created_at, name, surname, nickname, email 
+      SELECT rating, comment, client_rating.created_at
       FROM client_rating
-        INNER JOIN client_detail ON client_rating.client_detail_id = client_detail.client_detail_id
     `
   );
 
@@ -80,7 +79,7 @@ export const getContactFormsQuery = async ({ poolCountry }) =>
 export const getProviderStatisticsQuery = async ({ poolCountry, providerId }) =>
   await getDBPool("clinicalDb", poolCountry).query(
     `  
-      SELECT client_detail_id, provider_detail_id, time, status, price, type, consultation.campaign_id
+      SELECT client_detail_id, provider_detail_id, time, status, price, type, consultation.campaign_id, consultation.created_at
       FROM consultation
         INNER JOIN transaction_log ON consultation.consultation_id = transaction_log.consultation_id
       WHERE provider_detail_id = $1 AND (status = 'finished' OR (status = 'scheduled' AND now() > time + interval '1 hour'))

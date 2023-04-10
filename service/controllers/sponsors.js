@@ -19,6 +19,8 @@ import {
 } from "#utils/errors";
 
 import { getMultipleProvidersDataByIDs } from "#queries/providers";
+import { getMultipleClientsDataByIDs } from "#queries/clients";
+import { getClientInitials } from "#utils/helperFunctions";
 
 export const getAllSponsors = async ({ country }) => {
   return await getAllSponsorsQuery({ poolCountry: country })
@@ -296,6 +298,10 @@ export const getCouponsDataForCampaign = async ({ country, campaign_id }) => {
     new Set(couponData.map((x) => x.provider_detail_id))
   );
 
+  const clientIds = Array.from(
+    new Set(couponData.map((x) => x.client_detail_id))
+  );
+
   const providersData = await getMultipleProvidersDataByIDs({
     poolCountry: country,
     providerDetailIds: providerIds,
@@ -311,11 +317,35 @@ export const getCouponsDataForCampaign = async ({ country, campaign_id }) => {
       throw err;
     });
 
+  const clientsData = await getMultipleClientsDataByIDs({
+    poolCountry: country,
+    clientDetailIds: clientIds,
+  }).then((res) => {
+    if (res.rowCount === 0) {
+      return [];
+    } else {
+      return res.rows;
+    }
+  });
+
   couponData.forEach((data, index) => {
     const providerData = providersData.find(
       (x) => x.provider_detail_id === data.provider_detail_id
     );
+
+    const clientData = clientsData.find(
+      (x) => x.client_detail_id === data.client_detail_id
+    );
+
+    const clientName = getClientInitials(clientData);
+
     couponData[index].provider_data = { ...providerData };
+    couponData[index].client_data = {
+      name: clientName,
+      place_of_living: clientData.urban_rural,
+      year_of_birth: clientData.year_of_birth,
+      sex: clientData.sex,
+    };
   });
 
   return couponData;
