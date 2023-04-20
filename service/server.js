@@ -26,6 +26,7 @@ app.use("/admin/v1/admin", v1.AdminRouter);
 app.use("/admin/v1/rescue", v1.RescueRouter);
 app.use("/admin/v1/statistics", v1.StatisticsRouter);
 app.use("/admin/v1/sponsor", v1.SponsorsRouter);
+app.use("/admin/v1/my-qa", v1.MyQARouter);
 
 /*------------- Error middleware -------------*/
 

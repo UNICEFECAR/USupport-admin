@@ -127,3 +127,19 @@ export const providerNotFound = (language) => {
   error.status = 404;
   return error;
 };
+
+export const questionCantBeDeleted = (language) => {
+  const error = new Error();
+  error.message = t("question_cant_be_deleted_error", language);
+  error.name = "QUESTION CANT BE DELETED";
+  error.status = 409;
+  return error;
+};
+
+export const questionCantBeActivated = (language) => {
+  const error = new Error();
+  error.message = t("question_cant_be_activated_error", language);
+  error.name = "QUESTION CANT BE ACTIVATED";
+  error.status = 400;
+  return error;
+};
