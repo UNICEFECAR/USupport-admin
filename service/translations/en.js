@@ -20,4 +20,5 @@ export default {
     "A campaign with this coupon code already exists",
   campaign_not_found_error: "Campaign not found",
   provider_not_found_error: "Provider not found",
+  question_cant_be_deleted_error: "Question can't be deleted",
 };
