@@ -35,17 +35,29 @@ export const getQuestionReports = async ({ country }) => {
             throw err;
           });
 
-        for (let i = 0; i < reports.length; i++) {
+        const questionIds = Array.from(
+          new Set(reports.map((report) => report.question_id))
+        );
+        const finalReports = [];
+        // For each question id find the latest report
+        questionIds.forEach((id) => {
+          // Because there can be multiple reports for the same question we need to return only the latest one.
+          // The reports are sorted by creation date so the first report in the array is the latest one.
+          const report = reports.find((report) => report.question_id === id);
+          finalReports.push(report);
+        });
+
+        for (let i = 0; i < finalReports.length; i++) {
           const providerDetail = providersDetails.find(
             (provider) =>
               provider.provider_detail_id === reports[i].provider_detail_id
           );
 
-          reports[i].providerData = providerDetail;
+          finalReports[i].providerData = providerDetail;
 
           delete reports[i].provider_detail_id;
         }
-        return reports;
+        return finalReports;
       }
     })
     .catch((err) => {

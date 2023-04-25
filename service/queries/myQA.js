@@ -8,7 +8,7 @@ export const getQuestionReportsQuery = async ({ poolCountry }) => {
                 JOIN question_report_log ON question.question_id = question_report_log.question_id AND question_report_log.action = 'archive'
             WHERE question.status = 'archived'
             GROUP BY question.question_id, question_report_log.reason, question_report_log.additional_text, question_report_log.provider_detail_id, question_report_log.created_at
-            ORDER BY question.created_at DESC
+            ORDER BY question_report_log.created_at DESC
         `
   );
 };
