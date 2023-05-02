@@ -1,6 +1,7 @@
 import {
   activateQuestionQuery,
   deleteQuestionQuery,
+  getAllQuestionsQuery,
   getQuestionReportsQuery,
 } from "#queries/myQA";
 
@@ -111,4 +112,50 @@ export const activateQuestion = async ({
     .catch((err) => {
       throw err;
     });
+};
+
+export const getAllQuestions = async ({ country, type }) => {
+  const questions = await getAllQuestionsQuery({
+    poolCountry: country,
+    type,
+  })
+    .then((res) => {
+      if (res.rowCount === 0) {
+        return [];
+      } else {
+        return res.rows;
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
+
+  if (type !== "unanswered") {
+    // Get the details for all the providers
+    const providerIds = Array.from(
+      new Set(questions.map((x) => x.provider_detail_id))
+    );
+    const providersDetails = await getMultipleProvidersDataByIDs({
+      poolCountry: country,
+      providerDetailIds: providerIds,
+    }).then((res) => {
+      if (res.rowCount === 0) {
+        return [];
+      } else {
+        return res.rows;
+      }
+    });
+
+    for (let i = 0; i < questions.length; i++) {
+      questions[i].providerData = providersDetails.find(
+        (x) => x.provider_detail_id === questions[i].provider_detail_id
+      );
+
+      questions[i].tags = questions[i].tags.filter((x) => x);
+      questions[i].likes = questions[i].likes?.length || 0;
+      questions[i].dislikes = questions[i].dislikes?.length || 0;
+    }
+  }
+
+  return questions;
 };

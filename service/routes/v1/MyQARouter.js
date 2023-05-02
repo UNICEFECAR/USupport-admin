@@ -3,12 +3,14 @@ import express from "express";
 import {
   getQuestionReportsSchema,
   deleteQuestionSchema,
+  getAllQuestionsSchema,
 } from "#schemas/myQASchemas";
 
 import {
   getQuestionReports,
   deleteQuestion,
   activateQuestion,
+  getAllQuestions,
 } from "#controllers/myQA";
 
 const router = express.Router();
@@ -76,6 +78,24 @@ router.put("/activate-question", async (req, res, next) => {
       questionId,
     })
     .then(activateQuestion)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.get("/questions", async (req, res, next) => {
+  /**
+   * #route   GET /admin/v1/my-qa/questions
+   * #desc    Get  questions
+   */
+  const country = req.header("x-country-alpha-2");
+
+  const { type } = req.query;
+
+  return await getAllQuestionsSchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({ country, type })
+    .then(getAllQuestions)
     .then((result) => res.status(200).send(result))
     .catch(next);
 });
