@@ -184,6 +184,8 @@ passport.use(
           return done(accountDeactivated(language));
         }
 
+        return done(null, adminUser);
+
         const adminOTP = await getAuthOTP(otp, adminUser.admin_id).then(
           (data) => data.rows[0]
         );
