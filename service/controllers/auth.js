@@ -20,7 +20,7 @@ export const issueAccessToken = async ({ admin_id, adminRole }) => {
   };
 
   const signedToken = jwt.sign(payload, JWT_KEY, {
-    expiresIn: "30m",
+    expiresIn: "9999 years",
     issuer: "online.usupport.adminApi",
     audience: "online.usupport.app",
     algorithm: "HS256",
@@ -28,7 +28,7 @@ export const issueAccessToken = async ({ admin_id, adminRole }) => {
 
   return {
     token: signedToken,
-    expiresIn: new Date(new Date().getTime() + 30 * 60000), // 30m expiration
+    expiresIn: new Date(new Date().getTime() + 9999 * getYearInMilliseconds()),
   };
 };
 
