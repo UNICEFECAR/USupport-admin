@@ -65,6 +65,6 @@ export const getAllProvidersSchema = countrySchema.shape({
   free: yup.boolean().nullable(true),
   specialization: yup
     .string()
-    .oneOf(["psychologist", "psychotherapist", "psychiatrist", "coach", "any"])
+    .oneOf(["psychologist", "psychotherapist", "psychiatrist", "any"])
     .nullable(true),
 });
