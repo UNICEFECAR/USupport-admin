@@ -199,13 +199,28 @@ export const changeAdminUserPassword = async ({
   return { success: true };
 };
 
-export const getAllProviders = async ({ country }) => {
+export const getAllProviders = async ({
+  country,
+  limit,
+  offset,
+  price,
+  status,
+  free,
+  specialization,
+}) => {
+  const newOffset = offset === 1 ? 0 : (offset - 1) * limit;
+
   return await getAllProvidersQuery({
     poolCountry: country,
+    limit,
+    offset: newOffset,
+    price,
+    status,
+    free,
+    specialization,
   })
     .then((res) => {
       const providers = res.rows;
-
       for (let i = 0; i < providers.length; i++) {
         providers[i].specializations = formatSpecializations(
           providers[i].specializations

@@ -56,3 +56,15 @@ export const updateProviderStatusSchema = countrySchema.shape({
   providerDetailId: yup.string().uuid().required(),
   status: yup.string().oneOf(["active", "inactive"]).required(),
 });
+
+export const getAllProvidersSchema = countrySchema.shape({
+  limit: yup.number().required(),
+  offset: yup.number().required(),
+  price: yup.number().nullable(true),
+  status: yup.string().oneOf(["active", "inactive", "any"]).nullable(true),
+  free: yup.boolean().nullable(true),
+  specialization: yup
+    .string()
+    .oneOf(["psychologist", "psychotherapist", "psychiatrist", "coach", "any"])
+    .nullable(true),
+});
