@@ -59,7 +59,6 @@ export const updateAdminData = async ({
   email,
   currentEmail,
   phone,
-  phonePrefix,
 }) => {
   // Check if email is changed
   if (email !== currentEmail) {
@@ -83,7 +82,6 @@ export const updateAdminData = async ({
     name,
     surname,
     phone,
-    phonePrefix,
     email,
   })
     .then((res) => {
@@ -105,7 +103,6 @@ export const updateAdminDataById = async ({
   name,
   surname,
   email,
-  phonePrefix,
   phone,
   isActive,
 }) => {
@@ -143,7 +140,6 @@ export const updateAdminDataById = async ({
     name,
     surname,
     email,
-    phonePrefix,
     phone,
     isActive,
   })

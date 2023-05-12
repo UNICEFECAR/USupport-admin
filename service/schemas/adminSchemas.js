@@ -21,7 +21,6 @@ export const updateAdminDataSchema = getAdminByIdSchema.shape({
   name: yup.string().required(),
   surname: yup.string().required(),
   email: yup.string().email().required(),
-  phonePrefix: yup.string(),
   phone: yup.string(),
   currentEmail: yup.string().email().required(),
 });
@@ -33,7 +32,6 @@ export const updateAdminDataByIdSchema = yup.object().shape({
   name: yup.string().required(),
   surname: yup.string().required(),
   email: yup.string().email().required(),
-  phonePrefix: yup.string(),
   phone: yup.string(),
   isActive: yup.boolean().required(),
 });

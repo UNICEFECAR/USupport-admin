@@ -3,7 +3,7 @@ import { getDBPool } from "#utils/dbConfig";
 export const getAdminUserByEmail = async (email, role) =>
   await getDBPool("masterDb").query(
     `
-        SELECT admin_id, name, surname, phone_prefix, phone, email, role, password, is_active
+        SELECT admin_id, name, surname, phone, email, role, password, is_active
         FROM admin
         WHERE email = $1 AND role = $2
         ORDER BY created_at DESC
@@ -15,7 +15,7 @@ export const getAdminUserByEmail = async (email, role) =>
 export const getAdminUserByID = async (admin_id) =>
   await getDBPool("masterDb").query(
     `
-        SELECT admin_id, name, surname, phone_prefix, phone, email, role, password, is_active
+        SELECT admin_id, name, surname, phone, email, role, password, is_active
         FROM admin
         WHERE admin_id = $1
         ORDER BY created_at DESC
@@ -27,14 +27,13 @@ export const getAdminUserByID = async (admin_id) =>
 export const createAdminUser = async (props) =>
   await getDBPool("masterDb").query(
     `
-      INSERT INTO admin (name, surname, phone_prefix, phone, email, password, role, is_active)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO admin (name, surname, phone, email, password, role, is_active)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *;
     `,
     [
       props.name,
       props.surname,
-      props.phonePrefix,
       props.phone,
       props.email,
       props.hashedPass,
@@ -58,7 +57,6 @@ export const updateAdminDataQuery = async ({
   name,
   surname,
   email,
-  phonePrefix,
   phone,
 }) =>
   await getDBPool("masterDb").query(
@@ -67,12 +65,11 @@ export const updateAdminDataQuery = async ({
       SET name = $1, 
           surname = $2, 
           email = $3, 
-          phone_prefix = $4,
-          phone = $5
-      WHERE admin_id = $6
+          phone = $4
+      WHERE admin_id = $5
       RETURNING *;
     `,
-    [name, surname, email, phonePrefix, phone, admin_id]
+    [name, surname, email, phone, admin_id]
   );
 
 export const updateAdminDataByIdQuery = async ({
@@ -80,7 +77,6 @@ export const updateAdminDataByIdQuery = async ({
   name,
   surname,
   email,
-  phonePrefix,
   phone,
   isActive,
 }) =>
@@ -90,13 +86,12 @@ export const updateAdminDataByIdQuery = async ({
       SET name = $1,
           surname = $2,
           email = $3,
-          phone_prefix = $4,
-          phone = $5,
-          is_active = $6
-      WHERE admin_id = $7
+          phone = $4,
+          is_active = $5
+      WHERE admin_id = $6
       RETURNING *;
     `,
-    [name, surname, email, phonePrefix, phone, isActive, adminId]
+    [name, surname, email, phone, isActive, adminId]
   );
 
 export const deleteAdminDataByIdQuery = async ({ adminId }) =>
@@ -105,7 +100,6 @@ export const deleteAdminDataByIdQuery = async ({ adminId }) =>
       UPDATE admin
       SET name = 'DELETED',
           surname = 'DELETED',
-          phone_prefix = 'DELETED',
           phone = 'DELETED',
           email = 'DELETED',
           is_active = false,
@@ -149,7 +143,7 @@ export const createAdminToRegionLink = async ({ adminId, regionId }) =>
 export const getAllGlobalAdminsQuery = async () =>
   await getDBPool("masterDb").query(
     `
-      SELECT admin_id, name, surname, phone_prefix, phone, email, role, is_active
+      SELECT admin_id, name, surname, phone, email, role, is_active
       FROM admin
       WHERE role = 'global' AND deleted_at IS NULL
       ORDER BY created_at DESC;
@@ -159,7 +153,7 @@ export const getAllGlobalAdminsQuery = async () =>
 export const getAllCountryAdminsQuery = async ({ countryId }) =>
   await getDBPool("masterDb").query(
     `
-      SELECT admin.admin_id, name, surname, phone_prefix, phone, email, role, is_active
+      SELECT admin.admin_id, name, surname, phone, email, role, is_active
       FROM admin
         INNER JOIN admin_country_links ON admin.admin_id = admin_country_links.admin_id
       WHERE role = 'country' AND admin_country_links.country_id = $1  AND admin.deleted_at IS NULL

@@ -34,7 +34,7 @@ export const getAllProvidersQuery = async ({
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
-        SELECT provider_detail."provider_detail_id", "name", patronym, surname, nickname, email, phone_prefix, phone, image, specializations, street, city, postcode, education, sex, consultation_price, description, video_link, status
+        SELECT provider_detail."provider_detail_id", "name", patronym, surname, nickname, email, phone, image, specializations, street, city, postcode, education, sex, consultation_price, description, video_link, status
         FROM provider_detail
           JOIN "user" ON "user".provider_detail_id = provider_detail.provider_detail_id AND "user".deleted_at IS NULL
         WHERE consultation_price >= $3 AND
