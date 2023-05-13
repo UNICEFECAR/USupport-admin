@@ -34,7 +34,6 @@ export const createAdminSchema = (language) =>
       }),
       name: yup.string().required(),
       surname: yup.string().required(),
-      phonePrefix: yup.string(),
       phone: yup.string(),
       email: yup.string().email().required(),
       password: yup

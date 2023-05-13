@@ -59,7 +59,6 @@ export const updateAdminData = async ({
   email,
   currentEmail,
   phone,
-  phonePrefix,
 }) => {
   // Check if email is changed
   if (email !== currentEmail) {
@@ -83,7 +82,6 @@ export const updateAdminData = async ({
     name,
     surname,
     phone,
-    phonePrefix,
     email,
   })
     .then((res) => {
@@ -105,7 +103,6 @@ export const updateAdminDataById = async ({
   name,
   surname,
   email,
-  phonePrefix,
   phone,
   isActive,
 }) => {
@@ -143,7 +140,6 @@ export const updateAdminDataById = async ({
     name,
     surname,
     email,
-    phonePrefix,
     phone,
     isActive,
   })
@@ -199,13 +195,28 @@ export const changeAdminUserPassword = async ({
   return { success: true };
 };
 
-export const getAllProviders = async ({ country }) => {
+export const getAllProviders = async ({
+  country,
+  limit,
+  offset,
+  price,
+  status,
+  free,
+  specialization,
+}) => {
+  const newOffset = offset === 1 ? 0 : (offset - 1) * limit;
+
   return await getAllProvidersQuery({
     poolCountry: country,
+    limit,
+    offset: newOffset,
+    price,
+    status,
+    free,
+    specialization,
   })
     .then((res) => {
       const providers = res.rows;
-
       for (let i = 0; i < providers.length; i++) {
         providers[i].specializations = formatSpecializations(
           providers[i].specializations

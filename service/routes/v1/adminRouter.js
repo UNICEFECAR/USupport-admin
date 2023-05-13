@@ -19,10 +19,10 @@ import {
   getAllAdminsSchema,
   deleteAdminDataByIdSchema,
   updateProviderStatusSchema,
+  getAllProvidersSchema,
 } from "#schemas/adminSchemas";
 
 import { securedRoute } from "#middlewares/auth";
-import { countrySchema } from "#schemas/countrySchemas";
 
 const router = express.Router();
 
@@ -150,10 +150,20 @@ router.get("/all-providers", securedRoute, async (req, res, next) => {
    * #desc    Get all providers
    */
   const country = req.header("x-country-alpha-2");
-  return await countrySchema
+  const { limit, offset, price, status, free, specialization } = req.query;
+
+  return await getAllProvidersSchema
     .noUnknown(true)
     .strict(true)
-    .validate({ country })
+    .validate({
+      limit: Number(limit),
+      offset: Number(offset),
+      country,
+      price: price ? Number(price) : 0,
+      status: status ? status : "any",
+      free: free === "true" ? true : false,
+      specialization: specialization ? specialization : "any",
+    })
     .then(getAllProviders)
     .then((result) => res.status(200).send(result))
     .catch(next);
