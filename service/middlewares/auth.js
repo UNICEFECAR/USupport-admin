@@ -34,7 +34,7 @@ import {
   tooManyOTPRequests,
 } from "#utils/errors";
 import { produceRaiseNotification } from "#utils/kafkaProducers";
-import { generate4DigitCode } from "#utils/helperFunctions";
+import { generate4DigitCode, generatePassword } from "#utils/helperFunctions";
 
 const localStrategy = passportLocal.Strategy;
 const jwtStrategy = passportJWT.Strategy;
@@ -55,7 +55,6 @@ passport.use(
         const language = req.header("x-language-alpha-2");
         const {
           email,
-          password,
           adminCountryId,
           adminRegionId,
           name,
@@ -86,7 +85,8 @@ passport.use(
         }
 
         const salt = await bcrypt.genSalt(12);
-        const hashedPass = await bcrypt.hash(password, salt);
+        const randomlyGeneratedPassword = generatePassword(10);
+        const hashedPass = await bcrypt.hash(randomlyGeneratedPassword, salt);
 
         let newAdmin = await createAdminUser({
           adminCountryId,
@@ -120,6 +120,18 @@ passport.use(
             throw err;
           });
 
+        produceRaiseNotification({
+          channels: ["email"],
+          emailArgs: {
+            emailType: "admin-registration",
+            recipientEmail: email,
+            data: {
+              password: randomlyGeneratedPassword,
+              adminRole: role,
+            },
+          },
+          language,
+        }).catch(console.log);
         delete newAdmin.password;
 
         return done(null, newAdmin);
