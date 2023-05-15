@@ -37,3 +37,31 @@ export const formatSpecializations = (specializations) => {
     return specializations.replace("{", "").replace("}", "").split(",");
   }
 };
+
+export const generatePassword = (length) => {
+  const letterPattern = /[a-zA-Z0-9]/;
+  const passwordPattern = new RegExp(
+    "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{8,}"
+  );
+
+  const getRandomByte = () => {
+    return Math.floor(Math.random() * 256);
+  };
+
+  const tempPassword = () =>
+    Array.apply(null, { length: length })
+      .map(() => {
+        let result;
+        while (true) {
+          result = String.fromCharCode(getRandomByte());
+          if (letterPattern.test(result)) {
+            return result;
+          }
+        }
+      })
+      .join("");
+
+  let password = tempPassword();
+  if (passwordPattern.test(password)) return password;
+  else return generatePassword(length);
+};
