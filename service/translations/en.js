@@ -9,7 +9,8 @@ export default {
   not_authenticated_error:
     "Admin needs to authenticate to access this resource",
   invalid_refresh_token_error: "Refresh token invalid or already used",
-  invalid_reset_password_token_error: "Invalid or expired reset password token",
+  invalid_reset_password_token_error:
+    "Invalid or expired reset password token. Please request a new one at:",
   account_deactivated_error: "Your account has been deactivated",
   invalid_admin_otp_error: "Invalid OTP",
   too_many_otp_requests_error:
