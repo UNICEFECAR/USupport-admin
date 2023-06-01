@@ -20,7 +20,7 @@ export const generate4DigitCode = () => {
 export const getClientInitials = (clientData) => {
   return clientData.name && clientData.surname
     ? `${clientData.name.slice(0, 1)}.${clientData.surname.slice(0, 1)}.`
-    : clientData.nickname;
+    : `${clientData.nickname.slice(0, 3)}...`;
 };
 
 export const getYearInMilliseconds = () => {
