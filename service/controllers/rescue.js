@@ -10,13 +10,13 @@ import {
 import { updatePassword } from "#utils/helperFunctions";
 import { produceRaiseNotification } from "#utils/kafkaProducers";
 
-import { adminNotFound, invalidResetPasswordToken } from "#utils/errors";
+import { invalidResetPasswordToken } from "#utils/errors";
 
 export const sendForgotPasswordEmail = async ({ language, email, role }) => {
   const adminUser = await getAdminUserByEmail(email, role)
     .then((raw) => {
       if (raw.rowCount === 0) {
-        throw adminNotFound(language);
+        return null;
       } else {
         return raw.rows[0];
       }
@@ -24,6 +24,8 @@ export const sendForgotPasswordEmail = async ({ language, email, role }) => {
     .catch((err) => {
       throw err;
     });
+
+  if (!adminUser) return { success: true };
 
   const forgotPasswordToken = nanoid(16);
 
@@ -58,7 +60,7 @@ export const resetForgotPassword = async ({ language, token, password }) => {
     });
 
   const now = new Date().getTime();
-  const tokenExpiresIn = new Date(tokenData.expires_at).getTime();
+  const tokenExpiresIn = new Date(tokenData?.expires_at).getTime();
 
   if (!tokenData || tokenExpiresIn < now || tokenData.used) {
     throw invalidResetPasswordToken(language);
