@@ -13,13 +13,14 @@ export default {
   invalid_reset_password_token_error:
     "Недействительный или просроченный токен сброса пароля",
   account_deactivated_error: "Ваш аккаунт был деактивирован",
-  invalid_admin_otp_error: "Invalid OTP",
+  invalid_admin_otp_error: "Недействительный одноразовый пароль (OTP)",
   too_many_otp_requests_error:
-    "Too many OTP requests made, please try again soon.",
+    "Сделано слишком много запросов на одноразовый пароль (OTP), повторите попытку позже.",
   sponsor_email_already_exists_error:
-    "A sponsor with this email already exists.",
+    "Спонсор с таким адресом электронной почты уже существует.",
   campaign_code_already_exists_error:
-    "A campaign with this coupon code already exists",
-  campaign_not_found_error: "Campaign not found",
+    "Кампания с этим кодом купона уже существует",
+  campaign_not_found_error: "Кампания не найдена",
   provider_not_found_error: "Консультант не найден",
+  question_cant_be_deleted_error: "Вопрос не может быть удален",
 };
