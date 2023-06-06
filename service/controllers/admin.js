@@ -15,12 +15,7 @@ import {
 import { getAllProvidersQuery } from "#queries/providers";
 
 import { formatSpecializations, updatePassword } from "#utils/helperFunctions";
-import {
-  emailUsed,
-  adminNotFound,
-  incorrectPassword,
-  providerNotFound,
-} from "#utils/errors";
+import { emailUsed, adminNotFound, incorrectPassword } from "#utils/errors";
 
 const PROVIDER_LOCAL_HOST = "http://localhost:3002";
 
@@ -195,25 +190,12 @@ export const changeAdminUserPassword = async ({
   return { success: true };
 };
 
-export const getAllProviders = async ({
-  country,
-  limit,
-  offset,
-  price,
-  status,
-  free,
-  specialization,
-}) => {
-  const newOffset = offset === 1 ? 0 : (offset - 1) * limit;
-
+export const getAllProviders = async (props) => {
+  const newOffset = props.offset === 1 ? 0 : (props.offset - 1) * props.limit;
   return await getAllProvidersQuery({
-    poolCountry: country,
-    limit,
+    ...props,
+    poolCountry: props.country,
     offset: newOffset,
-    price,
-    status,
-    free,
-    specialization,
   })
     .then((res) => {
       const providers = res.rows;
