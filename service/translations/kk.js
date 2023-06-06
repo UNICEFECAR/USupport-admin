@@ -14,13 +14,12 @@ export default {
   invalid_reset_password_token_error:
     "Кілтсөзді өзгерту токені жарамсыз немесе мерзімі өтіп кеткен",
   account_deactivated_error: "Сіздің аккаунтыңыз істен шығарылды",
-  invalid_admin_otp_error: "Invalid OTP",
+  invalid_admin_otp_error: "Жарамсыз бір реттік құпия сөз (OTP)",
   too_many_otp_requests_error:
-    "Too many OTP requests made, please try again soon.",
-  sponsor_email_already_exists_error:
-    "A sponsor with this email already exists.",
-  campaign_code_already_exists_error:
-    "A campaign with this coupon code already exists",
-  campaign_not_found_error: "Campaign not found",
+    "Тым көп бір реттік құпия сөз (OTP) сұраулары жасалды, әрекетті кейінірек қайталаңыз.",
+  sponsor_email_already_exists_error: "Бұндай электронды почтамен демеуші бар.",
+  campaign_code_already_exists_error: "Бұл купон коды бар науқан әлдеқашан бар",
+  campaign_not_found_error: "Науқан табылмады",
   provider_not_found_error: "Консультант табылмады",
+  question_cant_be_deleted_error: "Сұрақты жою мүмкін емес",
 };
