@@ -26,12 +26,11 @@ import {
 
 import {
   emailUsed,
-  incorrectEmail,
-  incorrectPassword,
   notAuthenticated,
   accountDeactivated,
   invalidOTP,
   tooManyOTPRequests,
+  incorrectCredentials,
 } from "#utils/errors";
 import { produceRaiseNotification } from "#utils/kafkaProducers";
 import { generate4DigitCode, generatePassword } from "#utils/helperFunctions";
@@ -178,7 +177,7 @@ passport.use(
           });
 
         if (!adminUser) {
-          return done(incorrectEmail(language));
+          return done(incorrectCredentials(language));
         }
 
         const validatePassword = await bcrypt.compare(
@@ -187,7 +186,7 @@ passport.use(
         );
 
         if (!validatePassword) {
-          return done(incorrectPassword(language));
+          return done(incorrectCredentials(language));
         }
 
         if (!adminUser.is_active) {
@@ -256,7 +255,7 @@ passport.use(
           });
 
         if (!adminUser) {
-          return done(incorrectEmail(language));
+          return done(incorrectCredentials(language));
         }
 
         const validatePassword = await bcrypt.compare(
@@ -265,7 +264,7 @@ passport.use(
         );
 
         if (!validatePassword) {
-          return done(incorrectPassword(language));
+          return done(incorrectCredentials(language));
         }
 
         if (!adminUser.is_active) {

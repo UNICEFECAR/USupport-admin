@@ -6,6 +6,7 @@ export default {
   email_already_used_error: "Бұл электронды пошта әлдеқашан қолданылып жатыр",
   incorrect_email_error: "Осындай электронды поштасы бар әкімші жоқ",
   incorrect_password_error: "Берілген кілтсөз дұрыс емес",
+  incorrect_credentials_error: "Incorrect credentialsKK",
   not_authenticated_error:
     "Бұл ресурсқа қол жеткізу үшін әкімші аутентификациядан өтуі керек",
   invalid_refresh_token_error:
