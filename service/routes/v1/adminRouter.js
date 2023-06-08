@@ -150,7 +150,19 @@ router.get("/all-providers", securedRoute, async (req, res, next) => {
    * #desc    Get all providers
    */
   const country = req.header("x-country-alpha-2");
-  const { limit, offset, price, status, free, specialization } = req.query;
+  const {
+    limit,
+    offset,
+    price,
+    status,
+    free,
+    specialization,
+    sort_name,
+    sort_email,
+    sort_consultationPrice,
+    sort_status,
+    search,
+  } = req.query;
 
   return await getAllProvidersSchema
     .noUnknown(true)
@@ -163,6 +175,11 @@ router.get("/all-providers", securedRoute, async (req, res, next) => {
       status: status ? status : "any",
       free: free === "true" ? true : false,
       specialization: specialization ? specialization : "any",
+      sort_name: sort_name || null,
+      sort_email: sort_email || null,
+      sort_consultationPrice: sort_consultationPrice || null,
+      sort_status: sort_status || null,
+      search: search || null,
     })
     .then(getAllProviders)
     .then((result) => res.status(200).send(result))

@@ -6,6 +6,7 @@ export default {
   email_already_used_error: "This email is already used",
   incorrect_email_error: "There is no admin with this email",
   incorrect_password_error: "The provided password is incorrect",
+  incorrect_credentials_error: "Incorrect credentials",
   not_authenticated_error:
     "Admin needs to authenticate to access this resource",
   invalid_refresh_token_error: "Refresh token invalid or already used",

@@ -6,6 +6,7 @@ export default {
   email_already_used_error: "Этот электронный адрес уже используется",
   incorrect_email_error: "Нет администратора с таким адресом электронной почты",
   incorrect_password_error: "Предоставленный пароль неверен",
+  incorrect_credentials_error: "Incorrect credentialsRU",
   not_authenticated_error:
     "Администратору необходимо пройти аутентификацию для доступа к этому ресурсу",
   invalid_refresh_token_error:

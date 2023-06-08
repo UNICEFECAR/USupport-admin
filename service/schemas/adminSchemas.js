@@ -65,4 +65,12 @@ export const getAllProvidersSchema = countrySchema.shape({
     .string()
     .oneOf(["psychologist", "psychotherapist", "psychiatrist", "any"])
     .nullable(true),
+  sort_name: yup.string().oneOf([null, "asc", "desc"]).nullable(true),
+  sort_email: yup.string().oneOf([null, "asc", "desc"]).nullable(true),
+  sort_consultationPrice: yup
+    .string()
+    .oneOf([null, "asc", "desc"])
+    .nullable(true),
+  sort_status: yup.string().oneOf([null, "asc", "desc"]).nullable(true),
+  search: yup.string().nullable(true),
 });
