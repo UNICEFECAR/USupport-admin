@@ -1,18 +1,18 @@
 export default {
   platform_not_error: "Платформа табылмады",
   password_validation_error:
-    "Кілтсөз кемінде 8 таңбадан, 1 бас әріптен, 1 кіші әріптен және 1 саннан тұруы керек.",
+    "Құпия сөз кемінде 8 таңбадан, 1 бас әріптен, 1 кіші әріптен және 1 саннан тұруы керек.",
   admin_not_found_error: "Әкімші табылмады",
   email_already_used_error: "Бұл электронды пошта әлдеқашан қолданылып жатыр",
   incorrect_email_error: "Осындай электронды поштасы бар әкімші жоқ",
-  incorrect_password_error: "Берілген кілтсөз дұрыс емес",
-  incorrect_credentials_error: "Incorrect credentialsKK",
+  incorrect_password_error: "Берілген құпия сөз дұрыс емес",
+  incorrect_credentials_error: "Тіркелім деректері дұрыс емес",
   not_authenticated_error:
     "Бұл ресурсқа қол жеткізу үшін әкімші аутентификациядан өтуі керек",
   invalid_refresh_token_error:
     "Жаңарту токені жарамсыз немесе әлдеқашан қолданылып жатыр",
   invalid_reset_password_token_error:
-    "Кілтсөзді өзгерту токені жарамсыз немесе мерзімі өтіп кеткен",
+    "Құпия сөзді қалпына келтіру токені жарамсыз немесе мерзімі өтіп кеткен. Жаңасын сұрауыңызды өтінеміз:",
   account_deactivated_error: "Сіздің аккаунтыңыз істен шығарылды",
   invalid_admin_otp_error: "Жарамсыз бір реттік құпия сөз (OTP)",
   too_many_otp_requests_error:
