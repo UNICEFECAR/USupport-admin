@@ -6,13 +6,13 @@ export default {
   email_already_used_error: "Этот электронный адрес уже используется",
   incorrect_email_error: "Нет администратора с таким адресом электронной почты",
   incorrect_password_error: "Предоставленный пароль неверен",
-  incorrect_credentials_error: "Incorrect credentialsRU",
+  incorrect_credentials_error: "Неправильные учетные данные",
   not_authenticated_error:
     "Администратору необходимо пройти аутентификацию для доступа к этому ресурсу",
   invalid_refresh_token_error:
     "Токен обновления недействителен или уже используется",
   invalid_reset_password_token_error:
-    "Недействительный или просроченный токен сброса пароля",
+    "Недействительный или просроченный токен сброса пароля. Пожалуйста, запросите новый здесь:",
   account_deactivated_error: "Ваш аккаунт был деактивирован",
   invalid_admin_otp_error: "Недействительный одноразовый пароль (OTP)",
   too_many_otp_requests_error:
