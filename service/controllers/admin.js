@@ -9,7 +9,6 @@ import {
   getAllGlobalAdminsQuery,
   getAllCountryAdminsQuery,
   deleteAdminDataByIdQuery,
-  updateProviderStatusQuery,
 } from "#queries/admins";
 
 import { getAllProvidersQuery } from "#queries/providers";

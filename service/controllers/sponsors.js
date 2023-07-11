@@ -170,7 +170,6 @@ export const createCampaignForSponsor = async ({
 };
 
 export const updateCampaignData = async ({
-  language,
   country,
   campaign_id,
   name,
