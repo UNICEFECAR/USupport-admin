@@ -39,7 +39,7 @@ export const getErrorResponse = (error) => {
   };
 };
 
-// es-lint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 export const errorHandler = (err, req, res, next) => {
   //all errors pass through here
   const { name, message, status } = getErrorResponse(err);
@@ -56,7 +56,7 @@ export const errorHandler = (err, req, res, next) => {
   res.status(status).send(errorObj);
 };
 
-// es-lint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 export const notFound = (req, res, next) => {
   //501 if endpoint does not exist
   const error = new Error("Not Implemented");
