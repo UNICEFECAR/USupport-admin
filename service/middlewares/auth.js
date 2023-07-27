@@ -12,7 +12,7 @@ import {
 } from "#queries/admins";
 
 import {
-  getAuthOTP,
+  // getAuthOTP,
   getAdminLastAuthOTP,
   storeAuthOTP,
   changeOTPToUsed,
@@ -28,7 +28,7 @@ import {
   emailUsed,
   notAuthenticated,
   accountDeactivated,
-  invalidOTP,
+  // invalidOTP,
   tooManyOTPRequests,
   incorrectCredentials,
 } from "#utils/errors";
@@ -152,7 +152,7 @@ passport.use(
     async (req, emailIn, passwordIn, done) => {
       try {
         const language = req.header("x-language-alpha-2");
-        const country = req.header("x-country-alpha-2");
+        // const country = req.header("x-country-alpha-2");
 
         const role = req.body.role;
         const otp = req.body.otp;
@@ -195,31 +195,31 @@ passport.use(
 
         return done(null, adminUser);
 
-        const adminOTP = await getAuthOTP(otp, adminUser.admin_id).then(
-          (data) => data.rows[0]
-        );
+        // const adminOTP = await getAuthOTP(otp, adminUser.admin_id).then(
+        //   (data) => data.rows[0]
+        // );
 
-        if (adminOTP === undefined) {
-          // OTP not found or already used
-          return done(invalidOTP(language));
-        } else {
-          const OTPCreatedAt = new Date(adminOTP.created_at).getTime();
-          const now = new Date().getTime();
+        // if (adminOTP === undefined) {
+        //   // OTP not found or already used
+        //   return done(invalidOTP(language));
+        // } else {
+        //   const OTPCreatedAt = new Date(adminOTP.created_at).getTime();
+        //   const now = new Date().getTime();
 
-          if ((OTPCreatedAt - now) / 1000 > 60 * 30) {
-            // OTP is valid for 30 mins
-            return done(invalidOTP(language));
-          }
-        }
+        //   if ((OTPCreatedAt - now) / 1000 > 60 * 30) {
+        //     // OTP is valid for 30 mins
+        //     return done(invalidOTP(language));
+        //   }
+        // }
 
-        // each OTP can be used only once
-        await changeOTPToUsed(adminOTP.id).catch((err) => {
-          throw err;
-        });
+        // // each OTP can be used only once
+        // await changeOTPToUsed(adminOTP.id).catch((err) => {
+        //   throw err;
+        // });
 
-        delete adminUser.password;
+        // delete adminUser.password;
 
-        return done(null, adminUser);
+        // return done(null, adminUser);
       } catch (error) {
         return done(error);
       }

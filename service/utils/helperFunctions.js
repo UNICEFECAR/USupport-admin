@@ -51,10 +51,11 @@ export const generatePassword = (length) => {
   const tempPassword = () =>
     Array.apply(null, { length: length })
       .map(() => {
-        let result;
-        while (true) {
+        let result, isDone;
+        while (!isDone) {
           result = String.fromCharCode(getRandomByte());
           if (letterPattern.test(result)) {
+            isDone = true;
             return result;
           }
         }
