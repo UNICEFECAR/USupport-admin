@@ -12,7 +12,7 @@ import {
 } from "#queries/admins";
 
 import {
-  getAuthOTP,
+  // getAuthOTP,
   getAdminLastAuthOTP,
   storeAuthOTP,
   changeOTPToUsed,
@@ -26,15 +26,14 @@ import {
 
 import {
   emailUsed,
-  incorrectEmail,
-  incorrectPassword,
   notAuthenticated,
   accountDeactivated,
-  invalidOTP,
+  // invalidOTP,
   tooManyOTPRequests,
+  incorrectCredentials,
 } from "#utils/errors";
 import { produceRaiseNotification } from "#utils/kafkaProducers";
-import { generate4DigitCode } from "#utils/helperFunctions";
+import { generate4DigitCode, generatePassword } from "#utils/helperFunctions";
 
 const localStrategy = passportLocal.Strategy;
 const jwtStrategy = passportJWT.Strategy;
@@ -55,12 +54,10 @@ passport.use(
         const language = req.header("x-language-alpha-2");
         const {
           email,
-          password,
           adminCountryId,
           adminRegionId,
           name,
           surname,
-          phonePrefix,
           phone,
           role,
           isActive,
@@ -87,7 +84,8 @@ passport.use(
         }
 
         const salt = await bcrypt.genSalt(12);
-        const hashedPass = await bcrypt.hash(password, salt);
+        const randomlyGeneratedPassword = generatePassword(10);
+        const hashedPass = await bcrypt.hash(randomlyGeneratedPassword, salt);
 
         let newAdmin = await createAdminUser({
           adminCountryId,
@@ -95,7 +93,6 @@ passport.use(
           hashedPass,
           name,
           surname,
-          phonePrefix,
           phone,
           email,
           role,
@@ -122,6 +119,18 @@ passport.use(
             throw err;
           });
 
+        produceRaiseNotification({
+          channels: ["email"],
+          emailArgs: {
+            emailType: "admin-registration",
+            recipientEmail: email,
+            data: {
+              password: randomlyGeneratedPassword,
+              adminRole: role,
+            },
+          },
+          language,
+        }).catch(console.log);
         delete newAdmin.password;
 
         return done(null, newAdmin);
@@ -143,7 +152,7 @@ passport.use(
     async (req, emailIn, passwordIn, done) => {
       try {
         const language = req.header("x-language-alpha-2");
-        const country = req.header("x-country-alpha-2");
+        // const country = req.header("x-country-alpha-2");
 
         const role = req.body.role;
         const otp = req.body.otp;
@@ -168,7 +177,7 @@ passport.use(
           });
 
         if (!adminUser) {
-          return done(incorrectEmail(language));
+          return done(incorrectCredentials(language));
         }
 
         const validatePassword = await bcrypt.compare(
@@ -177,38 +186,40 @@ passport.use(
         );
 
         if (!validatePassword) {
-          return done(incorrectPassword(language));
+          return done(incorrectCredentials(language));
         }
 
         if (!adminUser.is_active) {
           return done(accountDeactivated(language));
         }
 
-        const adminOTP = await getAuthOTP(otp, adminUser.admin_id).then(
-          (data) => data.rows[0]
-        );
-
-        if (adminOTP === undefined) {
-          // OTP not found or already used
-          return done(invalidOTP(language));
-        } else {
-          const OTPCreatedAt = new Date(adminOTP.created_at).getTime();
-          const now = new Date().getTime();
-
-          if ((OTPCreatedAt - now) / 1000 > 60 * 30) {
-            // OTP is valid for 30 mins
-            return done(invalidOTP(language));
-          }
-        }
-
-        // each OTP can be used only once
-        await changeOTPToUsed(adminOTP.id).catch((err) => {
-          throw err;
-        });
-
-        delete adminUser.password;
-
         return done(null, adminUser);
+
+        // const adminOTP = await getAuthOTP(otp, adminUser.admin_id).then(
+        //   (data) => data.rows[0]
+        // );
+
+        // if (adminOTP === undefined) {
+        //   // OTP not found or already used
+        //   return done(invalidOTP(language));
+        // } else {
+        //   const OTPCreatedAt = new Date(adminOTP.created_at).getTime();
+        //   const now = new Date().getTime();
+
+        //   if ((OTPCreatedAt - now) / 1000 > 60 * 30) {
+        //     // OTP is valid for 30 mins
+        //     return done(invalidOTP(language));
+        //   }
+        // }
+
+        // // each OTP can be used only once
+        // await changeOTPToUsed(adminOTP.id).catch((err) => {
+        //   throw err;
+        // });
+
+        // delete adminUser.password;
+
+        // return done(null, adminUser);
       } catch (error) {
         return done(error);
       }
@@ -244,7 +255,7 @@ passport.use(
           });
 
         if (!adminUser) {
-          return done(incorrectEmail(language));
+          return done(incorrectCredentials(language));
         }
 
         const validatePassword = await bcrypt.compare(
@@ -253,7 +264,7 @@ passport.use(
         );
 
         if (!validatePassword) {
-          return done(incorrectPassword(language));
+          return done(incorrectCredentials(language));
         }
 
         if (!adminUser.is_active) {

@@ -24,18 +24,18 @@ export const emailUsed = (language) => {
   return error;
 };
 
-export const incorrectEmail = (language) => {
+export const incorrectPassword = (language) => {
   const error = new Error();
-  error.message = t("incorrect_email_error", language);
-  error.name = "INCORRECT EMAIl";
+  error.message = t("incorrect_password_error", language);
+  error.name = "INVALID CREDENTIALS";
   error.status = 404;
   return error;
 };
 
-export const incorrectPassword = (language) => {
+export const incorrectCredentials = (language) => {
   const error = new Error();
-  error.message = t("incorrect_password_error", language);
-  error.name = "INCORRECT PASSWORD";
+  error.message = t("incorrect_credentials_error", language);
+  error.name = "INVALID CREDENTIALS";
   error.status = 404;
   return error;
 };

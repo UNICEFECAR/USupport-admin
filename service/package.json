@@ -6,7 +6,8 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "prod": "node server.js"
+    "prod": "node server.js",
+    "lint": "eslint . --ext .js,.jsx"
   },
   "license": "GPL-3.0",
   "dependencies": {
@@ -25,11 +26,7 @@
     "yup": "^0.32.11"
   },
   "devDependencies": {
-    "eslint": "^8.23.1",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-prettier": "^4.2.1",
-    "nodemon": "^2.0.20",
-    "prettier": "^2.7.1"
+    "nodemon": "^2.0.20"
   },
   "imports": {
     "#routes/*": "./routes/*.js",

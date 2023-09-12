@@ -16,7 +16,6 @@ export const sponsorSchema = countrySchema.shape({
   language: yup.string().required(),
   name: yup.string().required(),
   email: yup.string().email().required(),
-  phonePrefix: yup.string().notRequired(),
   phone: yup.string().notRequired(),
   image: yup.string().notRequired(),
 });

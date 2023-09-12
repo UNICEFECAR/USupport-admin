@@ -20,7 +20,7 @@ export const generate4DigitCode = () => {
 export const getClientInitials = (clientData) => {
   return clientData.name && clientData.surname
     ? `${clientData.name.slice(0, 1)}.${clientData.surname.slice(0, 1)}.`
-    : clientData.nickname;
+    : `${clientData.nickname.slice(0, 1)}.`;
 };
 
 export const getYearInMilliseconds = () => {
@@ -36,4 +36,33 @@ export const formatSpecializations = (specializations) => {
   if (specializations?.length > 0) {
     return specializations.replace("{", "").replace("}", "").split(",");
   }
+};
+
+export const generatePassword = (length) => {
+  const letterPattern = /[a-zA-Z0-9]/;
+  const passwordPattern = new RegExp(
+    "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{8,}"
+  );
+
+  const getRandomByte = () => {
+    return Math.floor(Math.random() * 256);
+  };
+
+  const tempPassword = () =>
+    Array.apply(null, { length: length })
+      .map(() => {
+        let result, isDone;
+        while (!isDone) {
+          result = String.fromCharCode(getRandomByte());
+          if (letterPattern.test(result)) {
+            isDone = true;
+            return result;
+          }
+        }
+      })
+      .join("");
+
+  let password = tempPassword();
+  if (passwordPattern.test(password)) return password;
+  else return generatePassword(length);
 };

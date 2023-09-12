@@ -9,18 +9,12 @@ import {
   getAllGlobalAdminsQuery,
   getAllCountryAdminsQuery,
   deleteAdminDataByIdQuery,
-  updateProviderStatusQuery,
 } from "#queries/admins";
 
 import { getAllProvidersQuery } from "#queries/providers";
 
 import { formatSpecializations, updatePassword } from "#utils/helperFunctions";
-import {
-  emailUsed,
-  adminNotFound,
-  incorrectPassword,
-  providerNotFound,
-} from "#utils/errors";
+import { emailUsed, adminNotFound, incorrectPassword } from "#utils/errors";
 
 const PROVIDER_LOCAL_HOST = "http://localhost:3002";
 
@@ -59,7 +53,6 @@ export const updateAdminData = async ({
   email,
   currentEmail,
   phone,
-  phonePrefix,
 }) => {
   // Check if email is changed
   if (email !== currentEmail) {
@@ -83,7 +76,6 @@ export const updateAdminData = async ({
     name,
     surname,
     phone,
-    phonePrefix,
     email,
   })
     .then((res) => {
@@ -105,7 +97,6 @@ export const updateAdminDataById = async ({
   name,
   surname,
   email,
-  phonePrefix,
   phone,
   isActive,
 }) => {
@@ -143,7 +134,6 @@ export const updateAdminDataById = async ({
     name,
     surname,
     email,
-    phonePrefix,
     phone,
     isActive,
   })
@@ -199,13 +189,15 @@ export const changeAdminUserPassword = async ({
   return { success: true };
 };
 
-export const getAllProviders = async ({ country }) => {
+export const getAllProviders = async (props) => {
+  const newOffset = props.offset === 1 ? 0 : (props.offset - 1) * props.limit;
   return await getAllProvidersQuery({
-    poolCountry: country,
+    ...props,
+    poolCountry: props.country,
+    offset: newOffset,
   })
     .then((res) => {
       const providers = res.rows;
-
       for (let i = 0; i < providers.length; i++) {
         providers[i].specializations = formatSpecializations(
           providers[i].specializations

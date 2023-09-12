@@ -21,7 +21,6 @@ export const updateAdminDataSchema = getAdminByIdSchema.shape({
   name: yup.string().required(),
   surname: yup.string().required(),
   email: yup.string().email().required(),
-  phonePrefix: yup.string(),
   phone: yup.string(),
   currentEmail: yup.string().email().required(),
 });
@@ -33,7 +32,6 @@ export const updateAdminDataByIdSchema = yup.object().shape({
   name: yup.string().required(),
   surname: yup.string().required(),
   email: yup.string().email().required(),
-  phonePrefix: yup.string(),
   phone: yup.string(),
   isActive: yup.boolean().required(),
 });
@@ -55,4 +53,24 @@ export const updateProviderStatusSchema = countrySchema.shape({
   language: yup.string().required(),
   providerDetailId: yup.string().uuid().required(),
   status: yup.string().oneOf(["active", "inactive"]).required(),
+});
+
+export const getAllProvidersSchema = countrySchema.shape({
+  limit: yup.number().required(),
+  offset: yup.number().required(),
+  price: yup.number().nullable(true),
+  status: yup.string().oneOf(["active", "inactive", "any"]).nullable(true),
+  free: yup.boolean().nullable(true),
+  specialization: yup
+    .string()
+    .oneOf(["psychologist", "psychotherapist", "psychiatrist", "any"])
+    .nullable(true),
+  sort_name: yup.string().oneOf([null, "asc", "desc"]).nullable(true),
+  sort_email: yup.string().oneOf([null, "asc", "desc"]).nullable(true),
+  sort_consultationPrice: yup
+    .string()
+    .oneOf([null, "asc", "desc"])
+    .nullable(true),
+  sort_status: yup.string().oneOf([null, "asc", "desc"]).nullable(true),
+  search: yup.string().nullable(true),
 });

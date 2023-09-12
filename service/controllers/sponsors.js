@@ -40,7 +40,6 @@ export const createSponsor = async ({
   country,
   name,
   email,
-  phonePrefix,
   phone,
   image,
   language,
@@ -68,7 +67,6 @@ export const createSponsor = async ({
     poolCountry: country,
     name,
     email,
-    phonePrefix,
     phone,
     image,
   })
@@ -89,7 +87,6 @@ export const updateSponsor = async ({
   sponsor_id,
   name,
   email,
-  phonePrefix,
   phone,
   image,
 }) => {
@@ -98,7 +95,6 @@ export const updateSponsor = async ({
     sponsor_id,
     name,
     email,
-    phonePrefix,
     phone,
     image,
   })
@@ -174,7 +170,6 @@ export const createCampaignForSponsor = async ({
 };
 
 export const updateCampaignData = async ({
-  language,
   country,
   campaign_id,
   name,

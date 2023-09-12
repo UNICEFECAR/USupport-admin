@@ -14,7 +14,7 @@ export const getAllSponsorsQuery = ({ poolCountry }) => {
   const pool = getDBPool("piiDb", poolCountry);
   return pool.query(
     `
-        SELECT sponsor.sponsor_id, sponsor.name, email, phone_prefix, phone, image, 
+        SELECT sponsor.sponsor_id, sponsor.name, email, phone, image, 
                COUNT(*) FILTER (WHERE active = true) AS active_campaigns, COUNT(*) FILTER (WHERE coupon_code IS NOT NULL) AS total_campaigns
         FROM sponsor
            LEFT JOIN campaign ON sponsor.sponsor_id = campaign.sponsor_id
@@ -54,17 +54,16 @@ export const createSponsorQuery = ({
   poolCountry,
   name,
   email,
-  phonePrefix,
   phone,
   image,
 }) => {
   const pool = getDBPool("piiDb", poolCountry);
   return pool.query(
     `
-        INSERT INTO sponsor (name, email, phone_prefix, phone, image) VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO sponsor (name, email, phone, image) VALUES ($1, $2, $3, $4)
         RETURNING *
     `,
-    [name, email, phonePrefix, phone, image]
+    [name, email, phone, image]
   );
 };
 
@@ -73,7 +72,6 @@ export const updateSponsorQuery = ({
   sponsor_id,
   name,
   email,
-  phonePrefix,
   phone,
   image,
 }) => {
@@ -81,11 +79,11 @@ export const updateSponsorQuery = ({
   return pool.query(
     `
         UPDATE sponsor
-        SET name = $1, email = $2, phone_prefix = $3, phone = $4, image = $5
-        WHERE sponsor_id = $6
+        SET name = $1, email = $2, phone = $3, image = $4
+        WHERE sponsor_id = $5
         RETURNING *
     `,
-    [name, email, phonePrefix, phone, image, sponsor_id]
+    [name, email, phone, image, sponsor_id]
   );
 };
 
