@@ -50,7 +50,10 @@ export const getAllProvidersQuery = async ({
           AND CASE WHEN $6 = true THEN consultation_price = 0 ELSE consultation_price >= 0 END
           AND (
             $11::text IS NULL OR
-            (provider_detail.name::text ILIKE $11::text OR provider_detail.surname ILIKE $11::text OR provider_detail.email ILIKE $11::text)
+            (provider_detail.name::text ILIKE $11::text OR
+             provider_detail.surname ILIKE $11::text OR
+             provider_detail.patronym ILIKE $11::text OR
+             provider_detail.email ILIKE $11::text)
           )
         )
         ORDER BY 
