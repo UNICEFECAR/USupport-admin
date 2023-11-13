@@ -81,7 +81,7 @@ export const getProviderStatisticsQuery = async ({ poolCountry, providerId }) =>
     `  
       SELECT client_detail_id, provider_detail_id, time, status, price, campaign_id, created_at
       FROM consultation
-      WHERE provider_detail_id = $1 AND (status = 'finished' OR status = 'scheduled')
+      WHERE provider_detail_id = $1 AND (status = 'finished' OR (status = 'scheduled' AND now() > time + interval '1 hour'))
     `,
     [providerId]
   );
