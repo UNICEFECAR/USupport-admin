@@ -9,6 +9,7 @@ import {
   deleteAdminDataById,
   getAllProviders,
   updateProviderStatus,
+  PSKZUploadController,
 } from "#controllers/admin";
 
 import {
@@ -202,6 +203,14 @@ router.put("/update-provider-status", securedRoute, async (req, res, next) => {
     .strict(true)
     .validate({ country, language, providerDetailId, status })
     .then(updateProviderStatus)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.post("/pskz-db-snapshot-webhook", async (req, res, next) => {
+  const payload = req.body;
+
+  return await PSKZUploadController({ payload })
     .then((result) => res.status(200).send(result))
     .catch(next);
 });

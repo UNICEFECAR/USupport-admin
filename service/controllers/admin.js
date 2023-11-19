@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import fetch from "node-fetch";
+import AWS from "aws-sdk";
 
 import {
   getAdminUserByID,
@@ -19,6 +20,18 @@ import { emailUsed, adminNotFound, incorrectPassword } from "#utils/errors";
 const PROVIDER_LOCAL_HOST = "http://localhost:3002";
 
 const PROVIDER_URL = process.env.PROVIDER_URL;
+
+const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
+const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
+const AWS_REGION = process.env.AWS_REGION;
+const AWS_KZ_CLINICAL_DB_SNAPHOTS_BUCKET_NAME =
+  process.env.AWS_KZ_CLINICAL_DB_SNAPHOTS_BUCKET_NAME;
+const AWS_KZ_PII_DB_SNAPHOTS_BUCKET_NAME =
+  process.env.AWS_KZ_PII_DB_SNAPHOTS_BUCKET_NAME;
+
+//PSKZ envs
+const PSKZ_ACCESS_KEY_ID = process.env.PSKZ_ACCESS_KEY_ID;
+const PSKZ_SECRET_ACCESS_KEY = process.env.PSKZ_SECRET_ACCESS_KEY;
 
 export const getAdminUser = async ({ language, admin_id }) => {
   return await getAdminUserByID(admin_id)
@@ -243,4 +256,64 @@ export const updateProviderStatus = async ({
   }
 
   return result;
+};
+
+export const PSKZUploadController = async ({ payload }) => {
+  console.log(payload);
+  let response = {
+    status: "succes",
+    message: "Successfully uploaded",
+    data: payload,
+  };
+  try {
+    if (
+      payload.bucket === AWS_KZ_CLINICAL_DB_SNAPHOTS_BUCKET_NAME ||
+      payload.bucket === AWS_KZ_PII_DB_SNAPHOTS_BUCKET_NAME
+    ) {
+      const sourceS3 = new AWS.S3({
+        accessKeyId: AWS_ACCESS_KEY_ID,
+        secretAccessKey: AWS_SECRET_ACCESS_KEY,
+        region: AWS_REGION,
+      });
+
+      const destinationS3 = new AWS.S3({
+        accessKeyId: PSKZ_ACCESS_KEY_ID,
+        secretAccessKey: PSKZ_SECRET_ACCESS_KEY,
+        endpoint: `archive.pscloud.io`,
+      });
+
+      const getObjectParams = {
+        Bucket: payload.bucket,
+        Key: payload.key,
+      };
+
+      // Get the content of the object from the source bucket
+      const getObjectResult = await sourceS3
+        .getObject(getObjectParams)
+        .promise();
+      const fileContent = getObjectResult.Body.toString();
+
+      // Store the file in the destination bucket
+      const putObjectParams = {
+        Bucket: payload.bucket,
+        Key: payload.key,
+        Body: fileContent,
+      };
+      await destinationS3.putObject(putObjectParams).promise();
+    } else {
+      response = {
+        status: "error",
+        message: "Invalid bucket name",
+        data: payload,
+      };
+    }
+  } catch (err) {
+    response = {
+      status: "error",
+      message: err.message,
+      data: payload,
+    };
+  }
+
+  return response;
 };
