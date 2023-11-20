@@ -308,11 +308,13 @@ export const PSKZUploadController = async ({ payload }) => {
       };
     }
   } catch (err) {
-    response = {
-      status: "error",
-      message: err.message,
-      data: payload,
-    };
+    console.log("ERROR", err);
+    throw err;
+    // response = {
+    //   status: "error",
+    //   message: err.message,
+    //   data: payload,
+    // };
   }
 
   return response;
