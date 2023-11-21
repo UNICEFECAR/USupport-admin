@@ -207,12 +207,16 @@ router.put("/update-provider-status", securedRoute, async (req, res, next) => {
     .catch(next);
 });
 
-router.post("/pskz-db-snapshot-webhook", async (req, res, next) => {
-  const payload = req.body;
+router.post(
+  "/pskz-db-snapshot-webhook",
+  securedRoute,
+  async (req, res, next) => {
+    const payload = req.body;
 
-  return await PSKZUploadController({ payload })
-    .then((result) => res.status(200).send(result))
-    .catch(next);
-});
+    return await PSKZUploadController({ payload })
+      .then((result) => res.status(200).send(result))
+      .catch(next);
+  }
+);
 
 export { router };
