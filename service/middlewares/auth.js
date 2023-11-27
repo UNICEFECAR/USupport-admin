@@ -41,6 +41,7 @@ const extractJWT = passportJWT.ExtractJwt;
 
 const JWT_KEY = process.env.JWT_KEY;
 const PSKZ_ROLE = process.env.PSKZ_ROLE;
+console.log(JWT_KEY, JWT_KEY);
 
 passport.use(
   "signup",
@@ -330,8 +331,9 @@ passport.use(
     async (req, jwt_payload, done) => {
       try {
         const admin_id = jwt_payload.sub;
+        const admin_role = jwt_payload.role;
 
-        if (admin_id === PSKZ_ROLE) {
+        if (admin_role === PSKZ_ROLE) {
           return done(null, { role: PSKZ_ROLE });
         }
 
@@ -358,6 +360,8 @@ export const authenticateJWT = (isMiddleWare, req, res, next) => {
     const language = req.header("x-language-alpha-2");
 
     if (admin?.role === PSKZ_ROLE) {
+      if (isMiddleWare) return next();
+
       return res.status(200).send({ role: PSKZ_ROLE });
     }
 
