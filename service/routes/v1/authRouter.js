@@ -4,6 +4,7 @@ import passport from "passport";
 import {
   issueAccessToken,
   issueRefreshToken,
+  logoutAdmin,
   refreshAccessToken,
 } from "#controllers/auth";
 
