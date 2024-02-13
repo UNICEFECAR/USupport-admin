@@ -9,6 +9,7 @@ import {
 
 import { invalidRefreshToken } from "#utils/errors";
 import { getYearInMilliseconds } from "#utils/helperFunctions";
+import { logoutAdminQuery } from "#queries/admins";
 
 const JWT_KEY = process.env.JWT_KEY;
 
@@ -83,4 +84,27 @@ export const refreshAccessToken = async ({ language, refreshToken }) => {
       refreshToken: newRefreshToken,
     };
   }
+};
+
+export const logoutAdmin = async ({
+  country,
+  language,
+  admin_id,
+  jwt: jwtFromHeaders,
+}) => {
+  const decoded = jwt.decode(jwtFromHeaders);
+
+  const isSameID = decoded.sub === admin_id;
+
+  if (!isSameID) throw incorrectCredentials(language);
+
+  await logoutAdminQuery({
+    poolCountry: country,
+    token: jwt,
+  }).catch((err) => {
+    console.log("Error logging out user", err);
+    throw err;
+  });
+
+  return { success: true };
 };

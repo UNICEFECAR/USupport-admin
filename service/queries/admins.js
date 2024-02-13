@@ -177,3 +177,13 @@ export const updateProviderStatusQuery = async ({
     [status, providerDetailId]
   );
 };
+
+export const logoutAdminQuery = async ({ poolCountry, token }) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+        INSERT INTO jwt_blacklist (token)
+        VALUES ($1);
+      `,
+    [token]
+  );
+};

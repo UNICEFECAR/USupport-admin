@@ -46,3 +46,10 @@ export const createAdminSchema = (language) =>
     },
     ["adminCountryId", "adminRegionId"]
   );
+
+export const logoutAdminSchema = yup.object().shape({
+  country: yup.string().required(),
+  language: yup.string().required(),
+  admin_id: yup.string().uuid().required(),
+  jwt: yup.string().required(),
+});

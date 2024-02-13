@@ -7,7 +7,11 @@ import {
   refreshAccessToken,
 } from "#controllers/auth";
 
-import { refreshAccessTokenSchema } from "#schemas/authSchemas";
+import {
+  logoutAdminSchema,
+  refreshAccessTokenSchema,
+} from "#schemas/authSchemas";
+import { securedRoute } from "#middlewares/auth";
 
 const router = express.Router();
 
@@ -94,5 +98,24 @@ router.post(
     return res.status(200).send(req.user);
   }
 );
+
+router.route("/logout").post(securedRoute, async (req, res, next) => {
+  /**
+   * #route   POST /admin/v1/auth/logout
+   * #desc    Logout admin and blacklist JWT token
+   */
+  const country = req.header("x-country-alpha-2");
+  const language = req.header("x-language-alpha-2");
+  const admin_id = req.user.admin_id;
+  const jwt = req.header("authorization").split(" ")[1];
+
+  return await logoutAdminSchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({ country, language, admin_id, jwt })
+    .then(logoutAdmin)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
 
 export { router };
