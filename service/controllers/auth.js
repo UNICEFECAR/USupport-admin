@@ -17,6 +17,7 @@ export const issueAccessToken = async ({ admin_id, adminRole }) => {
     sub: admin_id,
     adminRole,
     iat: Math.floor(Date.now() / 1000),
+    jti: uuidv4(),
   };
 
   const signedToken = jwt.sign(payload, JWT_KEY, {
