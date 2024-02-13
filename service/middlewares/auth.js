@@ -41,7 +41,6 @@ const extractJWT = passportJWT.ExtractJwt;
 
 const JWT_KEY = process.env.JWT_KEY;
 const PSKZ_ROLE = process.env.PSKZ_ROLE;
-console.log(JWT_KEY, JWT_KEY);
 
 passport.use(
   "signup",
