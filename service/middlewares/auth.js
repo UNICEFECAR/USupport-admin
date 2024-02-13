@@ -9,6 +9,7 @@ import {
   createAdminUser,
   createAdminToCountryLink,
   createAdminToRegionLink,
+  isJwtBlacklisted,
 } from "#queries/admins";
 
 import {
@@ -329,11 +330,32 @@ passport.use(
     },
     async (req, jwt_payload, done) => {
       try {
+        const country = req.header("x-country-alpha-2");
         const admin_id = jwt_payload.sub;
         const admin_role = jwt_payload.role;
 
         if (admin_role === PSKZ_ROLE) {
           return done(null, { role: PSKZ_ROLE });
+        }
+
+        const rawJWT = req.headers.authorization.split(" ")[1];
+
+        const isBlacklisted = await isJwtBlacklisted({
+          token: rawJWT,
+          poolCountry: country,
+        })
+          .then((res) => {
+            if (res.rows.length > 0) return true;
+            return false;
+          })
+          .catch((err) => {
+            console.log("Error checking blacklisted token", err);
+            throw err;
+          });
+
+        // If the jwt is blacklisted revoke access
+        if (isBlacklisted) {
+          done(null, false);
         }
 
         const admin = await getAdminUserByID(admin_id)
