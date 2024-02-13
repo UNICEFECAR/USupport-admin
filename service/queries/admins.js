@@ -187,3 +187,15 @@ export const logoutAdminQuery = async ({ poolCountry, token }) => {
     [token]
   );
 };
+
+export const isJwtBlacklisted = async ({ token, poolCountry }) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+            SELECT *
+            FROM jwt_blacklist
+            WHERE token = $1
+            LIMIT 1;
+        `,
+    [token]
+  );
+};
