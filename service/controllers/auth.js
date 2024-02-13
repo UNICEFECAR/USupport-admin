@@ -100,7 +100,7 @@ export const logoutAdmin = async ({
 
   await logoutAdminQuery({
     poolCountry: country,
-    token: jwt,
+    token: jwtFromHeaders,
   }).catch((err) => {
     console.log("Error logging out user", err);
     throw err;
