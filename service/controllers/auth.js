@@ -7,7 +7,7 @@ import {
   invalidateRefreshToken,
 } from "#queries/authTokens";
 
-import { invalidRefreshToken } from "#utils/errors";
+import { incorrectCredentials, invalidRefreshToken } from "#utils/errors";
 import { getYearInMilliseconds } from "#utils/helperFunctions";
 import { logoutAdminQuery } from "#queries/admins";
 
@@ -92,6 +92,7 @@ export const logoutAdmin = async ({
   admin_id,
   jwt: jwtFromHeaders,
 }) => {
+  if (!jwtFromHeaders) throw incorrectCredentials(language);
   const decoded = jwt.decode(jwtFromHeaders);
 
   const isSameID = decoded.sub === admin_id;
