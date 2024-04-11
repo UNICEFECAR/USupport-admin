@@ -323,7 +323,7 @@ export const PSKZUploadController = async ({ payload }) => {
   return response;
 };
 
-export const getPlatformMetrics = async ({ country, language }) => {
+export const getPlatformMetrics = async ({ country }) => {
   const consultations =
     await getScheduledConsultationsWithClientIdForCountryQuery({
       poolCountry: country,
