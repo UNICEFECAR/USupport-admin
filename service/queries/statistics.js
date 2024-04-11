@@ -39,6 +39,17 @@ export const getScheduledConsultationsNoForCountryQuery = async ({
     `
   );
 
+export const getScheduledConsultationsWithClientIdForCountryQuery = async ({
+  poolCountry,
+}) =>
+  await getDBPool("clinicalDb", poolCountry).query(
+    `
+      SELECT client_detail_id, campaign_id
+      FROM consultation
+      WHERE status = 'scheduled';
+    `
+  );
+
 export const getSecurityCheckAnswersQuery = async ({ poolCountry }) =>
   await getDBPool("clinicalDb", poolCountry).query(
     `
@@ -84,4 +95,50 @@ export const getProviderStatisticsQuery = async ({ poolCountry, providerId }) =>
       WHERE provider_detail_id = $1 AND (status = 'finished' OR (status = 'scheduled' AND now() > time + interval '1 hour'))
     `,
     [providerId]
+  );
+
+export const getClientsAndProvidersLoggedIn15DaysQuery = async ({
+  poolCountry,
+}) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+    SELECT 
+    COUNT(*) FILTER (WHERE type = 'client') AS clients_no,
+    COUNT(*) FILTER (WHERE type = 'provider') AS providers_no
+    FROM "user"
+    WHERE deleted_at is NULL AND last_login > now() - interval '15 days';
+      `
+  );
+};
+
+export const getPositivePlatformRatingsFromClientsQuery = async ({
+  poolCountry,
+}) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+    SELECT COUNT(*)
+    FROM client_rating
+    WHERE rating > 3
+    `
+  );
+};
+
+export const getPositivePlatformRatingsFromProvidersQuery = async ({
+  poolCountry,
+}) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+    SELECT COUNT(*)
+    FROM provider_rating
+    WHERE rating > 3
+    `
+  );
+};
+
+export const getProviderPlatformRatingsQuery = async ({ poolCountry }) =>
+  await getDBPool("piiDb", poolCountry).query(
+    `
+      SELECT rating, comment, provider_rating.created_at
+      FROM provider_rating
+    `
   );

@@ -8,6 +8,7 @@ import {
   getClientRatingsQuery,
   getContactFormsQuery,
   getProviderStatisticsQuery,
+  getProviderPlatformRatingsQuery,
 } from "#queries/statistics";
 
 import {
@@ -305,4 +306,20 @@ export const getProviderStatistics = async ({ country, providerId }) => {
   });
 
   return consultations;
+};
+
+export const getProviderPlatformRatings = async ({ country }) => {
+  return await getProviderPlatformRatingsQuery({
+    poolCountry: country,
+  })
+    .then((res) => {
+      if (res.rowCount === 0) {
+        return [];
+      } else {
+        return res.rows;
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
 };

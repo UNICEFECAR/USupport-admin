@@ -10,7 +10,15 @@ import {
   getAllGlobalAdminsQuery,
   getAllCountryAdminsQuery,
   deleteAdminDataByIdQuery,
+  getPlatformAccessLogsQuery,
 } from "#queries/admins";
+
+import {
+  getScheduledConsultationsWithClientIdForCountryQuery,
+  getClientsAndProvidersLoggedIn15DaysQuery,
+  getPositivePlatformRatingsFromClientsQuery,
+  getPositivePlatformRatingsFromProvidersQuery,
+} from "#queries/statistics";
 
 import { getAllProvidersQuery } from "#queries/providers";
 
@@ -313,4 +321,109 @@ export const PSKZUploadController = async ({ payload }) => {
   }
 
   return response;
+};
+
+export const getPlatformMetrics = async ({ country, language }) => {
+  const consultations =
+    await getScheduledConsultationsWithClientIdForCountryQuery({
+      poolCountry: country,
+    }).then((res) => {
+      return res.rows;
+    });
+
+  const totalConsultations = consultations.length;
+  const uniqueClientsConsultations = new Set(
+    consultations.map((item) => item.client_detail_id)
+  ).size;
+
+  const uniqueClientsThatUsedCoupon = new Set();
+
+  const totalCouponConsultations = consultations.filter((item) => {
+    if (item.campaign_id) {
+      uniqueClientsThatUsedCoupon.add(item.client_detail_id);
+    }
+    return !!item.campaign_id;
+  }).length;
+
+  const { activeClients, activeProviders } =
+    await getClientsAndProvidersLoggedIn15DaysQuery({
+      poolCountry: country,
+    }).then((res) => {
+      if (res.rowCount === 0) {
+        return {
+          activeClients: 0,
+          activeProviders: 0,
+        };
+      }
+      const result = res.rows[0];
+      return {
+        activeClients: result.clients_no,
+        activeProviders: result.providers_no,
+      };
+    });
+
+  const accessLogs = await getPlatformAccessLogsQuery({
+    poolCountry: country,
+  }).then((res) => res.rows || []);
+
+  let totalWebsiteAccess = 0;
+  let totalClientAccess = 0;
+  let totalProviderAccess = 0;
+
+  let uniqueWebsiteAccess = new Set();
+  let uniqueClientAccess = new Set();
+  let uniqueProviderAccess = new Set();
+
+  accessLogs.map((log) => {
+    if (log.platform === "client") {
+      totalClientAccess++;
+
+      if (log.user_id) {
+        uniqueClientAccess.add(log.user_id);
+      } else {
+        uniqueClientAccess.add(log.ip_address);
+      }
+    } else if (log.platform === "provider") {
+      totalProviderAccess++;
+      if (log.user_id) {
+        uniqueProviderAccess.add(log.user_id);
+      } else {
+        uniqueProviderAccess.add(log.ip_address);
+      }
+    } else {
+      totalWebsiteAccess++;
+      uniqueWebsiteAccess.add(log.ip_address);
+    }
+  });
+
+  const positiveClientRatings =
+    await getPositivePlatformRatingsFromClientsQuery({
+      poolCountry: country,
+    }).then((res) => {
+      return res.rows ? res.rows[0].count : 0;
+    });
+
+  const positiveProviderRatings =
+    await getPositivePlatformRatingsFromProvidersQuery({
+      poolCountry: country,
+    }).then((res) => {
+      return res.rows ? res.rows[0].count : 0;
+    });
+
+  return {
+    totalConsultations,
+    uniqueClientsConsultations,
+    activeClients,
+    activeProviders,
+    totalWebsiteAccess,
+    totalClientAccess,
+    totalProviderAccess,
+    uniqueWebsiteAccess: uniqueWebsiteAccess.size,
+    uniqueClientAccess: uniqueClientAccess.size,
+    uniqueProviderAccess: uniqueProviderAccess.size,
+    uniqueClientsThatUsedCoupon: uniqueClientsThatUsedCoupon.size,
+    totalCouponConsultations,
+    positiveClientRatings,
+    positiveProviderRatings,
+  };
 };
