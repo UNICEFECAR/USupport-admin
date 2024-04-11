@@ -59,7 +59,14 @@ export const getSecurityCheckAnswersQuery = async ({ poolCountry }) =>
         WHERE contacts_disclosure = true
         OR suggest_outside_meeting = true
         OR identity_coercion = true
-        OR unsafe_feeling = true;
+        OR unsafe_feeling = true
+        OR provider_attend = false
+        OR feeling = 'very_dissatisfied'
+        OR feeling = 'dissatisfied'
+        OR feeling = 'neutral'
+        OR addressed_needs < 6
+        OR improve_wellbeing < 6
+        OR feelings_now < 6;
       `
   );
 
