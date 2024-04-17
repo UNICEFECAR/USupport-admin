@@ -39,16 +39,34 @@ export const getScheduledConsultationsNoForCountryQuery = async ({
     `
   );
 
+export const getScheduledConsultationsWithClientIdForCountryQuery = async ({
+  poolCountry,
+}) =>
+  await getDBPool("clinicalDb", poolCountry).query(
+    `
+      SELECT client_detail_id, campaign_id
+      FROM consultation
+      WHERE status = 'scheduled';
+    `
+  );
+
 export const getSecurityCheckAnswersQuery = async ({ poolCountry }) =>
   await getDBPool("clinicalDb", poolCountry).query(
     `
-        SELECT consultation_security_check_id, contacts_disclosure, suggest_outside_meeting, identity_coercion, unsafe_feeling, more_details, client_detail_id, provider_detail_id, time, consultation_security_check.created_at
+        SELECT consultation_security_check_id, contacts_disclosure, suggest_outside_meeting, identity_coercion, unsafe_feeling, provider_attend, feeling, addressed_needs, improve_wellbeing, feelings_now, additional_comment ,more_details, client_detail_id, provider_detail_id, time, consultation_security_check.created_at
         FROM consultation_security_check
           INNER JOIN consultation ON consultation_security_check.consultation_id = consultation.consultation_id
         WHERE contacts_disclosure = true
         OR suggest_outside_meeting = true
         OR identity_coercion = true
-        OR unsafe_feeling = true;
+        OR unsafe_feeling = true
+        OR provider_attend = false
+        OR feeling = 'very_dissatisfied'
+        OR feeling = 'dissatisfied'
+        OR feeling = 'neutral'
+        OR addressed_needs < 6
+        OR improve_wellbeing < 6
+        OR feelings_now < 6;
       `
   );
 
@@ -81,7 +99,53 @@ export const getProviderStatisticsQuery = async ({ poolCountry, providerId }) =>
     `  
       SELECT client_detail_id, provider_detail_id, time, status, price, campaign_id, created_at
       FROM consultation
-      WHERE provider_detail_id = $1 AND (status = 'finished' OR (status = 'scheduled' AND now() > time + interval '1 hour'))
+      WHERE provider_detail_id = $1 AND (status = 'finished' OR status = 'late-canceled' OR (status = 'scheduled' AND now() > time + interval '1 hour'))
     `,
     [providerId]
+  );
+
+export const getClientsAndProvidersLoggedIn15DaysQuery = async ({
+  poolCountry,
+}) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+    SELECT 
+    COUNT(*) FILTER (WHERE type = 'client') AS clients_no,
+    COUNT(*) FILTER (WHERE type = 'provider') AS providers_no
+    FROM "user"
+    WHERE deleted_at is NULL AND last_login > now() - interval '15 days';
+      `
+  );
+};
+
+export const getPositivePlatformRatingsFromClientsQuery = async ({
+  poolCountry,
+}) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+    SELECT COUNT(*)
+    FROM client_rating
+    WHERE rating > 3
+    `
+  );
+};
+
+export const getPositivePlatformRatingsFromProvidersQuery = async ({
+  poolCountry,
+}) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+    SELECT COUNT(*)
+    FROM provider_rating
+    WHERE rating > 3
+    `
+  );
+};
+
+export const getProviderPlatformRatingsQuery = async ({ poolCountry }) =>
+  await getDBPool("piiDb", poolCountry).query(
+    `
+      SELECT rating, comment, provider_rating.created_at
+      FROM provider_rating
+    `
   );

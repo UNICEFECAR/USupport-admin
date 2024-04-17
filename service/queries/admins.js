@@ -199,3 +199,12 @@ export const isJwtBlacklisted = async ({ token, poolCountry }) => {
     [token]
   );
 };
+
+export const getPlatformAccessLogsQuery = async ({ poolCountry }) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+      SELECT user_id, platform, ip_address
+      FROM platform_access
+        `
+  );
+};

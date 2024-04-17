@@ -10,6 +10,7 @@ import {
   getAllProviders,
   updateProviderStatus,
   PSKZUploadController,
+  getPlatformMetrics,
 } from "#controllers/admin";
 
 import {
@@ -123,6 +124,20 @@ router.get("/all", securedRoute, async (req, res, next) => {
       countryId,
     })
     .then(getAllAdmins)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.get("/platform-metrics", async (req, res, next) => {
+  /**
+   * #route   GET /admin/v1/admin/platform-metrics
+   * #desc    Get platform metrics
+   */
+
+  const country = req.header("x-country-alpha-2");
+  const language = req.header("x-language-alpha-2");
+
+  return await getPlatformMetrics({ country, language })
     .then((result) => res.status(200).send(result))
     .catch(next);
 });

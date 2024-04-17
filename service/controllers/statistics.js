@@ -8,6 +8,7 @@ import {
   getClientRatingsQuery,
   getContactFormsQuery,
   getProviderStatisticsQuery,
+  getProviderPlatformRatingsQuery,
 } from "#queries/statistics";
 
 import {
@@ -129,6 +130,43 @@ export const getSecurityCheck = async ({ country }) => {
       throw err;
     });
 
+  const getIssueNumber = (answers) => {
+    let counter = 0;
+    if (answers?.provider_attend === false) {
+      counter++;
+    }
+    if (answers.contacts_disclosure === true) {
+      counter++;
+    }
+    if (answers.suggest_outside_meeting === true) {
+      counter++;
+    }
+    if (answers.identity_coercion === true) {
+      counter++;
+    }
+    if (answers.unsafe_feeling === true) {
+      counter++;
+    }
+    if (
+      answers.feeling === "very_dissatisfied" ||
+      answers.feeling === "dissatisfied" ||
+      answers.feeling === "neutral"
+    ) {
+      counter++;
+    }
+    if (answers.addressed_needs < 6) {
+      counter++;
+    }
+    if (answers.improve_wellbeing < 6) {
+      counter++;
+    }
+    if (answers.feelings_now < 6) {
+      counter++;
+    }
+
+    return counter;
+  };
+
   const providerDetailsCache = {};
   const clientDetailsCache = {};
   for (let i = 0; i < securityChecks.length; i++) {
@@ -157,6 +195,8 @@ export const getSecurityCheck = async ({ country }) => {
       providerDetailsCache[providerId] = providerData;
       securityChecks[i].providerData = providerData;
     }
+
+    securityChecks[i].numberOfIssues = getIssueNumber(securityCheck);
 
     if (clientDetailsCache[clientId]) {
       const clientData = clientDetailsCache[clientId];
@@ -305,4 +345,20 @@ export const getProviderStatistics = async ({ country, providerId }) => {
   });
 
   return consultations;
+};
+
+export const getProviderPlatformRatings = async ({ country }) => {
+  return await getProviderPlatformRatingsQuery({
+    poolCountry: country,
+  })
+    .then((res) => {
+      if (res.rowCount === 0) {
+        return [];
+      } else {
+        return res.rows;
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
 };
