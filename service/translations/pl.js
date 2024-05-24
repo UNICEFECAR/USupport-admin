@@ -22,6 +22,6 @@ export default {
   campaign_code_already_exists_error:
     "Kampania z tym kodem kuponu już istnieje",
   campaign_not_found_error: "Nie znaleziono kampanii",
-  provider_not_found_error: "",
+  provider_not_found_error: "Nie znaleziono konsultanta",
   question_cant_be_deleted_error: "Pytanie nie może zostać usunięte",
 };

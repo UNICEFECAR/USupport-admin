@@ -19,6 +19,6 @@ export default {
   sponsor_email_already_exists_error: "Спонсор(ка) із такою адресою вже існує.",
   campaign_code_already_exists_error: "Кампанія з цим кодом купона вже існує",
   campaign_not_found_error: "Кампанію не знайдено",
-  provider_not_found_error: "",
+  provider_not_found_error: "Консультанта/тку не знайдено",
   question_cant_be_deleted_error: "Запитання не можна видалити",
 };
