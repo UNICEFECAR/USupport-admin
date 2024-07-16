@@ -3,8 +3,8 @@ export default {
   password_validation_error:
     "Hasło powinno zawierać co najmniej 8 znaków, 1 wielką literę, 1 małą literę i 1 cyfrę.",
   admin_not_found_error: "Nie znaleziono administratora",
-  email_already_used_error: "Ten adres e-mail jest już wykorzystany",
-  incorrect_email_error: "Nie ma administratora z tym adresem e-mail",
+  email_already_used_error: "Ten adres email jest już wykorzystywany",
+  incorrect_email_error: "Nie ma administratora z tym adresem email",
   incorrect_password_error: "Podane hasło jest nieprawidłowe",
   incorrect_credentials_error: "Nieprawidłowe poświadczenia",
   not_authenticated_error:
@@ -18,7 +18,7 @@ export default {
   too_many_otp_requests_error:
     "Wykonano zbyt wiele żądań OTP, spróbuj ponownie wkrótce.",
   sponsor_email_already_exists_error:
-    "Sponsor z tym adresem e-mail już istnieje.",
+    "Sponsor z tym adresem email już istnieje.",
   campaign_code_already_exists_error:
     "Kampania z tym kodem kuponu już istnieje",
   campaign_not_found_error: "Nie znaleziono kampanii",
