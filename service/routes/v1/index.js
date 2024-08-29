@@ -5,3 +5,4 @@ export { router as RescueRouter } from "./rescueRouter.js";
 export { router as StatisticsRouter } from "./StatisticsRouter.js";
 export { router as SponsorsRouter } from "./SponsorsRouter.js";
 export { router as MyQARouter } from "./MyQARouter.js";
+export { router as OrganizationsRouter } from "./OrganizationsRouter.js";
