@@ -143,3 +143,11 @@ export const questionCantBeActivated = (language) => {
   error.status = 400;
   return error;
 };
+
+export const organizationExists = (language) => {
+  const error = new Error();
+  error.message = t("organization_exists_error", language);
+  error.name = "ORGANIZATION EXISTS";
+  error.status = 409;
+  return error;
+};

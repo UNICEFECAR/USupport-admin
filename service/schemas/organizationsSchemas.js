@@ -6,3 +6,7 @@ export const createOrganizationSchema = yup.object().shape({
   country: yup.string().required(),
   language: yup.string().required(),
 });
+
+export const getAllOrganizationsSchema = yup.object().shape({
+  country: yup.string().required(),
+});

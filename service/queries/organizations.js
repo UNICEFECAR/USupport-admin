@@ -14,3 +14,11 @@ export const createOrganizationQuery = async ({
     [name, createdBy]
   );
 };
+
+export const getAllOrganizationsQuery = async ({ country: poolCountry }) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+            SELECT * FROM organization
+         `
+  );
+};

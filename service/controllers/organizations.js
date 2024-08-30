@@ -1,4 +1,8 @@
-import { createOrganizationQuery } from "#queries/organizations";
+import {
+  createOrganizationQuery,
+  getAllOrganizationsQuery,
+} from "#queries/organizations";
+import { organizationExists } from "#utils/errors";
 
 export const createOrganization = async (data) => {
   return await createOrganizationQuery(data)
@@ -8,8 +12,18 @@ export const createOrganization = async (data) => {
     .catch((err) => {
       // Check if the error is due to duplicate organization name
       if (err.code === "23505") {
-        throw new Error("Organization already exists");
+        throw organizationExists(data.language);
       }
+      throw err;
+    });
+};
+
+export const getAllOrganizations = async (data) => {
+  return await getAllOrganizationsQuery(data)
+    .then((res) => {
+      return res.rows || [];
+    })
+    .catch((err) => {
       throw err;
     });
 };
