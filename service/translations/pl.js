@@ -24,4 +24,7 @@ export default {
   campaign_not_found_error: "Nie znaleziono kampanii",
   provider_not_found_error: "Nie znaleziono konsultanta",
   question_cant_be_deleted_error: "Pytanie nie może zostać usunięte",
+  organization_exists_error: "Organizacja już istnieje",
+  provider_already_assigned_to_org:
+    "Konsultant jest już przypisany do tej organizacji",
 };

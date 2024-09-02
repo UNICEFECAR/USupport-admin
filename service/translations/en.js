@@ -23,4 +23,6 @@ export default {
   campaign_not_found_error: "Campaign not found",
   provider_not_found_error: "Provider not found",
   question_cant_be_deleted_error: "Question can't be deleted",
+  organization_exists_error: "Organization already exists",
+  provider_already_assigned_to_org: "Provider already assigned to organization",
 };

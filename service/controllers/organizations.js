@@ -1,8 +1,12 @@
 import {
+  assignProviderToOrganizationQuery,
   createOrganizationQuery,
   getAllOrganizationsQuery,
 } from "#queries/organizations";
-import { organizationExists } from "#utils/errors";
+import {
+  organizationExists,
+  providerAlreadyAssignedToOrg,
+} from "#utils/errors";
 
 export const createOrganization = async (data) => {
   return await createOrganizationQuery(data)
@@ -14,6 +18,19 @@ export const createOrganization = async (data) => {
       if (err.code === "23505") {
         throw organizationExists(data.language);
       }
+      throw err;
+    });
+};
+
+export const assignProviderToOrganization = async (data) => {
+  return await assignProviderToOrganizationQuery(data)
+    .then((res) => {
+      if (res.rows.length === 0) {
+        throw providerAlreadyAssignedToOrg(data.language);
+      }
+      return res.rows[0];
+    })
+    .catch((err) => {
       throw err;
     });
 };

@@ -22,4 +22,7 @@ export default {
   campaign_not_found_error: "Науқан табылмады",
   provider_not_found_error: "Консультант табылмады",
   question_cant_be_deleted_error: "Сұрақты жою мүмкін емес",
+  organization_exists_error: "Ұйым әлдеқашан бар",
+  provider_already_assigned_to_org:
+    "Консультант әлдеқашан организацияға тағайындалған",
 };

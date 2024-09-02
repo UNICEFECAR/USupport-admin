@@ -151,3 +151,11 @@ export const organizationExists = (language) => {
   error.status = 409;
   return error;
 };
+
+export const providerAlreadyAssignedToOrg = (language) => {
+  const error = new Error();
+  error.message = t("provider_already_assigned_to_org", language);
+  error.name = "PROVIDER ALREADY ASSIGNED TO ORGANIZATION";
+  error.status = 409;
+  return error;
+};

@@ -7,6 +7,13 @@ export const createOrganizationSchema = yup.object().shape({
   language: yup.string().required(),
 });
 
+export const assignProviderToOrganizationSchema = yup.object().shape({
+  organizationId: yup.string().uuid().required(),
+  providerDetailId: yup.string().uuid().required(),
+  country: yup.string().required(),
+  language: yup.string().required(),
+});
+
 export const getAllOrganizationsSchema = yup.object().shape({
   country: yup.string().required(),
 });

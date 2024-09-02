@@ -24,4 +24,6 @@ export default {
   campaign_not_found_error: "Кампания не найдена",
   provider_not_found_error: "Консультант не найден",
   question_cant_be_deleted_error: "Вопрос не может быть удален",
+  organization_exists_error: "Организация уже существует",
+  provider_already_assigned_to_org: "Консультант уже назначен организации",
 };
