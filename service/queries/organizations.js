@@ -79,3 +79,20 @@ export const getConsultationsForOrganizationsQuery = async ({
     [organizationIds]
   );
 };
+
+export const editOrganizationQuery = async ({
+  name,
+  organizationId,
+  country: poolCountry,
+}) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+    UPDATE organization
+    SET
+      name = $1
+    WHERE organization_id = $2
+    RETURNING *;
+    `,
+    [name, organizationId]
+  );
+};

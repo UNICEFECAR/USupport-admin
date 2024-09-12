@@ -1,6 +1,7 @@
 import {
   assignProviderToOrganizationQuery,
   createOrganizationQuery,
+  editOrganizationQuery,
   getAllOrganizationsQuery,
   getConsultationsForOrganizationsQuery,
 } from "#queries/organizations";
@@ -19,6 +20,16 @@ export const createOrganization = async (data) => {
       if (err.code === "23505") {
         throw organizationExists(data.language);
       }
+      throw err;
+    });
+};
+
+export const editOrganization = async (data) => {
+  return await editOrganizationQuery(data)
+    .then((res) => {
+      return res.rows[0];
+    })
+    .catch((err) => {
       throw err;
     });
 };

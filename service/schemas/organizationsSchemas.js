@@ -17,3 +17,9 @@ export const assignProviderToOrganizationSchema = yup.object().shape({
 export const getAllOrganizationsSchema = yup.object().shape({
   country: yup.string().required(),
 });
+
+export const editOrganizationSchema = createOrganizationSchema
+  .omit(["createdBy"])
+  .shape({
+    organizationId: yup.string().uuid().required(),
+  });
