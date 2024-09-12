@@ -44,3 +44,38 @@ export const assignProviderToOrganizationQuery = async ({
     [organizationId, providerDetailId]
   );
 };
+
+export const getAllOrganizationsWithDetailsQuery = async ({
+  country: poolCountry,
+}) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+            SELECT organization.*, organization_provider_links.provider_detail_id
+            FROM organization
+              JOIN organization_provider_links ON organization.id = organization_provider_links.organization_id
+            ORDER BY organization.created_at DESC;
+         `
+  );
+};
+
+export const getConsultationsForOrganizationsQuery = async ({
+  organizationIds,
+  country: poolCountry,
+}) => {
+  return await getDBPool("clinicalDb", poolCountry).query(
+    `
+          SELECT 
+              organization_id,
+              COUNT(DISTINCT consultation_id) AS consultations_count,
+              COUNT(DISTINCT provider_detail_id) AS providers_count,
+              COUNT(DISTINCT client_detail_id) AS clients_count
+          FROM 
+              consultation
+          WHERE 
+              organization_id = ANY($1)
+          GROUP BY 
+              organization_id;
+    `,
+    [organizationIds]
+  );
+};

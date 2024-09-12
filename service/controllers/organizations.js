@@ -2,6 +2,7 @@ import {
   assignProviderToOrganizationQuery,
   createOrganizationQuery,
   getAllOrganizationsQuery,
+  getConsultationsForOrganizationsQuery,
 } from "#queries/organizations";
 import {
   organizationExists,
@@ -43,4 +44,49 @@ export const getAllOrganizations = async (data) => {
     .catch((err) => {
       throw err;
     });
+};
+
+export const getAllOrganizationsWithDetails = async (data) => {
+  const organizations = await getAllOrganizationsQuery(data)
+    .then((res) => {
+      return res.rows || [];
+    })
+    .catch((err) => {
+      throw err;
+    });
+
+  const ids = organizations.map((org) => org.organization_id);
+
+  const consultations = await getConsultationsForOrganizationsQuery({
+    country: data.country,
+    organizationIds: ids,
+  })
+    .then((res) => {
+      return res.rows || [];
+    })
+    .catch((err) => {
+      throw err;
+    });
+
+  const organizationsWithDetails = organizations.map((org) => {
+    const consultationsForOrg = consultations.find(
+      (x) => x.organization_id === org.organization_id
+    );
+    if (!consultationsForOrg) {
+      return {
+        ...org,
+        totalConsultations: 0,
+        uniqueProviders: 0,
+        uniqueClients: 0,
+      };
+    }
+    return {
+      ...org,
+      totalConsultations: consultationsForOrg.consultations_count,
+      uniqueProviders: consultationsForOrg.providers_count,
+      uniqueClients: consultationsForOrg.clients_count,
+    };
+  });
+
+  return organizationsWithDetails;
 };

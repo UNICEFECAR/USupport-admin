@@ -4,6 +4,7 @@ import {
   assignProviderToOrganization,
   createOrganization,
   getAllOrganizations,
+  getAllOrganizationsWithDetails,
 } from "#controllers/organizations";
 import {
   assignProviderToOrganizationSchema,
@@ -21,6 +22,18 @@ router.get("/all", async (req, res, next) => {
     .strict(true)
     .validate({ country })
     .then(getAllOrganizations)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.get("/all/details", async (req, res, next) => {
+  const country = req.header("x-country-alpha-2");
+
+  return await getAllOrganizationsSchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({ country })
+    .then(getAllOrganizationsWithDetails)
     .then((result) => res.status(200).send(result))
     .catch(next);
 });
