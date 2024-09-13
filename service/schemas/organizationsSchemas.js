@@ -23,3 +23,9 @@ export const editOrganizationSchema = createOrganizationSchema
   .shape({
     organizationId: yup.string().uuid().required(),
   });
+
+export const getOrganizationByIdSchema = yup.object().shape({
+  country: yup.string().required(),
+  language: yup.string().required(),
+  organizationId: yup.string().uuid().required(),
+});

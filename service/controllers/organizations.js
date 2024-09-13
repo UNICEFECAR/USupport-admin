@@ -3,8 +3,12 @@ import {
   createOrganizationQuery,
   editOrganizationQuery,
   getAllOrganizationsQuery,
+  getAllOrganizationsWithDetailsQuery,
   getConsultationsForOrganizationsQuery,
+  getOrganizationByIdQuery,
+  getProviderConsultationsForOrganizationQuery,
 } from "#queries/organizations";
+import { getMultipleProvidersDataByIDs } from "#queries/providers";
 import {
   organizationExists,
   providerAlreadyAssignedToOrg,
@@ -58,7 +62,7 @@ export const getAllOrganizations = async (data) => {
 };
 
 export const getAllOrganizationsWithDetails = async (data) => {
-  const organizations = await getAllOrganizationsQuery(data)
+  const organizations = await getAllOrganizationsWithDetailsQuery(data)
     .then((res) => {
       return res.rows || [];
     })
@@ -91,13 +95,62 @@ export const getAllOrganizationsWithDetails = async (data) => {
         uniqueClients: 0,
       };
     }
+
     return {
       ...org,
       totalConsultations: consultationsForOrg.consultations_count,
-      uniqueProviders: consultationsForOrg.providers_count,
+      uniqueProviders: org.providers.length,
       uniqueClients: consultationsForOrg.clients_count,
     };
   });
 
   return organizationsWithDetails;
+};
+
+export const getOrganizationById = async (data) => {
+  const organization = await getOrganizationByIdQuery(data).then((res) => {
+    if (res.rows.length === 0) {
+      throw organizationNotFound(data.language);
+    }
+    return res.rows[0];
+  });
+
+  const providerDetailIds = organization.providers.map(
+    (x) => x.provider_detail_id
+  );
+
+  const providersData = await getMultipleProvidersDataByIDs({
+    providerDetailIds,
+    poolCountry: data.country,
+  }).then((res) => {
+    return res.rows;
+  });
+
+  const providerConsultationsForOrg =
+    await getProviderConsultationsForOrganizationQuery({
+      organizationId: organization.organization_id,
+      country: data.country,
+    }).then((res) => {
+      return res.rows;
+    });
+
+  for (let i = 0; i < organization.providers.length; i++) {
+    const provider = organization.providers[i];
+
+    const dataForProvider = providersData.find(
+      (x) => x.provider_detail_id === provider.provider_detail_id
+    );
+
+    const consultationsDataForProvider = providerConsultationsForOrg.find(
+      (x) => x.provider_detail_id === provider.provider_detail_id
+    );
+
+    organization.providers[i] = {
+      ...provider,
+      ...dataForProvider,
+      ...consultationsDataForProvider,
+    };
+  }
+
+  return organization;
 };

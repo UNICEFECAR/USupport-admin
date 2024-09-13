@@ -159,3 +159,11 @@ export const providerAlreadyAssignedToOrg = (language) => {
   error.status = 409;
   return error;
 };
+
+export const organizationNotFound = (language) => {
+  const error = new Error();
+  error.message = t("organization_not_found_error", language);
+  error.name = "ORGANIZATION NOT FOUND";
+  error.status = 404;
+  return error;
+};

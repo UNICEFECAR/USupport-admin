@@ -6,12 +6,14 @@ import {
   editOrganization,
   getAllOrganizations,
   getAllOrganizationsWithDetails,
+  getOrganizationById,
 } from "#controllers/organizations";
 import {
   assignProviderToOrganizationSchema,
   createOrganizationSchema,
   editOrganizationSchema,
   getAllOrganizationsSchema,
+  getOrganizationByIdSchema,
 } from "#schemas/organizationsSchemas";
 
 const router = express.Router();
@@ -36,6 +38,20 @@ router.get("/all/details", async (req, res, next) => {
     .strict(true)
     .validate({ country })
     .then(getAllOrganizationsWithDetails)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.get("/:organizationId", async (req, res, next) => {
+  const country = req.header("x-country-alpha-2");
+  const language = req.header("x-language-alpha-2");
+  const organizationId = req.params.organizationId;
+
+  return await getOrganizationByIdSchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({ organizationId, country, language })
+    .then(getOrganizationById)
     .then((result) => res.status(200).send(result))
     .catch(next);
 });
