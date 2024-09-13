@@ -26,4 +26,5 @@ export default {
   question_cant_be_deleted_error: "Вопрос не может быть удален",
   organization_exists_error: "Организация уже существует",
   provider_already_assigned_to_org: "Консультант уже назначен организации",
+  organization_not_found_error: "Организация не найдена",
 };

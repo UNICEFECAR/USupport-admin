@@ -27,4 +27,5 @@ export default {
   organization_exists_error: "Organizacja już istnieje",
   provider_already_assigned_to_org:
     "Konsultant jest już przypisany do tej organizacji",
+  organization_not_found_error: "Nie znaleziono organizacji",
 };

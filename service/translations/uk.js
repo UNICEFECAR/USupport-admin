@@ -24,4 +24,5 @@ export default {
   organization_exists_error: "Організація вже існує",
   provider_already_assigned_to_org:
     "Консультант/ка вже призначений/на для цієї організації",
+  organization_not_found_error: "Організацію не знайдено",
 };

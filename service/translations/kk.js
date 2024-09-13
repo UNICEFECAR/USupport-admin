@@ -25,4 +25,5 @@ export default {
   organization_exists_error: "Ұйым әлдеқашан бар",
   provider_already_assigned_to_org:
     "Консультант әлдеқашан организацияға тағайындалған",
+  organization_not_found_error: "Ұйым табылмады",
 };
