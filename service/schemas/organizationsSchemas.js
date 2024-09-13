@@ -9,7 +9,7 @@ export const createOrganizationSchema = yup.object().shape({
 
 export const assignProviderToOrganizationSchema = yup.object().shape({
   organizationId: yup.string().uuid().required(),
-  providerDetailId: yup.string().uuid().required(),
+  providerDetailIds: yup.array().of(yup.string().uuid().required()).required(),
   country: yup.string().required(),
   language: yup.string().required(),
 });
@@ -29,3 +29,8 @@ export const getOrganizationByIdSchema = yup.object().shape({
   language: yup.string().required(),
   organizationId: yup.string().uuid().required(),
 });
+
+export const removeProviderFromOrganizationSchema =
+  assignProviderToOrganizationSchema.omit(["providerDetailIds"]).shape({
+    providerDetailId: yup.string().uuid().required(),
+  });

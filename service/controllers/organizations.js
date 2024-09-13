@@ -7,6 +7,7 @@ import {
   getConsultationsForOrganizationsQuery,
   getOrganizationByIdQuery,
   getProviderConsultationsForOrganizationQuery,
+  removeProviderFromOrganizationQuery,
 } from "#queries/organizations";
 import { getMultipleProvidersDataByIDs } from "#queries/providers";
 import {
@@ -141,9 +142,10 @@ export const getOrganizationById = async (data) => {
       (x) => x.provider_detail_id === provider.provider_detail_id
     );
 
-    const consultationsDataForProvider = providerConsultationsForOrg.find(
-      (x) => x.provider_detail_id === provider.provider_detail_id
-    );
+    const consultationsDataForProvider =
+      providerConsultationsForOrg.find(
+        (x) => x.provider_detail_id === provider.provider_detail_id
+      ) || 0;
 
     organization.providers[i] = {
       ...provider,
@@ -153,4 +155,14 @@ export const getOrganizationById = async (data) => {
   }
 
   return organization;
+};
+
+export const removeProviderFromOrganization = async (data) => {
+  return await removeProviderFromOrganizationQuery(data)
+    .then((res) => {
+      return res.rows[0];
+    })
+    .catch((err) => {
+      throw err;
+    });
 };

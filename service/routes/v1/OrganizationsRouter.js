@@ -7,6 +7,7 @@ import {
   getAllOrganizations,
   getAllOrganizationsWithDetails,
   getOrganizationById,
+  removeProviderFromOrganization,
 } from "#controllers/organizations";
 import {
   assignProviderToOrganizationSchema,
@@ -14,6 +15,7 @@ import {
   editOrganizationSchema,
   getAllOrganizationsSchema,
   getOrganizationByIdSchema,
+  removeProviderFromOrganizationSchema,
 } from "#schemas/organizationsSchemas";
 
 const router = express.Router();
@@ -92,6 +94,19 @@ router.post("/assign-provider", async (req, res, next) => {
     .strict(true)
     .validate({ ...req.body, country, language })
     .then(assignProviderToOrganization)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.put("/remove-provider", async (req, res, next) => {
+  const country = req.header("x-country-alpha-2");
+  const language = req.header("x-language-alpha-2");
+
+  return await removeProviderFromOrganizationSchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({ ...req.body, country, language })
+    .then(removeProviderFromOrganization)
     .then((result) => res.status(200).send(result))
     .catch(next);
 });
