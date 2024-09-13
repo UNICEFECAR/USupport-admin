@@ -83,3 +83,13 @@ export const getAllProvidersQuery = async ({
     ]
   );
 };
+
+export const getAllProviderNamesQuery = async ({ poolCountry }) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+      SELECT provider_detail_id, name, surname, patronym
+      FROM provider_detail
+      ORDER BY NAME ASC;
+    `
+  );
+};

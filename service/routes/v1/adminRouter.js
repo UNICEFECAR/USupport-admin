@@ -11,6 +11,7 @@ import {
   updateProviderStatus,
   PSKZUploadController,
   getPlatformMetrics,
+  getAllProviderNames,
 } from "#controllers/admin";
 
 import {
@@ -22,6 +23,7 @@ import {
   deleteAdminDataByIdSchema,
   updateProviderStatusSchema,
   getAllProvidersSchema,
+  countrySchema,
 } from "#schemas/adminSchemas";
 
 import { securedRoute } from "#middlewares/auth";
@@ -198,6 +200,17 @@ router.get("/all-providers", securedRoute, async (req, res, next) => {
       search: search || null,
     })
     .then(getAllProviders)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.get("/all-provider-names", securedRoute, async (req, res, next) => {
+  const country = req.header("x-country-alpha-2");
+  return await countrySchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({ country })
+    .then(getAllProviderNames)
     .then((result) => res.status(200).send(result))
     .catch(next);
 });

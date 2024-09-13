@@ -20,7 +20,10 @@ import {
   getPositivePlatformRatingsFromProvidersQuery,
 } from "#queries/statistics";
 
-import { getAllProvidersQuery } from "#queries/providers";
+import {
+  getAllProviderNamesQuery,
+  getAllProvidersQuery,
+} from "#queries/providers";
 
 import { formatSpecializations, updatePassword } from "#utils/helperFunctions";
 import { emailUsed, adminNotFound, incorrectPassword } from "#utils/errors";
@@ -426,4 +429,16 @@ export const getPlatformMetrics = async ({ country }) => {
     positiveClientRatings,
     positiveProviderRatings,
   };
+};
+
+export const getAllProviderNames = async ({ country }) => {
+  return await getAllProviderNamesQuery({
+    poolCountry: country,
+  })
+    .then((res) => {
+      return res.rows || [];
+    })
+    .catch((err) => {
+      throw err;
+    });
 };
