@@ -166,7 +166,7 @@ export const removeProviderFromOrganizationQuery = async ({
   );
 };
 
-export const getOgranizationsByIdsQuery = async ({
+export const getOrganizationsByIdsQuery = async ({
   organizationIds,
   country: poolCountry,
 }) => {

@@ -24,7 +24,7 @@ import {
 import { getProviderDataById } from "#queries/providers";
 import { getCampaignNamesByIds } from "#queries/sponsors";
 
-import { getOgranizationsByIdsQuery } from "#queries/organizations";
+import { getOrganizationsByIdsQuery } from "#queries/organizations";
 
 import { countryNotFound } from "#utils/errors";
 import { getClientInitials } from "#utils/helperFunctions";
@@ -332,7 +332,7 @@ export const getProviderStatistics = async ({ country, providerId }) => {
       throw err;
     });
 
-  const organizations = await getOgranizationsByIdsQuery({
+  const organizations = await getOrganizationsByIdsQuery({
     organizationIds: Array.from(
       new Set(consultations.map((x) => x.organization_id))
     ),
