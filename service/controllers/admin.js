@@ -223,7 +223,7 @@ export const getAllProviders = async (props) => {
     .then(async (res) => {
       const providers = res.rows;
       for (let i = 0; i < providers.length; i++) {
-        const provider = provider[i];
+        const provider = providers[i];
         providers[i].specializations = formatSpecializations(
           provider.specializations
         );
