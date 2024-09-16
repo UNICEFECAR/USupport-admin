@@ -165,3 +165,16 @@ export const removeProviderFromOrganizationQuery = async ({
     [organizationId, providerDetailId]
   );
 };
+
+export const getOgranizationsByIdsQuery = async ({
+  organizationIds,
+  country: poolCountry,
+}) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+            SELECT * FROM organization
+            WHERE organization_id = ANY($1);
+         `,
+    [organizationIds]
+  );
+};
