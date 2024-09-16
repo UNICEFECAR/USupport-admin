@@ -220,12 +220,16 @@ export const getAllProviders = async (props) => {
     poolCountry: props.country,
     offset: newOffset,
   })
-    .then((res) => {
+    .then(async (res) => {
       const providers = res.rows;
       for (let i = 0; i < providers.length; i++) {
+        const provider = provider[i];
         providers[i].specializations = formatSpecializations(
-          providers[i].specializations
+          provider.specializations
         );
+        providers[i].organizations =
+          provider.organizations?.map((x) => x.organization_name).join(", ") ||
+          "";
       }
 
       return providers;

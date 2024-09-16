@@ -40,9 +40,16 @@ export const getAllProvidersQuery = async ({
   const searchPattern = search ? `%${search}%` : null;
   return await getDBPool("piiDb", poolCountry).query(
     `
-        SELECT provider_detail."provider_detail_id", "name", patronym, surname, nickname, email, phone, image, specializations, street, city, postcode, education, sex, consultation_price, description, video_link, status
+        SELECT provider_detail."provider_detail_id", provider_detail."name", patronym, surname, nickname, email, phone, image, specializations, street, city, postcode, education, sex, consultation_price, description, video_link, status,
+         JSON_AGG(
+                JSON_BUILD_OBJECT(
+                    'organization_id', organization_provider_links.organization_id,
+                    'organization_name', organization.name)
+                  ) AS organizations
         FROM provider_detail
           JOIN "user" ON "user".provider_detail_id = provider_detail.provider_detail_id AND "user".deleted_at IS NULL
+          LEFT JOIN organization_provider_links ON (organization_provider_links.provider_detail_id = provider_detail.provider_detail_id AND organization_provider_links.is_deleted = false)
+          LEFT JOIN organization ON organization.organization_id = organization_provider_links.organization_id
         WHERE consultation_price >= $3
         AND (
           CASE WHEN $4 = 'any' THEN status = ANY(ARRAY['active', 'inactive']) ELSE status = $4 END 
@@ -56,6 +63,7 @@ export const getAllProvidersQuery = async ({
              provider_detail.email ILIKE $11::text)
           )
         )
+        GROUP BY provider_detail.provider_detail_id
         ORDER BY 
           CASE WHEN $7 = 'asc' THEN provider_detail.name ELSE NULL END ASC,
           CASE WHEN $7 = 'desc' THEN provider_detail.name ELSE NULL END DESC,
