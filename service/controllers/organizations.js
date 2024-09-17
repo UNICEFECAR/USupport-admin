@@ -1,3 +1,4 @@
+import { getMultipleClientsDataByIDs } from "#queries/clients";
 import {
   assignProviderToOrganizationQuery,
   createOrganizationQuery,
@@ -131,8 +132,37 @@ export const getOrganizationById = async (data) => {
     await getProviderConsultationsForOrganizationQuery({
       organizationId: organization.organization_id,
       country: data.country,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      startTime: data.startTime,
+      endTime: data.endTime,
+      weekdays: data.weekdays,
+      weekends: data.weekends,
     }).then((res) => {
       return res.rows;
+    });
+
+  const allClientIds = Array.from(
+    new Set(
+      providerConsultationsForOrg.reduce((acc, x) => {
+        if (x.consultations) {
+          const ids = x.consultations.map((y) => y.client_detail_id);
+          acc.push(...ids);
+        }
+        return acc;
+      }, [])
+    )
+  );
+
+  const allClients = await getMultipleClientsDataByIDs({
+    poolCountry: data.country,
+    clientDetailIds: allClientIds,
+  })
+    .then((res) => {
+      return res.rows || [];
+    })
+    .catch((err) => {
+      throw err;
     });
 
   for (let i = 0; i < organization.providers.length; i++) {
@@ -142,10 +172,26 @@ export const getOrganizationById = async (data) => {
       (x) => x.provider_detail_id === provider.provider_detail_id
     );
 
-    const consultationsDataForProvider =
-      providerConsultationsForOrg.find(
-        (x) => x.provider_detail_id === provider.provider_detail_id
-      ) || 0;
+    const consultationsDataForProvider = providerConsultationsForOrg.find(
+      (x) => x.provider_detail_id === provider.provider_detail_id
+    ) || {
+      consultations_count: 0,
+      clients_count: 0,
+      consultations: [],
+    };
+
+    consultationsDataForProvider.consultations =
+      consultationsDataForProvider.consultations.map((x) => {
+        const consultationClient = allClients.find(
+          (y) => y.client_detail_id === x.client_detail_id
+        );
+        return {
+          ...x,
+          clientName: `${consultationClient.name || ""} ${
+            consultationClient.surname || ""
+          }`,
+        };
+      });
 
     organization.providers[i] = {
       ...provider,

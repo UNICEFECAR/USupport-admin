@@ -28,6 +28,13 @@ export const getOrganizationByIdSchema = yup.object().shape({
   country: yup.string().required(),
   language: yup.string().required(),
   organizationId: yup.string().uuid().required(),
+  // Filters
+  startDate: yup.string().notRequired(),
+  endDate: yup.string().notRequired(),
+  startTime: yup.number().notRequired(),
+  endTime: yup.number().notRequired(),
+  weekdays: yup.boolean().notRequired(),
+  weekends: yup.boolean().notRequired(),
 });
 
 export const removeProviderFromOrganizationSchema =

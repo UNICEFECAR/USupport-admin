@@ -114,21 +114,38 @@ export const getConsultationsForOrganizationsQuery = async ({
 export const getProviderConsultationsForOrganizationQuery = async ({
   organizationId,
   country: poolCountry,
+  startDate,
+  endDate,
+  startTime,
+  endTime,
+  weekdays, // Boolean to include or exclude weekdays
+  weekends, // Boolean to include or exclude weekends
 }) => {
   return await getDBPool("clinicalDb", poolCountry).query(
     `
-          SELECT 
-              provider_detail_id,
-              COUNT(DISTINCT consultation_id) AS consultations_count,
-              COUNT(DISTINCT client_detail_id) AS clients_count
-          FROM 
-              consultation
-          WHERE 
-              organization_id = $1 AND (consultation.status = 'scheduled' OR consultation.status = 'finished')
-          GROUP BY 
-              provider_detail_id;
+      SELECT 
+          provider_detail_id,
+          COUNT(DISTINCT consultation_id) AS consultations_count,
+          COUNT(DISTINCT client_detail_id) AS clients_count,
+          JSON_AGG(consultation) as consultations
+      FROM 
+          consultation
+      WHERE 
+          organization_id = $1 
+          AND (consultation.status = 'scheduled' OR consultation.status = 'finished')
+          AND consultation.time >= to_timestamp($2)
+          AND consultation.time <= to_timestamp($3)
+          AND EXTRACT(HOUR FROM consultation.time) >= $4
+          AND EXTRACT(HOUR FROM consultation.time) <= $5
+          -- Filter by weekdays/weekends based on the provided conditions
+          AND (
+            ($6 = true AND EXTRACT(DOW FROM consultation.time) BETWEEN 1 AND 5) OR  -- Weekdays (Monday to Friday)
+            ($7 = true AND EXTRACT(DOW FROM consultation.time) IN (0, 6)) -- Weekends (Saturday, Sunday)
+          )
+      GROUP BY 
+          provider_detail_id;
     `,
-    [organizationId]
+    [organizationId, startDate, endDate, startTime, endTime, weekdays, weekends]
   );
 };
 
