@@ -1,6 +1,7 @@
 import { getMultipleClientsDataByIDs } from "#queries/clients";
 import {
   assignProviderToOrganizationQuery,
+  checkProvidersFutureConsultationsForOrgQuery,
   createOrganizationQuery,
   editOrganizationQuery,
   getAllOrganizationsQuery,
@@ -8,11 +9,14 @@ import {
   getConsultationsForOrganizationsQuery,
   getOrganizationByIdQuery,
   getProviderConsultationsForOrganizationQuery,
+  getProviderOrganizationLinkQuery,
+  reassignProviderToOrganizationQuery,
   removeProviderFromOrganizationQuery,
 } from "#queries/organizations";
 import { getMultipleProvidersDataByIDs } from "#queries/providers";
 import {
   organizationExists,
+  organizationNotFound,
   providerAlreadyAssignedToOrg,
 } from "#utils/errors";
 
@@ -41,16 +45,51 @@ export const editOrganization = async (data) => {
 };
 
 export const assignProviderToOrganization = async (data) => {
-  return await assignProviderToOrganizationQuery(data)
+  const assignedProviders = await getProviderOrganizationLinkQuery(data)
     .then((res) => {
       if (res.rows.length === 0) {
-        throw providerAlreadyAssignedToOrg(data.language);
+        return false;
       }
-      return res.rows[0];
+      return res.rows;
     })
     .catch((err) => {
       throw err;
     });
+
+  const assignedProviderIds = assignedProviders
+    ? assignedProviders.map((x) => x.provider_detail_id)
+    : [];
+  const notAssignedProviders = data.providerDetailIds.filter(
+    (x) => !assignedProviderIds.includes(x)
+  );
+
+  if (notAssignedProviders.length > 0) {
+    await assignProviderToOrganizationQuery({
+      organizationId: data.organizationId,
+      providerDetailIds: notAssignedProviders,
+      country: data.country,
+    })
+      .then((res) => {
+        if (res.rows.length === 0) {
+          throw providerAlreadyAssignedToOrg(data.language);
+        }
+        return res.rows[0];
+      })
+      .catch((err) => {
+        throw err;
+      });
+  }
+  if (assignedProviderIds.length > 0) {
+    await reassignProviderToOrganizationQuery({
+      organizationId: data.organizationId,
+      providerDetailIds: assignedProviderIds,
+      country: data.country,
+    }).catch((err) => {
+      console.log("err");
+      throw err;
+    });
+  }
+  return { success: true };
 };
 
 export const getAllOrganizations = async (data) => {
@@ -121,12 +160,22 @@ export const getOrganizationById = async (data) => {
     (x) => x.provider_detail_id
   );
 
-  const providersData = await getMultipleProvidersDataByIDs({
+  let providersData = await getMultipleProvidersDataByIDs({
     providerDetailIds,
     poolCountry: data.country,
   }).then((res) => {
     return res.rows;
   });
+
+  if (data.search) {
+    providersData = providersData.filter((x) => {
+      return (
+        x.name.toLowerCase().includes(data.search.toLowerCase()) ||
+        x.surname.toLowerCase().includes(data.search.toLowerCase()) ||
+        x.patronym.toLowerCase().includes(data.search.toLowerCase())
+      );
+    });
+  }
 
   const providerConsultationsForOrg =
     await getProviderConsultationsForOrganizationQuery({
@@ -138,9 +187,23 @@ export const getOrganizationById = async (data) => {
       endTime: data.endTime,
       weekdays: data.weekdays,
       weekends: data.weekends,
+      search: data.search,
     }).then((res) => {
       return res.rows;
     });
+
+  const futureConsultationsForProviders =
+    await checkProvidersFutureConsultationsForOrgQuery({
+      providerDetailIds,
+      organizationId: organization.organization_id,
+      country: data.country,
+    })
+      .then((res) => {
+        return res.rows || [];
+      })
+      .catch((err) => {
+        throw err;
+      });
 
   const allClientIds = Array.from(
     new Set(
@@ -165,8 +228,17 @@ export const getOrganizationById = async (data) => {
       throw err;
     });
 
+  const includedProvidersDetailIds = providersData.map(
+    (x) => x.provider_detail_id
+  );
+
   for (let i = 0; i < organization.providers.length; i++) {
     const provider = organization.providers[i];
+
+    if (!includedProvidersDetailIds.includes(provider.provider_detail_id)) {
+      delete organization.providers[i];
+      continue;
+    }
 
     const dataForProvider = providersData.find(
       (x) => x.provider_detail_id === provider.provider_detail_id
@@ -179,6 +251,11 @@ export const getOrganizationById = async (data) => {
       clients_count: 0,
       consultations: [],
     };
+
+    const futureConsultationsForProvider =
+      futureConsultationsForProviders.find(
+        (x) => x.provider_detail_id === provider.provider_detail_id
+      )?.count || 0;
 
     consultationsDataForProvider.consultations =
       consultationsDataForProvider.consultations.map((x) => {
@@ -197,8 +274,11 @@ export const getOrganizationById = async (data) => {
       ...provider,
       ...dataForProvider,
       ...consultationsDataForProvider,
+      future_consultations: futureConsultationsForProvider,
     };
   }
+
+  organization.providers = organization.providers.filter((x) => !!x);
 
   return organization;
 };

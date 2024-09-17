@@ -23,9 +23,25 @@ export const getAllOrganizationsQuery = async ({ country: poolCountry }) => {
   );
 };
 
+export const getProviderOrganizationLinkQuery = async ({
+  organizationId,
+  providerDetailIds,
+  country: poolCountry,
+}) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+          SELECT *
+          FROM organization_provider_links
+          WHERE organization_id = $1 AND provider_detail_id = ANY($2::uuid[]);
+    `,
+    [organizationId, providerDetailIds]
+  );
+};
+
 export const assignProviderToOrganizationQuery = async ({
   organizationId,
-  providerDetailIds, // Now an array of provider IDs
+  providerDetailIds,
+
   country: poolCountry,
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
@@ -48,6 +64,27 @@ export const assignProviderToOrganizationQuery = async ({
   );
 };
 
+export const reassignProviderToOrganizationQuery = async ({
+  organizationId,
+  providerDetailIds,
+  country: poolCountry,
+}) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+      UPDATE
+        organization_provider_links
+      SET
+        deleted_at = NULL,
+        is_deleted = false,
+        created_at = NOW()
+      WHERE
+        organization_id = $1
+        AND provider_detail_id = ANY($2::uuid[])
+    `,
+    [organizationId, providerDetailIds]
+  );
+};
+
 export const getAllOrganizationsWithDetailsQuery = async ({
   country: poolCountry,
 }) => {
@@ -57,7 +94,7 @@ export const getAllOrganizationsWithDetailsQuery = async ({
             organization_provider_links.provider_detail_id
             ) AS providers
             FROM organization
-              JOIN organization_provider_links ON (organization.organization_id = organization_provider_links.organization_id AND organization_provider_links.is_deleted = false)
+              LEFT  JOIN organization_provider_links ON (organization.organization_id = organization_provider_links.organization_id AND organization_provider_links.is_deleted = false)
             GROUP BY organization.organization_id
             ORDER BY organization.created_at DESC;
          `
@@ -74,15 +111,12 @@ export const getOrganizationByIdQuery = async ({
             JSON_AGG(
                 JSON_BUILD_OBJECT(
                   'provider_detail_id', organization_provider_links.provider_detail_id,
-                  'provider_join_date', organization_provider_links.created_at
+                  'provider_join_date', organization_provider_links.created_at,
+                  'provider_leave_date', organization_provider_links.deleted_at
                 )
               ) AS providers
             FROM organization 
-              JOIN organization_provider_links ON (
-                                                  organization.organization_id = organization_provider_links.organization_id 
-                                                  AND
-                                                  organization_provider_links.is_deleted = false
-                                                  )
+            LEFT JOIN organization_provider_links ON organization.organization_id = organization_provider_links.organization_id 
             WHERE organization.organization_id = $1
             GROUP BY organization.organization_id;
          `,
@@ -149,6 +183,30 @@ export const getProviderConsultationsForOrganizationQuery = async ({
   );
 };
 
+export const checkProvidersFutureConsultationsForOrgQuery = async ({
+  providerDetailIds,
+  organizationId,
+  country: poolCountry,
+}) => {
+  return await getDBPool("clinicalDb", poolCountry).query(
+    `
+      SELECT 
+          provider_detail_id,
+          COUNT(DISTINCT consultation_id) AS count
+      FROM 
+          consultation
+      WHERE 
+          organization_id = $1 
+          AND provider_detail_id = ANY($2::uuid[])
+          AND status = 'scheduled'
+          AND time > NOW()
+      GROUP BY 
+          provider_detail_id;
+    `,
+    [organizationId, providerDetailIds]
+  );
+};
+
 export const editOrganizationQuery = async ({
   name,
   organizationId,
@@ -173,11 +231,26 @@ export const removeProviderFromOrganizationQuery = async ({
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
-          UPDATE organization_provider_links
-          SET deleted_at = NOW(),
-              is_deleted = true
-          WHERE organization_id = $1 AND provider_detail_id = $2
-          RETURNING *;
+        UPDATE organization_provider_links
+        SET deleted_at = NOW(),
+            is_deleted = true,
+            periods = CASE 
+                -- If periods is already an array, append the new object to the array
+                WHEN jsonb_typeof(periods) = 'array' THEN periods || jsonb_build_object(
+                    'enrolled_at', created_at,
+                    'removed_at', NOW()
+                )
+                -- If periods is NULL or not an array, create a new array with the current periods and the new object
+                ELSE jsonb_build_array(
+                    periods, 
+                    jsonb_build_object(
+                        'enrolled_at', created_at,
+                        'removed_at', NOW()
+                    )
+                )
+            END
+        WHERE organization_id = $1 AND provider_detail_id = $2
+        RETURNING *;
     `,
     [organizationId, providerDetailId]
   );
