@@ -49,7 +49,7 @@ router.get("/:organizationId", async (req, res, next) => {
   const language = req.header("x-language-alpha-2");
   const organizationId = req.params.organizationId;
 
-  const { startDate, endDate, startTime, endTime, weekdays, weekends } =
+  const { startDate, endDate, startTime, endTime, weekdays, weekends, search } =
     req.query;
 
   return await getOrganizationByIdSchema
@@ -65,6 +65,7 @@ router.get("/:organizationId", async (req, res, next) => {
       endTime: Number(endTime),
       weekdays: !!Number(weekdays),
       weekends: !!Number(weekends),
+      search: search || "",
     })
     .then(getOrganizationById)
     .then((result) => res.status(200).send(result))
