@@ -19,6 +19,7 @@ import {
   organizationNotFound,
   providerAlreadyAssignedToOrg,
 } from "#utils/errors";
+import { removeProvidersCacheRequest } from "#utils/helperFunctions";
 
 export const createOrganization = async (data) => {
   return await createOrganizationQuery(data)
@@ -89,6 +90,13 @@ export const assignProviderToOrganization = async (data) => {
       throw err;
     });
   }
+
+  await removeProvidersCacheRequest({
+    providerIds: data.providerDetailIds,
+    country: data.country,
+    language: data.language,
+  });
+
   return { success: true };
 };
 
@@ -285,7 +293,13 @@ export const getOrganizationById = async (data) => {
 
 export const removeProviderFromOrganization = async (data) => {
   return await removeProviderFromOrganizationQuery(data)
-    .then((res) => {
+    .then(async (res) => {
+      await removeProvidersCacheRequest({
+        providerIds: [data.providerDetailId],
+        country: data.country,
+        language: data.language,
+      });
+
       return res.rows[0];
     })
     .catch((err) => {
