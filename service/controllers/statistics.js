@@ -22,8 +22,9 @@ import {
 } from "#queries/clients";
 
 import { getProviderDataById } from "#queries/providers";
-
 import { getCampaignNamesByIds } from "#queries/sponsors";
+
+import { getOrganizationsByIdsQuery } from "#queries/organizations";
 
 import { countryNotFound } from "#utils/errors";
 import { getClientInitials } from "#utils/helperFunctions";
@@ -331,6 +332,19 @@ export const getProviderStatistics = async ({ country, providerId }) => {
       throw err;
     });
 
+  const organizations = await getOrganizationsByIdsQuery({
+    organizationIds: Array.from(
+      new Set(consultations.map((x) => x.organization_id))
+    ),
+    country,
+  })
+    .then((res) => {
+      return res.rows || [];
+    })
+    .catch((err) => {
+      throw err;
+    });
+
   consultations.forEach((consultation, index) => {
     const clientData = clientDetails.find(
       (x) => x.client_detail_id === consultation.client_detail_id
@@ -340,8 +354,13 @@ export const getProviderStatistics = async ({ country, providerId }) => {
       (x) => x.campaign_id === consultation.campaign_id
     )?.name;
 
+    const organizationName = organizations.find(
+      (x) => x.organization_id === consultation.organization_id
+    )?.name;
+
     consultations[index].clientName = getClientInitials(clientData);
     consultations[index].campaign_name = campaignName;
+    consultations[index].organization_name = organizationName;
   });
 
   return consultations;

@@ -20,7 +20,10 @@ import {
   getPositivePlatformRatingsFromProvidersQuery,
 } from "#queries/statistics";
 
-import { getAllProvidersQuery } from "#queries/providers";
+import {
+  getAllProviderNamesQuery,
+  getAllProvidersQuery,
+} from "#queries/providers";
 
 import { formatSpecializations, updatePassword } from "#utils/helperFunctions";
 import { emailUsed, adminNotFound, incorrectPassword } from "#utils/errors";
@@ -217,12 +220,16 @@ export const getAllProviders = async (props) => {
     poolCountry: props.country,
     offset: newOffset,
   })
-    .then((res) => {
+    .then(async (res) => {
       const providers = res.rows;
       for (let i = 0; i < providers.length; i++) {
+        const provider = providers[i];
         providers[i].specializations = formatSpecializations(
-          providers[i].specializations
+          provider.specializations
         );
+        providers[i].organizations =
+          provider.organizations?.map((x) => x.organization_name).join(", ") ||
+          "";
       }
 
       return providers;
@@ -426,4 +433,16 @@ export const getPlatformMetrics = async ({ country }) => {
     positiveClientRatings,
     positiveProviderRatings,
   };
+};
+
+export const getAllProviderNames = async ({ country }) => {
+  return await getAllProviderNamesQuery({
+    poolCountry: country,
+  })
+    .then((res) => {
+      return res.rows || [];
+    })
+    .catch((err) => {
+      throw err;
+    });
 };

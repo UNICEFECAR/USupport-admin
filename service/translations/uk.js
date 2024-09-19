@@ -21,4 +21,8 @@ export default {
   campaign_not_found_error: "Кампанію не знайдено",
   provider_not_found_error: "Консультанта/тку не знайдено",
   question_cant_be_deleted_error: "Запитання не можна видалити",
+  organization_exists_error: "Організація вже існує",
+  provider_already_assigned_to_org:
+    "Консультант/ка вже призначений/на для цієї організації",
+  organization_not_found_error: "Організацію не знайдено",
 };
