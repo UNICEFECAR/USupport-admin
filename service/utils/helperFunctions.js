@@ -1,5 +1,9 @@
 import bcrypt from "bcryptjs";
 import { updateAdminUserPassword } from "#queries/admins";
+import fetch from "node-fetch";
+
+const PROVIDER_URL = process.env.PROVIDER_URL;
+const PROVIDER_LOCAL_HOST = "http://localhost:3002";
 
 export const updatePassword = async ({ admin_id, password }) => {
   const salt = await bcrypt.genSalt(12);
@@ -65,4 +69,34 @@ export const generatePassword = (length) => {
   let password = tempPassword();
   if (passwordPattern.test(password)) return password;
   else return generatePassword(length);
+};
+
+export const removeProvidersCacheRequest = async ({
+  providerIds,
+  country,
+  language,
+}) => {
+  const response = await fetch(
+    `${PROVIDER_URL}/provider/v1/provider/remove-cache`,
+    {
+      method: "PUT",
+      headers: {
+        "x-language-alpha-2": language,
+        "x-country-alpha-2": country,
+        host: PROVIDER_LOCAL_HOST,
+        "Content-type": "application/json",
+      },
+      body: JSON.stringify({
+        providerDetailIds: providerIds,
+      }),
+    }
+  ).catch(console.log);
+
+  const result = await response.json();
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  return result;
 };

@@ -41,7 +41,7 @@ const jwtStrategy = passportJWT.Strategy;
 const extractJWT = passportJWT.ExtractJwt;
 
 const JWT_KEY = process.env.JWT_KEY;
-const PSKZ_ROLE = process.env.PSKZ_ROLE;
+const PSKZ_ROLE = process.env.PSKZ_ROLE || "pskz";
 
 passport.use(
   "signup",

@@ -143,3 +143,27 @@ export const questionCantBeActivated = (language) => {
   error.status = 400;
   return error;
 };
+
+export const organizationExists = (language) => {
+  const error = new Error();
+  error.message = t("organization_exists_error", language);
+  error.name = "ORGANIZATION EXISTS";
+  error.status = 409;
+  return error;
+};
+
+export const providerAlreadyAssignedToOrg = (language) => {
+  const error = new Error();
+  error.message = t("provider_already_assigned_to_org", language);
+  error.name = "PROVIDER ALREADY ASSIGNED TO ORGANIZATION";
+  error.status = 409;
+  return error;
+};
+
+export const organizationNotFound = (language) => {
+  const error = new Error();
+  error.message = t("organization_not_found_error", language);
+  error.name = "ORGANIZATION NOT FOUND";
+  error.status = 404;
+  return error;
+};
