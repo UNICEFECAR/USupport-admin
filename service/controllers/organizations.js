@@ -140,7 +140,7 @@ export const getAllOrganizationsWithDetails = async (data) => {
       return {
         ...org,
         totalConsultations: 0,
-        uniqueProviders: 0,
+        uniqueProviders: org.providers?.filter((x) => !!x)?.length || 0,
         uniqueClients: 0,
       };
     }
