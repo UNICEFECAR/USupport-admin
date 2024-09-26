@@ -95,8 +95,9 @@ export const getAllProvidersQuery = async ({
 export const getAllProviderNamesQuery = async ({ poolCountry }) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
-      SELECT provider_detail_id, name, surname, patronym
+      SELECT provider_detail.provider_detail_id, name, surname, patronym
       FROM provider_detail
+          JOIN "user" ON "user".provider_detail_id = provider_detail.provider_detail_id AND "user".deleted_at IS NULL
       ORDER BY NAME ASC;
     `
   );
