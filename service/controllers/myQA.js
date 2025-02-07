@@ -114,10 +114,11 @@ export const activateQuestion = async ({
     });
 };
 
-export const getAllQuestions = async ({ country, type }) => {
+export const getAllQuestions = async ({ country, type, languageId }) => {
   const questions = await getAllQuestionsQuery({
     poolCountry: country,
     type,
+    languageId,
   })
     .then((res) => {
       if (res.rowCount === 0) {
