@@ -57,7 +57,11 @@ export const activateQuestionQuery = async ({
   );
 };
 
-export const getAllQuestionsQuery = async ({ poolCountry, type }) => {
+export const getAllQuestionsQuery = async ({
+  poolCountry,
+  type,
+  languageId,
+}) => {
   return await getDBPool("clinicalDb", poolCountry).query(
     `
       SELECT 
@@ -79,9 +83,10 @@ export const getAllQuestionsQuery = async ({ poolCountry, type }) => {
       WHERE  question.status = 'active' AND
            CASE WHEN $1 = 'answered' THEN answer.answer_id IS NOT NULL
                 ELSE answer.answer_id IS NULL END
+            AND ($2::uuid IS NULL OR answer.language_id = $2)
       GROUP BY question.question, answer.answer_id, question.created_at, question.question_id
-      ORDER BY question.created_at DESC;
+      ORDER BY answer.created_at DESC;
       `,
-    [type]
+    [type, languageId === "all" ? null : languageId]
   );
 };
