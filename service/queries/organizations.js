@@ -138,6 +138,8 @@ export const getConsultationsForOrganizationsQuery = async ({
               consultation
           WHERE 
               organization_id = ANY($1)
+              AND
+              (consultation.status = 'scheduled' OR consultation.status = 'finished')
           GROUP BY 
               organization_id;
     `,
