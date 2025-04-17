@@ -3,7 +3,7 @@ export default {
   password_validation_error:
     "Hasło powinno zawierać co najmniej 8 znaków, 1 wielką literę, 1 małą literę i 1 cyfrę.",
   admin_not_found_error: "Nie znaleziono administratora",
-  email_already_used_error: "Ten adres email jest już wykorzystywany",
+  email_already_used_error: "Ten adres email jest już zajęty",
   incorrect_email_error: "Nie ma administratora z tym adresem email",
   incorrect_password_error: "Podane hasło jest nieprawidłowe",
   incorrect_credentials_error: "Nieprawidłowe poświadczenia",
