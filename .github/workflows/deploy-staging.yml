@@ -40,7 +40,7 @@ jobs:
 
       - name: Generate secrets.yaml
         run: |
-          mkdir -p kube-config/prod
+          mkdir -p kube-config/staging
           {
             echo "apiVersion: v1"
             echo "kind: Secret"
@@ -62,7 +62,7 @@ jobs:
             echo "  PSKZ_ACCESS_KEY_ID: '${{ secrets.PSKZ_ACCESS_KEY_ID }}'"
             echo "  PSKZ_SECRET_ACCESS_KEY: '${{ secrets.PSKZ_SECRET_ACCESS_KEY }}'"
             echo "  PSKZ_ROLE: '${{ secrets.PSKZ_ROLE }}'"
-          } > kube-config/prod/secrets.yaml
+          } > kube-config/staging/secrets.yaml
 
       - name: Deploy to Kubernetes
         run: |
