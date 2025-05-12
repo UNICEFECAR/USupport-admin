@@ -10,7 +10,13 @@ import {
   getCountryArticles,
   addCountryArticles,
   deleteCountryArticles,
+  getCountryVideos,
+  addCountryVideos,
+  deleteCountryVideos,
   updateCountryMinMaxClientAge,
+  getCountryPodcasts,
+  addCountryPodcasts,
+  deleteCountryPodcasts,
 } from "#controllers/countries";
 
 import {
@@ -174,6 +180,106 @@ router
       .strict(true)
       .validate({ ...payload, country })
       .then(deleteCountryArticles)
+      .then((result) => res.status(200).send(result))
+      .catch(next);
+  });
+
+router
+  .route("/videos")
+  .get(async (req, res, next) => {
+    /**
+     * #route   GET /admin/v1/country/videos
+     * #desc    Get all videos for a country
+     */
+    const country = req.header("x-country-alpha-2");
+
+    return await countrySchema
+      .noUnknown(true)
+      .strict(true)
+      .validate({ country })
+      .then(getCountryVideos)
+      .then((result) => res.status(200).send(result))
+      .catch(next);
+  })
+  .put(async (req, res, next) => {
+    /**
+     * #route   PUT /admin/v1/country/videos
+     * #desc    Add given video to a country
+     */
+    const country = req.header("x-country-alpha-2");
+    const payload = req.body;
+
+    return await countryArticlesByIDSchema // Reusing the articles schema for videos
+      .noUnknown(true)
+      .strict(true)
+      .validate({ ...payload, country })
+      .then(addCountryVideos)
+      .then((result) => res.status(200).send(result))
+      .catch(next);
+  })
+  .delete(async (req, res, next) => {
+    /**
+     * #route   DELETE /admin/v1/country/videos
+     * #desc    Delete given video from a country
+     */
+    const country = req.header("x-country-alpha-2");
+    const payload = req.body;
+
+    return await countryArticlesByIDSchema // Reusing the articles schema for videos
+      .noUnknown(true)
+      .strict(true)
+      .validate({ ...payload, country })
+      .then(deleteCountryVideos)
+      .then((result) => res.status(200).send(result))
+      .catch(next);
+  });
+
+router
+  .route("/podcasts")
+  .get(async (req, res, next) => {
+    /**
+     * #route   GET /admin/v1/country/podcasts
+     * #desc    Get all podcasts for a country
+     */
+    const country = req.header("x-country-alpha-2");
+
+    return await countrySchema
+      .noUnknown(true)
+      .strict(true)
+      .validate({ country })
+      .then(getCountryPodcasts)
+      .then((result) => res.status(200).send(result))
+      .catch(next);
+  })
+  .put(async (req, res, next) => {
+    /**
+     * #route   PUT /admin/v1/country/podcasts
+     * #desc    Add given podcast to a country
+     */
+    const country = req.header("x-country-alpha-2");
+    const payload = req.body;
+
+    return await countryArticlesByIDSchema // Reusing the articles schema for podcasts
+      .noUnknown(true)
+      .strict(true)
+      .validate({ ...payload, country })
+      .then(addCountryPodcasts)
+      .then((result) => res.status(200).send(result))
+      .catch(next);
+  })
+  .delete(async (req, res, next) => {
+    /**
+     * #route   DELETE /admin/v1/country/podcasts
+     * #desc    Delete given podcast from a country
+     */
+    const country = req.header("x-country-alpha-2");
+    const payload = req.body;
+
+    return await countryArticlesByIDSchema // Reusing the articles schema for podcasts
+      .noUnknown(true)
+      .strict(true)
+      .validate({ ...payload, country })
+      .then(deleteCountryPodcasts)
       .then((result) => res.status(200).send(result))
       .catch(next);
   });
