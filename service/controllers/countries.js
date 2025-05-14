@@ -15,6 +15,12 @@ import {
   addCountryArticlesQuery,
   deleteCountryArticlesQuery,
   updateCountryMinMaxClientAgeQuery,
+  getCountryVideosQuery,
+  addCountryVideosQuery,
+  deleteCountryVideosQuery,
+  getCountryPodcastsQuery,
+  addCountryPodcastsQuery,
+  deleteCountryPodcastsQuery,
 } from "#queries/countries";
 
 import { platformNotFound, countryNotFound } from "#utils/errors";
@@ -184,4 +190,82 @@ export const updateCountryMinMaxClientAge = async ({
     .catch((err) => {
       throw err;
     });
+};
+
+export const getCountryVideos = async ({ country }) => {
+  return await getCountryVideosQuery({ country })
+    .then((res) => {
+      if (res.rowCount > 0) {
+        return res.rows[0][`video_ids`];
+      }
+      return [];
+    })
+    .catch((err) => {
+      throw err;
+    });
+};
+
+export const addCountryVideos = async ({ country, id }) => {
+  return await addCountryVideosQuery({ country, id })
+    .then((res) => {
+      if (res.rowCount > 0) {
+        return res.rows[0][`video_ids`];
+      }
+      return { success: true };
+    })
+    .catch((err) => {
+      throw err;
+    });
+};
+
+export const deleteCountryVideos = async ({ country, id }) => {
+  return await deleteCountryVideosQuery({ country, id })
+    .then((res) => {
+      if (res.rowCount > 0) {
+        return res.rows[0][`video_ids`];
+      }
+      return { success: true };
+    })
+    .catch((err) => {
+      throw err;
+    });
+};
+
+export const getCountryPodcasts = async (data) => {
+  try {
+    return await getCountryPodcastsQuery(data).then((res) => {
+      if (res.rowCount > 0) {
+        return res.rows[0][`podcast_ids`];
+      }
+      return [];
+    });
+  } catch (err) {
+    throw new Error(err);
+  }
+};
+
+export const addCountryPodcasts = async (data) => {
+  try {
+    return await addCountryPodcastsQuery(data).then((res) => {
+      if (res.rowCount > 0) {
+        return res.rows[0][`podcast_ids`];
+      }
+      return { success: true };
+    });
+  } catch (err) {
+    throw new Error(err);
+  }
+};
+
+export const deleteCountryPodcasts = async (data) => {
+  try {
+    return await deleteCountryPodcastsQuery(data).then((res) => {
+      if (res.rowCount > 0) {
+        return res.rows[0][`podcast_ids`];
+      }
+      return { success: true };
+    });
+  } catch (err) {
+    throw new Error(err);
+  }
 };
