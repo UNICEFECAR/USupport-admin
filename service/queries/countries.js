@@ -221,3 +221,101 @@ export const updateCountryMinMaxClientAgeQuery = async ({
     `,
     [country, minClientAge, maxClientAge]
   );
+
+export const getCountryVideosQuery = async ({ country }) => {
+  return await getDBPool("masterDb").query(
+    `
+      SELECT "video_ids"
+      FROM "country"
+      WHERE "alpha2" = $1
+      ORDER BY "created_at" DESC
+      LIMIT 1
+    `,
+    [country]
+  );
+};
+
+export const addCountryVideosQuery = async ({ id, country }) => {
+  return await getDBPool("masterDb").query(
+    `
+      UPDATE country
+      SET video_ids = (SELECT array_agg(distinct e) FROM UNNEST(video_ids || $1::VARCHAR) e)
+      WHERE alpha2 = $2
+      RETURNING *
+    `,
+    [id, country]
+  );
+};
+
+export const deleteCountryVideosQuery = async ({ id, country }) => {
+  return await getDBPool("masterDb").query(
+    `
+      UPDATE country
+      SET video_ids = array_remove(video_ids, $1::VARCHAR)
+      WHERE alpha2 = $2
+      RETURNING *
+    `,
+    [id, country]
+  );
+};
+
+/**
+ * Get all podcasts for a country
+ * @param {Object} data
+ * @param {string} data.country - The country code
+ * @returns {Promise<Array>} - Array of podcast IDs
+ */
+export const getCountryPodcastsQuery = async (data) => {
+  const { country } = data;
+
+  return await getDBPool("masterDb").query(
+    `
+    SELECT podcast_ids
+    FROM country
+    WHERE alpha2 = $1;
+    `,
+    [country]
+  );
+};
+
+/**
+ * Add podcast to a country
+ * @param {Object} data
+ * @param {string} data.country - The country code
+ * @param {string} data.id - The podcast ID
+ * @returns {Promise<Array>} - Updated array of podcast IDs
+ */
+export const addCountryPodcastsQuery = async (data) => {
+  const { country, id } = data;
+
+  return await getDBPool("masterDb").query(
+    `
+    UPDATE country
+    SET podcast_ids = array_append(COALESCE(podcast_ids, ARRAY[]::integer[]), $2::integer)
+    WHERE alpha2 = $1
+    RETURNING podcast_ids;
+    `,
+    [country, id]
+  );
+};
+
+/**
+ * Delete podcast from a country
+ * @param {Object} data
+ * @param {string} data.country - The country code
+ * @param {string} data.id - The podcast ID
+ * @returns {Promise<Array>} - Updated array of podcast IDs
+ */
+export const deleteCountryPodcastsQuery = async (data) => {
+  const { country, id } = data;
+
+  return await getDBPool("masterDb").query(
+    `
+    UPDATE country
+    SET podcast_ids = array_remove(podcast_ids, $2::integer)
+    WHERE alpha2 = $1
+    RETURNING podcast_ids;
+    `,
+    [country, id]
+  );
+};
