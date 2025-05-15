@@ -340,24 +340,24 @@ passport.use(
 
         const rawJWT = req.headers.authorization.split(" ")[1];
 
-        const isBlacklisted = await isJwtBlacklisted({
-          token: rawJWT,
-          poolCountry: country,
-        })
-          .then((res) => {
-            if (res.rows.length > 0) return true;
-            return false;
+        if (country !== "global") {
+          const isBlacklisted = await isJwtBlacklisted({
+            token: rawJWT,
+            poolCountry: country,
           })
-          .catch((err) => {
-            console.log("Error checking blacklisted token", err);
-            throw err;
-          });
-
-        // If the jwt is blacklisted revoke access
-        if (isBlacklisted) {
-          done(null, false);
+            .then((res) => {
+              if (res.rows.length > 0) return true;
+              return false;
+            })
+            .catch((err) => {
+              console.log("Error checking blacklisted token", err);
+              throw err;
+            });
+          // If the jwt is blacklisted revoke access
+          if (isBlacklisted) {
+            done(null, false);
+          }
         }
-
         const admin = await getAdminUserByID(admin_id)
           .then((res) => res.rows[0])
           .catch((err) => {
