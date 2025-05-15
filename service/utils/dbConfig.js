@@ -35,6 +35,14 @@ const CLINICAL_PG_POOL_RO = new pg.Pool({
 const IS_DEV = process.env.NODE_ENV === "development";
 
 export const getDBPool = (dbType, country) => {
+  console.log("====================");
+  console.log("CLINICAL_DB_URL_RO", process.env.CLINICAL_DB_URL_RO);
+  console.log("PII_DB_URL_RO", process.env.PII_DB_URL_RO);
+  console.log("CLINICAL_DB_URL_KZ", process.env.CLINICAL_DB_URL_KZ);
+  console.log("PII_DB_URL_KZ", process.env.PII_DB_URL_KZ);
+  console.log("CLINICAL_DB_URL_PL", process.env.CLINICAL_DB_URL_PL);
+  console.log("PII_DB_URL_PL", process.env.PII_DB_URL_PL);
+  console.log("====================");
   if (dbType === "masterDb") return MASTER_PG_POOL;
   else {
     if (IS_DEV) {
