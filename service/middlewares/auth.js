@@ -34,7 +34,11 @@ import {
   incorrectCredentials,
 } from "#utils/errors";
 import { produceRaiseNotification } from "#utils/kafkaProducers";
-import { generate4DigitCode, generatePassword } from "#utils/helperFunctions";
+import {
+  generate4DigitCode,
+  generatePassword,
+  getCountryLabelFromAlpha2,
+} from "#utils/helperFunctions";
 
 const localStrategy = passportLocal.Strategy;
 const jwtStrategy = passportJWT.Strategy;
@@ -129,6 +133,7 @@ passport.use(
             data: {
               password: randomlyGeneratedPassword,
               adminRole: role,
+              countryLabel: getCountryLabelFromAlpha2(country),
             },
           },
           language,
