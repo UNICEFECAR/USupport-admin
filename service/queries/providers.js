@@ -40,7 +40,10 @@ export const getAllProvidersQuery = async ({
   const searchPattern = search ? `%${search}%` : null;
   return await getDBPool("piiDb", poolCountry).query(
     `
-        SELECT provider_detail."provider_detail_id", provider_detail."name", patronym, surname, nickname, email, phone, image, specializations, street, city, postcode, education, sex, consultation_price, description, video_link, status,
+        SELECT provider_detail."provider_detail_id", provider_detail."name", patronym, surname, nickname,
+               provider_detail.email, provider_detail.phone, image, specializations, street,
+               provider_detail.city, postcode, education, sex, consultation_price, 
+               provider_detail.description, video_link, status,
          JSON_AGG(
                 JSON_BUILD_OBJECT(
                     'organization_id', organization_provider_links.organization_id,
