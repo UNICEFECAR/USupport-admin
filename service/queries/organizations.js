@@ -70,7 +70,7 @@ export const assignProviderToOrganizationQuery = async ({
       existing_links AS (
         SELECT provider_detail_id
         FROM organization_provider_links
-        WHERE organization_id = $1
+        WHERE organization_id = $1 AND organization_provider_links.is_deleted = false
       )
       INSERT INTO organization_provider_links (organization_id, provider_detail_id)
       SELECT $1, provider_data.provider_detail_id
