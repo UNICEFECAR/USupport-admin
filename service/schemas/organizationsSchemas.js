@@ -3,8 +3,23 @@ import * as yup from "yup";
 export const createOrganizationSchema = yup.object().shape({
   name: yup.string().required(),
   createdBy: yup.string().uuid().required(),
-  country: yup.string().required(),
-  language: yup.string().required(),
+  country: yup.string().nullable().required(),
+  language: yup.string().nullable().required(),
+  unitName: yup.string().nullable().notRequired(),
+  websiteUrl: yup.string().nullable().notRequired(),
+  address: yup.string().nullable().notRequired(),
+  location: yup.object().shape({
+    latitude: yup.number().nullable().notRequired(),
+    longitude: yup.number().nullable().notRequired(),
+  }),
+  phone: yup.string().nullable().notRequired(),
+  email: yup.string().nullable().notRequired(),
+  district: yup.string().nullable().notRequired(),
+  workWith: yup.array().of(yup.string().uuid()).notRequired(),
+  description: yup.string().nullable().notRequired(),
+  paymentMethod: yup.string().nullable().notRequired(),
+  userInteraction: yup.string().nullable().notRequired(),
+  specialisations: yup.array().of(yup.string().uuid()).notRequired(),
 });
 
 export const assignProviderToOrganizationSchema = yup.object().shape({
@@ -24,6 +39,10 @@ export const editOrganizationSchema = createOrganizationSchema
     organizationId: yup.string().uuid().required(),
   });
 
+export const organizationCountrySchema = yup.object().shape({
+  country: yup.string().required(),
+});
+
 export const getOrganizationByIdSchema = yup.object().shape({
   country: yup.string().required(),
   language: yup.string().required(),
@@ -42,3 +61,18 @@ export const removeProviderFromOrganizationSchema =
   assignProviderToOrganizationSchema.omit(["providerDetailIds"]).shape({
     providerDetailId: yup.string().uuid().required(),
   });
+
+export const organizationMetadataSchema = yup.object().shape({
+  country: yup.string().required(),
+  type: yup
+    .string()
+    .oneOf([
+      "work-with",
+      "districts",
+      "payment-methods",
+      "user-interactions",
+      "specialisations",
+      "all",
+    ])
+    .required(),
+});

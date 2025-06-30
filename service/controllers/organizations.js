@@ -12,6 +12,13 @@ import {
   getProviderOrganizationLinkQuery,
   reassignProviderToOrganizationQuery,
   removeProviderFromOrganizationQuery,
+  createOrganizationWorkWithLinksQuery,
+  getOrganizationWorkWithLinksQuery,
+  deleteOrganizationWorkWithLinksQuery,
+  createOrganizationSpecialisationsLinksQuery,
+  deleteOrganizationSpecialisationsLinksQuery,
+  getOrganizationSpecialisationsLinksQuery,
+  getOrganizationMetadataQuery,
 } from "#queries/organizations";
 import { getMultipleProvidersDataByIDs } from "#queries/providers";
 import {
@@ -22,27 +29,137 @@ import {
 import { removeProvidersCacheRequest } from "#utils/helperFunctions";
 
 export const createOrganization = async (data) => {
-  return await createOrganizationQuery(data)
-    .then((res) => {
-      return res.rows[0];
+  try {
+    return await createOrganizationQuery({
+      ...data,
+      districtId: data.district,
     })
-    .catch((err) => {
-      // Check if the error is due to duplicate organization name
-      if (err.code === "23505") {
-        throw organizationExists(data.language);
-      }
-      throw err;
-    });
+      .then(async (res) => {
+        const organizationId = res.rows[0].organization_id;
+
+        if (data.workWith && data.workWith.length > 0) {
+          await createOrganizationWorkWithLinksQuery({
+            poolCountry: data.country,
+            organizationId,
+            workWithIds: data.workWith,
+          });
+
+          if (data.specialisations && data.specialisations.length > 0) {
+            await createOrganizationSpecialisationsLinksQuery({
+              poolCountry: data.country,
+              organizationId,
+              specialisationIds: data.specialisations,
+            });
+          }
+        }
+
+        return res.rows[0];
+      })
+      .catch((err) => {
+        // Check if the error is due to duplicate organization name
+        if (err.code === "23505") {
+          throw organizationExists(data.language);
+        }
+        throw err;
+      });
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const editOrganization = async (data) => {
-  return await editOrganizationQuery(data)
-    .then((res) => {
-      return res.rows[0];
+  try {
+    return await editOrganizationQuery({
+      ...data,
+      districtId: data.district,
     })
-    .catch((err) => {
-      throw err;
-    });
+      .then(async (res) => {
+        const organizationId = res.rows[0].organization_id;
+
+        if (data.workWith !== undefined) {
+          const existingLinks = await getOrganizationWorkWithLinksQuery({
+            poolCountry: data.country,
+            organizationId,
+          });
+
+          const existingWorkWithIds = existingLinks.rows.map(
+            (link) => link.organization_work_with_id
+          );
+          const newWorkWithIds = data.workWith || [];
+
+          const workWithIdsToAdd = newWorkWithIds.filter(
+            (id) => !existingWorkWithIds.includes(id)
+          );
+
+          const workWithIdsToRemove = existingWorkWithIds.filter(
+            (id) => !newWorkWithIds.includes(id)
+          );
+
+          if (workWithIdsToAdd.length > 0) {
+            await createOrganizationWorkWithLinksQuery({
+              poolCountry: data.country,
+              organizationId,
+              workWithIds: workWithIdsToAdd,
+            });
+          }
+
+          if (workWithIdsToRemove.length > 0) {
+            await deleteOrganizationWorkWithLinksQuery({
+              poolCountry: data.country,
+              organizationId,
+              workWithIds: workWithIdsToRemove,
+            });
+          }
+        }
+
+        if (data.specialisations !== undefined) {
+          const existingLinks = await getOrganizationSpecialisationsLinksQuery({
+            poolCountry: data.country,
+            organizationId,
+          });
+
+          const existingSpecialisationIds = existingLinks.rows.map(
+            (link) => link.organization_specialisation_id
+          );
+          const newSpecialisationIds = data.specialisations || [];
+
+          const specialisationIdsToAdd = newSpecialisationIds.filter(
+            (id) => !existingSpecialisationIds.includes(id)
+          );
+
+          const specialisationIdsToRemove = existingSpecialisationIds.filter(
+            (id) => !newSpecialisationIds.includes(id)
+          );
+
+          if (specialisationIdsToAdd.length > 0) {
+            await createOrganizationSpecialisationsLinksQuery({
+              poolCountry: data.country,
+              organizationId,
+              specialisationIds: specialisationIdsToAdd,
+            });
+          }
+
+          if (specialisationIdsToRemove.length > 0) {
+            await deleteOrganizationSpecialisationsLinksQuery({
+              poolCountry: data.country,
+              organizationId,
+              specialisationIds: specialisationIdsToRemove,
+            });
+          }
+        }
+
+        return res.rows[0];
+      })
+      .catch((err) => {
+        // Check if the error is due to duplicate organization name
+        if (err.code === "23505") {
+          throw organizationExists(data.language);
+        }
+        throw err;
+      });
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const assignProviderToOrganization = async (data) => {
@@ -300,6 +417,25 @@ export const removeProviderFromOrganization = async (data) => {
         language: data.language,
       });
 
+      return res.rows[0];
+    })
+    .catch((err) => {
+      throw err;
+    });
+};
+
+export const getOrganizationMetadata = async (data) => {
+  return await getOrganizationMetadataQuery(data)
+    .then((res) => {
+      if (res.rows.length === 0) {
+        return {
+          workWith: [],
+          districts: [],
+          paymentMethods: [],
+          userInteractions: [],
+          specialisations: [],
+        };
+      }
       return res.rows[0];
     })
     .catch((err) => {

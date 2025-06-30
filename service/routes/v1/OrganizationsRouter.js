@@ -8,6 +8,7 @@ import {
   getAllOrganizationsWithDetails,
   getOrganizationById,
   removeProviderFromOrganization,
+  getOrganizationMetadata,
 } from "#controllers/organizations";
 import {
   assignProviderToOrganizationSchema,
@@ -16,6 +17,7 @@ import {
   getAllOrganizationsSchema,
   getOrganizationByIdSchema,
   removeProviderFromOrganizationSchema,
+  organizationCountrySchema,
 } from "#schemas/organizationsSchemas";
 
 const router = express.Router();
@@ -40,6 +42,18 @@ router.get("/all/details", async (req, res, next) => {
     .strict(true)
     .validate({ country })
     .then(getAllOrganizationsWithDetails)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.get("/metadata", async (req, res, next) => {
+  const country = req.header("x-country-alpha-2");
+
+  return await organizationCountrySchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({ country })
+    .then(getOrganizationMetadata)
     .then((result) => res.status(200).send(result))
     .catch(next);
 });
@@ -80,7 +94,12 @@ router.post("/", async (req, res, next) => {
   return await createOrganizationSchema
     .noUnknown(true)
     .strict(true)
-    .validate({ name: req.body.name, country, language, createdBy })
+    .validate({
+      country,
+      language,
+      createdBy,
+      ...req.body,
+    })
     .then(createOrganization)
     .then((result) => res.status(200).send(result))
     .catch(next);
