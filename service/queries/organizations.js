@@ -433,7 +433,24 @@ export const removeProviderFromOrganizationQuery = async ({
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
-        DELETE FROM organization_provider_links
+        UPDATE organization_provider_links
+        SET deleted_at = NOW(),
+            is_deleted = true,
+            periods = CASE 
+                -- If periods is already an array, append the new object to the array
+                WHEN jsonb_typeof(periods) = 'array' THEN periods || jsonb_build_object(
+                    'enrolled_at', created_at,
+                    'removed_at', NOW()
+                )
+                -- If periods is NULL or not an array, create a new array with the current periods and the new object
+                ELSE jsonb_build_array(
+                    periods, 
+                    jsonb_build_object(
+                        'enrolled_at', created_at,
+                        'removed_at', NOW()
+                    )
+                )
+            END
         WHERE organization_id = $1 AND provider_detail_id = $2
         RETURNING *;
     `,
