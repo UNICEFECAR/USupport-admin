@@ -12,8 +12,8 @@ export const createOrganizationQuery = async ({
   location,
   description,
   districtId,
-  paymentMethodId,
-  userInteractionId,
+  paymentMethod,
+  userInteraction,
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
@@ -36,8 +36,8 @@ export const createOrganizationQuery = async ({
       location?.latitude,
       description,
       districtId,
-      paymentMethodId,
-      userInteractionId,
+      paymentMethod,
+      userInteraction,
     ]
   );
 };
@@ -388,7 +388,7 @@ export const editOrganizationQuery = async ({
   paymentMethod,
   userInteraction,
 }) => {
-  console.log(location);
+  console.log(organizationId);
 
   return await getDBPool("piiDb", poolCountry).query(
     `
@@ -402,9 +402,10 @@ export const editOrganizationQuery = async ({
             email = $6,
             geolocation = ST_Point($7, $8),
             description = $9,
-            district_id = $10,
-            payment_method_id = $11,
-            user_interaction_id = $12
+            -- check for null values and check data types
+            district_id = CASE WHEN $10::uuid IS NULL THEN district_id ELSE $10::uuid END,
+            payment_method_id = CASE WHEN $11::uuid IS NULL THEN payment_method_id ELSE $11::uuid END,
+            user_interaction_id = CASE WHEN $12::uuid IS NULL THEN user_interaction_id ELSE $12::uuid END
           WHERE organization_id = $13
           RETURNING *, ST_X(geolocation) as longitude, ST_Y(geolocation) as latitude;
     `,
@@ -418,9 +419,9 @@ export const editOrganizationQuery = async ({
       location?.longitude,
       location?.latitude,
       description,
-      district,
-      paymentMethod,
-      userInteraction,
+      district || null,
+      paymentMethod || null,
+      userInteraction || null,
       organizationId,
     ]
   );
