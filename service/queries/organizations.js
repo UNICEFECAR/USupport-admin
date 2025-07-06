@@ -146,6 +146,7 @@ export const getAllOrganizationsQuery = async ({ country: poolCountry }) => {
 
 export const getAllOrganizationsWithDetailsQuery = async ({
   country: poolCountry,
+  search,
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
@@ -208,7 +209,9 @@ export const getAllOrganizationsWithDetailsQuery = async ({
         )
         GROUP BY organization_id
       ) specialisations_agg ON organization.organization_id = specialisations_agg.organization_id
-    `
+      WHERE ($1::text IS NULL OR organization.name ILIKE $1::text OR organization.unit_name ILIKE $1::text)
+    `,
+    search ? [`%${search}%`] : [null]
   );
 };
 

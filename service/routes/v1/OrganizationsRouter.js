@@ -18,6 +18,7 @@ import {
   getOrganizationByIdSchema,
   removeProviderFromOrganizationSchema,
   organizationCountrySchema,
+  getOrganizationsWithDetailsSchema,
 } from "#schemas/organizationsSchemas";
 
 const router = express.Router();
@@ -37,10 +38,12 @@ router.get("/all", async (req, res, next) => {
 router.get("/all/details", async (req, res, next) => {
   const country = req.header("x-country-alpha-2");
 
-  return await getAllOrganizationsSchema
+  const { search } = req.query;
+
+  return await getOrganizationsWithDetailsSchema
     .noUnknown(true)
     .strict(true)
-    .validate({ country })
+    .validate({ country, search: search || null })
     .then(getAllOrganizationsWithDetails)
     .then((result) => res.status(200).send(result))
     .catch(next);

@@ -33,6 +33,11 @@ export const getAllOrganizationsSchema = yup.object().shape({
   country: yup.string().required(),
 });
 
+export const getOrganizationsWithDetailsSchema = yup.object().shape({
+  country: yup.string().required(),
+  search: yup.string().nullable().notRequired(),
+});
+
 export const editOrganizationSchema = createOrganizationSchema
   .omit(["createdBy"])
   .shape({
