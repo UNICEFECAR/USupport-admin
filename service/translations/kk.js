@@ -26,4 +26,5 @@ export default {
   provider_already_assigned_to_org:
     "Консультант әлдеқашан организацияға тағайындалған",
   organization_not_found_error: "Ұйым табылмады",
+  organization_geolocation_not_found_error: "Ұйымның геолокациясы табылмады",
 };
