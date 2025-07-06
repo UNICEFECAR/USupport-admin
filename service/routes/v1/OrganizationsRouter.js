@@ -9,6 +9,7 @@ import {
   getOrganizationById,
   removeProviderFromOrganization,
   getOrganizationMetadata,
+  deleteOrganization,
 } from "#controllers/organizations";
 import {
   assignProviderToOrganizationSchema,
@@ -18,6 +19,7 @@ import {
   getOrganizationByIdSchema,
   removeProviderFromOrganizationSchema,
   organizationCountrySchema,
+  deleteOrganizationSchema,
 } from "#schemas/organizationsSchemas";
 
 const router = express.Router();
@@ -58,33 +60,59 @@ router.get("/metadata", async (req, res, next) => {
     .catch(next);
 });
 
-router.get("/:organizationId", async (req, res, next) => {
-  const country = req.header("x-country-alpha-2");
-  const language = req.header("x-language-alpha-2");
-  const organizationId = req.params.organizationId;
+router
+  .route("/:organizationId")
+  .get(async (req, res, next) => {
+    const country = req.header("x-country-alpha-2");
+    const language = req.header("x-language-alpha-2");
+    const organizationId = req.params.organizationId;
 
-  const { startDate, endDate, startTime, endTime, weekdays, weekends, search } =
-    req.query;
-
-  return await getOrganizationByIdSchema
-    .noUnknown(true)
-    .strict(true)
-    .validate({
-      organizationId,
-      country,
-      language,
+    const {
       startDate,
       endDate,
-      startTime: Number(startTime),
-      endTime: Number(endTime),
-      weekdays: !!Number(weekdays),
-      weekends: !!Number(weekends),
-      search: search || "",
-    })
-    .then(getOrganizationById)
-    .then((result) => res.status(200).send(result))
-    .catch(next);
-});
+      startTime,
+      endTime,
+      weekdays,
+      weekends,
+      search,
+    } = req.query;
+
+    return await getOrganizationByIdSchema
+      .noUnknown(true)
+      .strict(true)
+      .validate({
+        organizationId,
+        country,
+        language,
+        startDate,
+        endDate,
+        startTime: Number(startTime),
+        endTime: Number(endTime),
+        weekdays: !!Number(weekdays),
+        weekends: !!Number(weekends),
+        search: search || "",
+      })
+      .then(getOrganizationById)
+      .then((result) => res.status(200).send(result))
+      .catch(next);
+  })
+  .delete(async (req, res, next) => {
+    const country = req.header("x-country-alpha-2");
+    const language = req.header("x-language-alpha-2");
+    const organizationId = req.params.organizationId;
+
+    return await deleteOrganizationSchema
+      .noUnknown(true)
+      .strict(true)
+      .validate({
+        organizationId,
+        country,
+        language,
+      })
+      .then(deleteOrganization)
+      .then((result) => res.status(200).send(result))
+      .catch(next);
+  });
 
 router.post("/", async (req, res, next) => {
   const country = req.header("x-country-alpha-2");

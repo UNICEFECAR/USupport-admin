@@ -43,6 +43,12 @@ export const organizationCountrySchema = yup.object().shape({
   country: yup.string().required(),
 });
 
+export const deleteOrganizationSchema = yup.object().shape({
+  country: yup.string().required(),
+  organizationId: yup.string().uuid().required(),
+  language: yup.string().required(),
+});
+
 export const getOrganizationByIdSchema = yup.object().shape({
   country: yup.string().required(),
   language: yup.string().required(),
