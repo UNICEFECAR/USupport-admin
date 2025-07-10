@@ -9,6 +9,7 @@ import {
   getContactForms,
   getProviderStatistics,
   getProviderPlatformRatings,
+  getPlatformSuggestionsForType,
 } from "#controllers/statistics";
 
 import {
@@ -17,6 +18,7 @@ import {
   getStatsSchema,
   languageSchema,
   countrySchema,
+  getPlatformSuggestionsForTypeSchema,
 } from "#schemas/statisticsSchemas";
 
 const router = express.Router();
@@ -85,6 +87,25 @@ router.route("/information-portal-suggestions").get(async (req, res, next) => {
     .strict(true)
     .validate({ language, country })
     .then(getInformationPortalSuggestions)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.route("/platform-suggestions").get(async (req, res, next) => {
+  /**
+   * #route   GET /admin/v1/statistics/platform-suggestions
+   * #desc    Get platform suggestions
+   */
+
+  const country = req.header("x-country-alpha-2");
+  const language = req.header("x-language-alpha-2");
+  const { type } = req.query;
+
+  return await getPlatformSuggestionsForTypeSchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({ language, country, type })
+    .then(getPlatformSuggestionsForType)
     .then((result) => res.status(200).send(result))
     .catch(next);
 });

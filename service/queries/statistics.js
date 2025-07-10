@@ -73,9 +73,9 @@ export const getSecurityCheckAnswersQuery = async ({ poolCountry }) =>
 export const getInformationPortalSuggestionsQuery = async ({ poolCountry }) =>
   await getDBPool("piiDb", poolCountry).query(
     `
-      SELECT suggestion, information_portal_suggestion.created_at, name, surname, nickname, email  
-      FROM information_portal_suggestion
-        INNER JOIN client_detail ON information_portal_suggestion.client_detail_id = client_detail.client_detail_id
+      SELECT suggestion, platform_suggestion.created_at, name, surname, nickname, email  
+      FROM platform_suggestion
+        INNER JOIN client_detail ON platform_suggestion.client_detail_id = client_detail.client_detail_id
     `
   );
 
@@ -148,4 +148,18 @@ export const getProviderPlatformRatingsQuery = async ({ poolCountry }) =>
       SELECT rating, comment, provider_rating.created_at
       FROM provider_rating
     `
+  );
+
+export const getPlatformSuggestionsForTypeQuery = async ({
+  poolCountry,
+  type,
+}) =>
+  await getDBPool("piiDb", poolCountry).query(
+    `
+      SELECT suggestion, platform_suggestion.created_at, type, name, surname, nickname, email
+      FROM platform_suggestion
+        INNER JOIN client_detail ON platform_suggestion.client_detail_id = client_detail.client_detail_id
+      WHERE ($1::text IS NULL or type = $1)
+    `,
+    [type === "all" ? null : type]
   );
