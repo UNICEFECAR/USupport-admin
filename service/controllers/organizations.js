@@ -13,12 +13,15 @@ import {
   reassignProviderToOrganizationQuery,
   removeProviderFromOrganizationQuery,
   getOrganizationMetadataQuery,
+  deleteOrganizationQuery,
+  getProvidersForOrganizationQuery,
 } from "#queries/organizations";
 import { getMultipleProvidersDataByIDs } from "#queries/providers";
 import {
   organizationExists,
   organizationNotFound,
   providerAlreadyAssignedToOrg,
+  organizationHasProviders,
 } from "#utils/errors";
 import { removeProvidersCacheRequest } from "#utils/helperFunctions";
 import {
@@ -351,6 +354,37 @@ export const getOrganizationMetadata = async (data) => {
           propertyType: [],
         };
       }
+      return res.rows[0];
+    })
+    .catch((err) => {
+      throw err;
+    });
+};
+
+export const deleteOrganization = async (data) => {
+  const assignedProviders = await getProvidersForOrganizationQuery({
+    country: data.country,
+    organizationId: data.organizationId,
+  })
+    .then((res) => {
+      console.log(res.rows);
+      if (res.rows.length > 0) {
+        throw organizationHasProviders(data.language, res.rows);
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
+
+  return await deleteOrganizationQuery({
+    country: data.country,
+    organizationId: data.organizationId,
+  })
+    .then((res) => {
+      if (res.rows.length === 0) {
+        throw organizationNotFound(data.language);
+      }
+
       return res.rows[0];
     })
     .catch((err) => {

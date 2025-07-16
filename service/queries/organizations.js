@@ -350,6 +350,7 @@ export const getAllOrganizationsWithDetailsQuery = async ({
         )
         GROUP BY organization_id
       ) property_types_agg ON organization.organization_id = property_types_agg.organization_id
+      WHERE organization.is_deleted = FALSE
     `
   );
 };
@@ -945,5 +946,35 @@ export const getOrganizationMetadataQuery = async ({
     CROSS JOIN specialisations
     CROSS JOIN property_types;
     `
+  );
+};
+
+export const deleteOrganizationQuery = async ({
+  country: poolCountry,
+  organizationId,
+}) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+      UPDATE organization
+      SET is_deleted = true, deleted_at = NOW()
+      WHERE organization_id = $1
+      RETURNING *;
+    `,
+    [organizationId]
+  );
+};
+
+export const getProvidersForOrganizationQuery = async ({
+  country: poolCountry,
+  organizationId,
+}) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    ` 
+    SELECT organization_provider_links.*, provider_detail.* 
+	  FROM organization_provider_links
+	  LEFT JOIN provider_detail ON organization_provider_links.provider_detail_id = provider_detail.provider_detail_id
+	  WHERE organization_id = $1
+    `,
+    [organizationId]
   );
 };
