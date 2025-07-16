@@ -17,3 +17,16 @@ export const getStatsSchema = languageSchema.concat(countrySchema);
 export const getProviderStatisticsSchema = getStatsSchema.shape({
   providerId: yup.string().uuid().required(),
 });
+
+export const getPlatformSuggestionsForTypeSchema = getStatsSchema.shape({
+  type: yup
+    .string()
+    .oneOf([
+      "information-portal",
+      "my-qa",
+      "consultations",
+      "organizations",
+      "mood-tracker",
+      "all",
+    ]),
+});

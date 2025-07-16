@@ -74,3 +74,10 @@ export const getAllProvidersSchema = countrySchema.shape({
   sort_status: yup.string().oneOf([null, "asc", "desc"]).nullable(true),
   search: yup.string().nullable(true),
 });
+
+export const updateCountryContentActiveStatusSchema = yup.object().shape({
+  language: yup.string().required(),
+  country: yup.string().required(),
+  contentType: yup.string().oneOf(["videos", "podcasts"]).required(),
+  status: yup.string().oneOf(["enabled", "disabled"]).required(),
+});

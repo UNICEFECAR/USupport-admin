@@ -26,4 +26,5 @@ export default {
   organization_exists_error: "Organization already exists",
   provider_already_assigned_to_org: "Provider already assigned to organization",
   organization_not_found_error: "Organization not found",
+  organization_has_providers_error: "Organization has providers",
 };

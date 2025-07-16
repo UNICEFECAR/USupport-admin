@@ -25,4 +25,6 @@ export default {
   provider_already_assigned_to_org:
     "Консультант/ка вже призначений/на для цієї організації",
   organization_not_found_error: "Організацію не знайдено",
+  organization_geolocation_not_found_error:
+    "Геолокацію організації не знайдено",
 };
