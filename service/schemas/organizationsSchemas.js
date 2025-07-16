@@ -14,11 +14,12 @@ export const createOrganizationSchema = yup.object().shape({
   }),
   phone: yup.string().nullable().notRequired(),
   email: yup.string().nullable().notRequired(),
-  district: yup.string().nullable().notRequired(),
+  district: yup.string().uuid().nullable().notRequired(),
   workWith: yup.array().of(yup.string().uuid()).notRequired(),
   description: yup.string().nullable().notRequired(),
-  paymentMethod: yup.string().nullable().notRequired(),
-  userInteraction: yup.string().nullable().notRequired(),
+  paymentMethods: yup.array().of(yup.string().uuid()).notRequired(),
+  userInteractions: yup.array().of(yup.string().uuid()).notRequired(),
+  propertyType: yup.array().of(yup.string().uuid()).notRequired(),
   specialisations: yup.array().of(yup.string().uuid()).notRequired(),
 });
 
@@ -33,6 +34,11 @@ export const getAllOrganizationsSchema = yup.object().shape({
   country: yup.string().required(),
 });
 
+export const getOrganizationsWithDetailsSchema = yup.object().shape({
+  country: yup.string().required(),
+  search: yup.string().nullable().notRequired(),
+});
+
 export const editOrganizationSchema = createOrganizationSchema
   .omit(["createdBy"])
   .shape({
@@ -41,6 +47,12 @@ export const editOrganizationSchema = createOrganizationSchema
 
 export const organizationCountrySchema = yup.object().shape({
   country: yup.string().required(),
+});
+
+export const deleteOrganizationSchema = yup.object().shape({
+  country: yup.string().required(),
+  organizationId: yup.string().uuid().required(),
+  language: yup.string().required(),
 });
 
 export const getOrganizationByIdSchema = yup.object().shape({
@@ -72,6 +84,7 @@ export const organizationMetadataSchema = yup.object().shape({
       "payment-methods",
       "user-interactions",
       "specialisations",
+      "property-types",
       "all",
     ])
     .required(),

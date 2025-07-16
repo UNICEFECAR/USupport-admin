@@ -319,3 +319,30 @@ export const deleteCountryPodcastsQuery = async (data) => {
     [country, id]
   );
 };
+
+/**
+ * Update content type active status for a country
+ * @param {Object} data
+ * @param {string} data.country - The country code
+ * @param {string} data.contentType - The content type (videos or podcasts)
+ * @param {boolean} data.isActive - Whether the content type should be active
+ * @returns {Promise<Object>} - Updated country data
+ */
+export const updateCountryContentActiveStatusQuery = async ({
+  country,
+  contentType,
+  isActive,
+}) => {
+  const columnName =
+    contentType === "videos" ? "videos_active" : "podcasts_active";
+
+  return await getDBPool("masterDb").query(
+    `
+      UPDATE country
+      SET ${columnName} = $2
+      WHERE alpha2 = $1
+      RETURNING *;
+    `,
+    [country, isActive]
+  );
+};

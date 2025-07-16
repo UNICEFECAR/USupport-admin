@@ -9,6 +9,7 @@ import {
   getContactFormsQuery,
   getProviderStatisticsQuery,
   getProviderPlatformRatingsQuery,
+  getPlatformSuggestionsForTypeQuery,
 } from "#queries/statistics";
 
 import {
@@ -369,6 +370,23 @@ export const getProviderStatistics = async ({ country, providerId }) => {
 export const getProviderPlatformRatings = async ({ country }) => {
   return await getProviderPlatformRatingsQuery({
     poolCountry: country,
+  })
+    .then((res) => {
+      if (res.rowCount === 0) {
+        return [];
+      } else {
+        return res.rows;
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
+};
+
+export const getPlatformSuggestionsForType = async ({ country, type }) => {
+  return await getPlatformSuggestionsForTypeQuery({
+    poolCountry: country,
+    type,
   })
     .then((res) => {
       if (res.rowCount === 0) {

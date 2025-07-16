@@ -14,6 +14,8 @@ import {
   getAllProviderNames,
 } from "#controllers/admin";
 
+import { updateCountryContentActiveStatus } from "#controllers/countries";
+
 import {
   changePasswordSchema,
   updateAdminDataSchema,
@@ -24,6 +26,7 @@ import {
   updateProviderStatusSchema,
   getAllProvidersSchema,
   countrySchema,
+  updateCountryContentActiveStatusSchema,
 } from "#schemas/adminSchemas";
 
 import { securedRoute } from "#middlewares/auth";
@@ -246,5 +249,23 @@ router.post(
       .catch(next);
   }
 );
+
+router.put("/content-active-status", securedRoute, async (req, res, next) => {
+  /**
+   * #route   PUT /admin/v1/admin/content-active-status
+   * #desc    Update content type active status for a country
+   */
+  const language = req.header("x-language-alpha-2");
+  const country = req.header("x-country-alpha-2");
+  const { contentType, status } = req.body;
+
+  return await updateCountryContentActiveStatusSchema
+    .noUnknown(true)
+    .strict()
+    .validate({ language, country, contentType, status })
+    .then(updateCountryContentActiveStatus)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
 
 export { router };

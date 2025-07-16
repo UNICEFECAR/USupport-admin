@@ -167,3 +167,23 @@ export const organizationNotFound = (language) => {
   error.status = 404;
   return error;
 };
+
+class CustomError extends Error {
+  constructor(message, name, status, customData) {
+    super(message);
+    this.name = name;
+    this.status = status;
+    this.customData = customData;
+  }
+}
+
+export const organizationHasProviders = (language, providers) => {
+  const error = new CustomError();
+  error.message = t("organization_has_providers_error", language);
+  error.name = "ORGANIZATION HAS PROVIDERS";
+  error.status = 409;
+  error.customData = {
+    providers,
+  };
+  return error;
+};

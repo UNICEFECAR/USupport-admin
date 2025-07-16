@@ -21,6 +21,7 @@ import {
   getCountryPodcastsQuery,
   addCountryPodcastsQuery,
   deleteCountryPodcastsQuery,
+  updateCountryContentActiveStatusQuery,
 } from "#queries/countries";
 
 import { platformNotFound, countryNotFound } from "#utils/errors";
@@ -268,4 +269,29 @@ export const deleteCountryPodcasts = async (data) => {
   } catch (err) {
     throw new Error(err);
   }
+};
+
+export const updateCountryContentActiveStatus = async ({
+  country,
+  language,
+  contentType,
+  status,
+}) => {
+  const isActive = status === "enabled";
+
+  return await updateCountryContentActiveStatusQuery({
+    country,
+    contentType,
+    isActive,
+  })
+    .then((res) => {
+      if (res.rowCount === 0) {
+        throw countryNotFound(language);
+      } else {
+        return res.rows[0];
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
 };

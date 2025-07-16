@@ -12,21 +12,22 @@ import {
   getProviderOrganizationLinkQuery,
   reassignProviderToOrganizationQuery,
   removeProviderFromOrganizationQuery,
-  createOrganizationWorkWithLinksQuery,
-  getOrganizationWorkWithLinksQuery,
-  deleteOrganizationWorkWithLinksQuery,
-  createOrganizationSpecialisationsLinksQuery,
-  deleteOrganizationSpecialisationsLinksQuery,
-  getOrganizationSpecialisationsLinksQuery,
   getOrganizationMetadataQuery,
+  deleteOrganizationQuery,
+  getProvidersForOrganizationQuery,
 } from "#queries/organizations";
 import { getMultipleProvidersDataByIDs } from "#queries/providers";
 import {
   organizationExists,
   organizationNotFound,
   providerAlreadyAssignedToOrg,
+  organizationHasProviders,
 } from "#utils/errors";
 import { removeProvidersCacheRequest } from "#utils/helperFunctions";
+import {
+  handleOrganizationLinksCreation,
+  handleOrganizationLinksUpdate,
+} from "#utils/organization";
 
 export const createOrganization = async (data) => {
   try {
@@ -38,25 +39,12 @@ export const createOrganization = async (data) => {
         const organizationId = res.rows[0].organization_id;
 
         if (data.workWith && data.workWith.length > 0) {
-          await createOrganizationWorkWithLinksQuery({
-            poolCountry: data.country,
-            organizationId,
-            workWithIds: data.workWith,
-          });
-
-          if (data.specialisations && data.specialisations.length > 0) {
-            await createOrganizationSpecialisationsLinksQuery({
-              poolCountry: data.country,
-              organizationId,
-              specialisationIds: data.specialisations,
-            });
-          }
+          await handleOrganizationLinksCreation(data, organizationId);
         }
 
         return res.rows[0];
       })
       .catch((err) => {
-        // Check if the error is due to duplicate organization name
         if (err.code === "23505") {
           throw organizationExists(data.language);
         }
@@ -76,82 +64,11 @@ export const editOrganization = async (data) => {
       .then(async (res) => {
         const organizationId = res.rows[0].organization_id;
 
-        if (data.workWith !== undefined) {
-          const existingLinks = await getOrganizationWorkWithLinksQuery({
-            poolCountry: data.country,
-            organizationId,
-          });
-
-          const existingWorkWithIds = existingLinks.rows.map(
-            (link) => link.organization_work_with_id
-          );
-          const newWorkWithIds = data.workWith || [];
-
-          const workWithIdsToAdd = newWorkWithIds.filter(
-            (id) => !existingWorkWithIds.includes(id)
-          );
-
-          const workWithIdsToRemove = existingWorkWithIds.filter(
-            (id) => !newWorkWithIds.includes(id)
-          );
-
-          if (workWithIdsToAdd.length > 0) {
-            await createOrganizationWorkWithLinksQuery({
-              poolCountry: data.country,
-              organizationId,
-              workWithIds: workWithIdsToAdd,
-            });
-          }
-
-          if (workWithIdsToRemove.length > 0) {
-            await deleteOrganizationWorkWithLinksQuery({
-              poolCountry: data.country,
-              organizationId,
-              workWithIds: workWithIdsToRemove,
-            });
-          }
-        }
-
-        if (data.specialisations !== undefined) {
-          const existingLinks = await getOrganizationSpecialisationsLinksQuery({
-            poolCountry: data.country,
-            organizationId,
-          });
-
-          const existingSpecialisationIds = existingLinks.rows.map(
-            (link) => link.organization_specialisation_id
-          );
-          const newSpecialisationIds = data.specialisations || [];
-
-          const specialisationIdsToAdd = newSpecialisationIds.filter(
-            (id) => !existingSpecialisationIds.includes(id)
-          );
-
-          const specialisationIdsToRemove = existingSpecialisationIds.filter(
-            (id) => !newSpecialisationIds.includes(id)
-          );
-
-          if (specialisationIdsToAdd.length > 0) {
-            await createOrganizationSpecialisationsLinksQuery({
-              poolCountry: data.country,
-              organizationId,
-              specialisationIds: specialisationIdsToAdd,
-            });
-          }
-
-          if (specialisationIdsToRemove.length > 0) {
-            await deleteOrganizationSpecialisationsLinksQuery({
-              poolCountry: data.country,
-              organizationId,
-              specialisationIds: specialisationIdsToRemove,
-            });
-          }
-        }
+        await handleOrganizationLinksUpdate(data, organizationId);
 
         return res.rows[0];
       })
       .catch((err) => {
-        // Check if the error is due to duplicate organization name
         if (err.code === "23505") {
           throw organizationExists(data.language);
         }
@@ -203,7 +120,7 @@ export const assignProviderToOrganization = async (data) => {
       providerDetailIds: assignedProviderIds,
       country: data.country,
     }).catch((err) => {
-      console.log("err");
+      ("err");
       throw err;
     });
   }
@@ -434,8 +351,40 @@ export const getOrganizationMetadata = async (data) => {
           paymentMethods: [],
           userInteractions: [],
           specialisations: [],
+          propertyType: [],
         };
       }
+      return res.rows[0];
+    })
+    .catch((err) => {
+      throw err;
+    });
+};
+
+export const deleteOrganization = async (data) => {
+  const assignedProviders = await getProvidersForOrganizationQuery({
+    country: data.country,
+    organizationId: data.organizationId,
+  })
+    .then((res) => {
+      console.log(res.rows);
+      if (res.rows.length > 0) {
+        throw organizationHasProviders(data.language, res.rows);
+      }
+    })
+    .catch((err) => {
+      throw err;
+    });
+
+  return await deleteOrganizationQuery({
+    country: data.country,
+    organizationId: data.organizationId,
+  })
+    .then((res) => {
+      if (res.rows.length === 0) {
+        throw organizationNotFound(data.language);
+      }
+
       return res.rows[0];
     })
     .catch((err) => {
