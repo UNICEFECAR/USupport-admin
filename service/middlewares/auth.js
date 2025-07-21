@@ -125,6 +125,15 @@ passport.use(
             throw err;
           });
 
+        const countryAlpha2 = await getCountryAlpha2CodeByIdQuery({
+          countryId: adminCountryId,
+        }).then((res) => {
+          if (res.rows.length > 0) {
+            return res.rows[0].alpha2;
+          }
+          return null;
+        });
+
         produceRaiseNotification({
           channels: ["email"],
           emailArgs: {
@@ -133,7 +142,7 @@ passport.use(
             data: {
               password: randomlyGeneratedPassword,
               adminRole: role,
-              countryLabel: getCountryLabelFromAlpha2(country),
+              countryLabel: getCountryLabelFromAlpha2(countryAlpha2),
             },
           },
           language,
