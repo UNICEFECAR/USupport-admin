@@ -15,7 +15,7 @@ export const createOrganizationQuery = async ({
   return await getDBPool("piiDb", poolCountry).query(
     `
       INSERT INTO organization (
-        name, created_by, website_url, address, phone, email, 2
+        name, created_by, website_url, address, phone, email,
         geolocation, description, district_id
       )
       VALUES ($1, $2, $3, $4, $5, $6, ST_Point($7, $8), $9, $10)
