@@ -1,7 +1,7 @@
 import {
-  createOrganizationWorkWithLinksQuery,
-  getOrganizationWorkWithLinksQuery,
-  deleteOrganizationWorkWithLinksQuery,
+  // createOrganizationWorkWithLinksQuery,
+  // getOrganizationWorkWithLinksQuery,
+  // deleteOrganizationWorkWithLinksQuery,
   createOrganizationSpecialisationsLinksQuery,
   deleteOrganizationSpecialisationsLinksQuery,
   getOrganizationSpecialisationsLinksQuery,
@@ -17,13 +17,13 @@ import {
 } from "#queries/organizations";
 
 const LINK_CONFIGS = {
-  workWith: {
-    createQuery: createOrganizationWorkWithLinksQuery,
-    getQuery: getOrganizationWorkWithLinksQuery,
-    deleteQuery: deleteOrganizationWorkWithLinksQuery,
-    dataKey: "workWithIds",
-    idField: "organization_work_with_id",
-  },
+  // workWith: {
+  //   createQuery: createOrganizationWorkWithLinksQuery,
+  //   getQuery: getOrganizationWorkWithLinksQuery,
+  //   deleteQuery: deleteOrganizationWorkWithLinksQuery,
+  //   dataKey: "workWithIds",
+  //   idField: "organization_work_with_id",
+  // },
   specialisations: {
     createQuery: createOrganizationSpecialisationsLinksQuery,
     getQuery: getOrganizationSpecialisationsLinksQuery,
@@ -119,7 +119,7 @@ export const updateOrganizationLinks = async (
 
 export const handleOrganizationLinksCreation = async (data, organizationId) => {
   const linkTypes = [
-    "workWith",
+    // "workWith",
     "specialisations",
     "paymentMethods",
     "userInteractions",
@@ -139,7 +139,7 @@ export const handleOrganizationLinksCreation = async (data, organizationId) => {
 
 export const handleOrganizationLinksUpdate = async (data, organizationId) => {
   const linkTypes = [
-    "workWith",
+    // "workWith",
     "specialisations",
     "paymentMethods",
     "userInteractions",
