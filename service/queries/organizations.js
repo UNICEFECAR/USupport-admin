@@ -329,7 +329,7 @@ export const getAllOrganizationsWithDetailsQuery = async ({
         )
         GROUP BY organization_id
       ) property_types_agg ON organization.organization_id = property_types_agg.organization_id
-      WHERE ($1::text IS NULL OR organization.name ILIKE $1::text OR organization.unit_name ILIKE $1::text) AND organization.is_deleted = FALSE
+      WHERE ($1::text IS NULL OR organization.name ILIKE $1::text) AND organization.is_deleted = FALSE
     `,
     search ? [`%${search}%`] : [null]
   );
