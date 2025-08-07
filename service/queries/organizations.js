@@ -11,14 +11,15 @@ export const createOrganizationQuery = async ({
   location,
   description,
   districtId,
+  workWith,
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
       INSERT INTO organization (
         name, created_by, website_url, address, phone, email,
-        geolocation, description, district_id
+        geolocation, description, district_id, work_with
       )
-      VALUES ($1, $2, $3, $4, $5, $6, ST_Point($7, $8), $9, $10)
+      VALUES ($1, $2, $3, $4, $5, $6, ST_Point($7, $8), $9, $10, $11)
       RETURNING *, ST_X(geolocation) as longitude, ST_Y(geolocation) as latitude
     `,
     [
@@ -32,6 +33,7 @@ export const createOrganizationQuery = async ({
       location?.latitude,
       description,
       districtId,
+      workWith,
     ]
   );
 };
@@ -47,6 +49,7 @@ export const editOrganizationQuery = async ({
   location,
   description,
   districtId,
+  workWith,
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
@@ -59,8 +62,9 @@ export const editOrganizationQuery = async ({
         email = $5,
         geolocation = ST_Point($6, $7),
         description = $8,
-        district_id = CASE WHEN $9::uuid IS NULL THEN district_id ELSE $9::uuid END
-      WHERE organization_id = $10
+        district_id = CASE WHEN $9::uuid IS NULL THEN district_id ELSE $9::uuid END,
+        work_with = $10
+      WHERE organization_id = $11
       RETURNING *, ST_X(geolocation) as longitude, ST_Y(geolocation) as latitude;
     `,
     [
@@ -73,6 +77,7 @@ export const editOrganizationQuery = async ({
       location?.latitude,
       description,
       districtId || null,
+      workWith,
       organizationId,
     ]
   );
@@ -174,26 +179,12 @@ export const getAllOrganizationsQuery = async ({ country: poolCountry }) => {
       ST_X(organization.geolocation) as longitude, 
       ST_Y(organization.geolocation) as latitude,
       district.name as district,
-      COALESCE(work_with_agg.work_with, '[]'::json) as work_with,
       COALESCE(specialisations_agg.specialisations, '[]'::json) as specialisations,
       COALESCE(payment_methods_agg.payment_methods, '[]'::json) as payment_methods,
       COALESCE(user_interactions_agg.user_interactions, '[]'::json) as user_interactions,
       COALESCE(property_types_agg.property_types, '[]'::json) as property_types
     FROM organization
     LEFT JOIN district ON organization.district_id = district.district_id
-    LEFT JOIN (
-      SELECT 
-        organization_id,
-        JSON_AGG(JSON_BUILD_OBJECT(
-          'id', organization_work_with_links.organization_work_with_id,
-          'topic', organization_work_with.topic
-        )) as work_with
-      FROM organization_work_with_links
-      LEFT JOIN organization_work_with ON (
-        organization_work_with_links.organization_work_with_id = organization_work_with.organization_work_with_id
-      )
-      GROUP BY organization_id
-    ) work_with_agg ON organization.organization_id = work_with_agg.organization_id
     LEFT JOIN (
       SELECT 
         organization_id,
@@ -267,11 +258,11 @@ export const getAllOrganizationsWithDetailsQuery = async ({
         organization.created_by,
         organization.created_at,
         organization.district_id,
+        organization.work_with,
         ST_X(organization.geolocation) as longitude, 
         ST_Y(organization.geolocation) as latitude,
         district.name as district,
         COALESCE(providers_agg.providers, '[]'::json) as providers,
-        COALESCE(work_with_agg.work_with, '[]'::json) as work_with,
         COALESCE(specialisations_agg.specialisations, '[]'::json) as specialisations,
         COALESCE(payment_methods_agg.payment_methods, '[]'::json) as payment_methods,
         COALESCE(user_interactions_agg.user_interactions, '[]'::json) as user_interactions,
@@ -286,19 +277,6 @@ export const getAllOrganizationsWithDetailsQuery = async ({
         WHERE is_deleted = false OR is_deleted IS NULL
         GROUP BY organization_id
       ) providers_agg ON organization.organization_id = providers_agg.organization_id
-      LEFT JOIN (
-        SELECT 
-          organization_id,
-          JSON_AGG(JSON_BUILD_OBJECT(
-            'id', organization_work_with_links.organization_work_with_id,
-            'topic', organization_work_with.topic
-          )) as work_with
-        FROM organization_work_with_links
-        LEFT JOIN organization_work_with ON (
-          organization_work_with_links.organization_work_with_id = organization_work_with.organization_work_with_id
-        )
-        GROUP BY organization_id
-      ) work_with_agg ON organization.organization_id = work_with_agg.organization_id
       LEFT JOIN (
         SELECT 
           organization_id,
@@ -351,7 +329,7 @@ export const getAllOrganizationsWithDetailsQuery = async ({
         )
         GROUP BY organization_id
       ) property_types_agg ON organization.organization_id = property_types_agg.organization_id
-      WHERE ($1::text IS NULL OR organization.name ILIKE $1::text OR organization.unit_name ILIKE $1::text) AND organization.is_deleted = FALSE
+      WHERE ($1::text IS NULL OR organization.name ILIKE $1::text) AND organization.is_deleted = FALSE
     `,
     search ? [`%${search}%`] : [null]
   );
@@ -373,11 +351,11 @@ export const getOrganizationByIdQuery = async ({
         organization.description,
         organization.created_at, 
         organization.district_id,
+        organization.work_with,
         ST_X(organization.geolocation) as longitude, 
         ST_Y(organization.geolocation) as latitude,
         district.name as district,
         COALESCE(providers_agg.providers, '[]'::json) as providers,
-        COALESCE(work_with_agg.work_with, '[]'::json) as work_with,
         COALESCE(specialisations_agg.specialisations, '[]'::json) as specialisations,
         COALESCE(payment_methods_agg.payment_methods, '[]'::json) as payment_methods,
         COALESCE(user_interactions_agg.user_interactions, '[]'::json) as user_interactions,
@@ -395,20 +373,6 @@ export const getOrganizationByIdQuery = async ({
         WHERE organization_id = $1 AND (is_deleted = false OR is_deleted IS NULL)
         GROUP BY organization_id
       ) providers_agg ON organization.organization_id = providers_agg.organization_id
-      LEFT JOIN (
-        SELECT 
-          organization_id,
-          JSON_AGG(JSON_BUILD_OBJECT(
-            'id', organization_work_with_links.organization_work_with_id,
-            'topic', organization_work_with.topic
-          )) as work_with
-        FROM organization_work_with_links
-        LEFT JOIN organization_work_with ON (
-          organization_work_with_links.organization_work_with_id = organization_work_with.organization_work_with_id
-        )
-        WHERE organization_work_with_links.organization_id = $1
-        GROUP BY organization_id
-      ) work_with_agg ON organization.organization_id = work_with_agg.organization_id
       LEFT JOIN (
         SELECT 
           organization_id,
@@ -501,8 +465,8 @@ export const getProviderConsultationsForOrganizationQuery = async ({
   endDate,
   startTime,
   endTime,
-  weekdays, // Boolean to include or exclude weekdays
-  weekends, // Boolean to include or exclude weekends
+  weekdays,
+  weekends,
 }) => {
   return await getDBPool("clinicalDb", poolCountry).query(
     `
@@ -600,64 +564,6 @@ export const getOrganizationsByIdsQuery = async ({
       WHERE organization.organization_id = ANY($1);
     `,
     [organizationIds]
-  );
-};
-
-// Work With Queries
-export const getOrganizationWorkWithQuery = async ({ country }) => {
-  return await getDBPool("piiDb", country).query(
-    `
-      SELECT *
-      FROM organization_work_with;
-    `
-  );
-};
-
-export const createOrganizationWorkWithLinksQuery = async ({
-  poolCountry,
-  organizationId,
-  workWithIds,
-}) => {
-  return await getDBPool("piiDb", poolCountry).query(
-    `
-      INSERT INTO organization_work_with_links (organization_id, organization_work_with_id)
-      SELECT $1, unnest($2::uuid[])
-      RETURNING *;
-    `,
-    [organizationId, workWithIds]
-  );
-};
-
-export const deleteOrganizationWorkWithLinksQuery = async ({
-  poolCountry,
-  organizationId,
-  workWithIds,
-}) => {
-  return await getDBPool("piiDb", poolCountry).query(
-    `
-      DELETE FROM organization_work_with_links 
-      WHERE organization_id = $1 AND organization_work_with_id = ANY($2::uuid[]);
-    `,
-    [organizationId, workWithIds]
-  );
-};
-
-export const getOrganizationWorkWithLinksQuery = async ({
-  poolCountry,
-  organizationId,
-}) => {
-  return await getDBPool("piiDb", poolCountry).query(
-    `
-      SELECT 
-        organization_work_with_links.organization_work_with_id,
-        organization_work_with.topic
-      FROM organization_work_with_links
-      LEFT JOIN organization_work_with ON (
-        organization_work_with_links.organization_work_with_id = organization_work_with.organization_work_with_id
-      )
-      WHERE organization_work_with_links.organization_id = $1;
-    `,
-    [organizationId]
   );
 };
 
@@ -898,13 +804,7 @@ export const getOrganizationMetadataQuery = async ({
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
-    WITH work_with AS (
-      SELECT 
-        organization_work_with_id,
-        topic
-      FROM organization_work_with
-    ),
-    districts AS (
+    WITH districts AS (
       SELECT 
         district_id,
         name
@@ -935,14 +835,12 @@ export const getOrganizationMetadataQuery = async ({
       FROM organization_property_type
     )
     SELECT 
-      JSON_AGG(DISTINCT work_with.*) as work_with,
       JSON_AGG(DISTINCT districts.*) as districts,
       JSON_AGG(DISTINCT payment_methods.*) as payment_methods,
       JSON_AGG(DISTINCT user_interactions.*) as user_interactions,
       JSON_AGG(DISTINCT specialisations.*) as specialisations,
       JSON_AGG(DISTINCT property_types.*) as property_types
-    FROM work_with
-    CROSS JOIN districts
+    FROM districts
     CROSS JOIN payment_methods
     CROSS JOIN user_interactions
     CROSS JOIN specialisations
