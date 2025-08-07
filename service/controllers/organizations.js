@@ -344,7 +344,6 @@ export const getOrganizationMetadata = async (data) => {
     .then((res) => {
       if (res.rows.length === 0) {
         return {
-          // workWith: [],
           districts: [],
           paymentMethods: [],
           userInteractions: [],
