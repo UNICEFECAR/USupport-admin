@@ -38,9 +38,7 @@ export const createOrganization = async (data) => {
       .then(async (res) => {
         const organizationId = res.rows[0].organization_id;
 
-        if (data.workWith && data.workWith.length > 0) {
-          await handleOrganizationLinksCreation(data, organizationId);
-        }
+        await handleOrganizationLinksCreation(data, organizationId);
 
         return res.rows[0];
       })
@@ -346,7 +344,7 @@ export const getOrganizationMetadata = async (data) => {
     .then((res) => {
       if (res.rows.length === 0) {
         return {
-          workWith: [],
+          // workWith: [],
           districts: [],
           paymentMethods: [],
           userInteractions: [],
