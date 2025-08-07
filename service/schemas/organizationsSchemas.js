@@ -15,7 +15,6 @@ export const createOrganizationSchema = yup.object().shape({
   phone: yup.string().nullable().notRequired(),
   email: yup.string().nullable().notRequired(),
   district: yup.string().uuid().nullable().notRequired(),
-  workWith: yup.string().nullable().notRequired(),
   description: yup.string().nullable().notRequired(),
   paymentMethods: yup.array().of(yup.string().uuid()).notRequired(),
   userInteractions: yup.array().of(yup.string().uuid()).notRequired(),
@@ -79,7 +78,6 @@ export const organizationMetadataSchema = yup.object().shape({
   type: yup
     .string()
     .oneOf([
-      "work-with",
       "districts",
       "payment-methods",
       "user-interactions",
