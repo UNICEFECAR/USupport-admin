@@ -11,15 +11,14 @@ export const createOrganizationQuery = async ({
   location,
   description,
   districtId,
-  workWith,
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
       INSERT INTO organization (
         name, created_by, website_url, address, phone, email,
-        geolocation, description, district_id, work_with
+        geolocation, description, district_id
       )
-      VALUES ($1, $2, $3, $4, $5, $6, ST_Point($7, $8), $9, $10, $11)
+      VALUES ($1, $2, $3, $4, $5, $6, ST_Point($7, $8), $9, $10)
       RETURNING *, ST_X(geolocation) as longitude, ST_Y(geolocation) as latitude
     `,
     [
@@ -33,7 +32,6 @@ export const createOrganizationQuery = async ({
       location?.latitude,
       description,
       districtId,
-      workWith,
     ]
   );
 };
@@ -49,7 +47,6 @@ export const editOrganizationQuery = async ({
   location,
   description,
   districtId,
-  workWith,
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
@@ -62,9 +59,8 @@ export const editOrganizationQuery = async ({
         email = $5,
         geolocation = ST_Point($6, $7),
         description = $8,
-        district_id = CASE WHEN $9::uuid IS NULL THEN district_id ELSE $9::uuid END,
-        work_with = $10
-      WHERE organization_id = $11
+        district_id = CASE WHEN $9::uuid IS NULL THEN district_id ELSE $9::uuid END
+      WHERE organization_id = $10
       RETURNING *, ST_X(geolocation) as longitude, ST_Y(geolocation) as latitude;
     `,
     [
@@ -77,7 +73,6 @@ export const editOrganizationQuery = async ({
       location?.latitude,
       description,
       districtId || null,
-      workWith,
       organizationId,
     ]
   );
@@ -258,7 +253,6 @@ export const getAllOrganizationsWithDetailsQuery = async ({
         organization.created_by,
         organization.created_at,
         organization.district_id,
-        organization.work_with,
         ST_X(organization.geolocation) as longitude, 
         ST_Y(organization.geolocation) as latitude,
         district.name as district,
@@ -351,7 +345,6 @@ export const getOrganizationByIdQuery = async ({
         organization.description,
         organization.created_at, 
         organization.district_id,
-        organization.work_with,
         ST_X(organization.geolocation) as longitude, 
         ST_Y(organization.geolocation) as latitude,
         district.name as district,
