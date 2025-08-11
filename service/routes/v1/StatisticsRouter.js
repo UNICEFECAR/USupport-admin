@@ -10,6 +10,7 @@ import {
   getProviderStatistics,
   getProviderPlatformRatings,
   getPlatformSuggestionsForType,
+  getSOSCenterClicks,
 } from "#controllers/statistics";
 
 import {
@@ -19,6 +20,7 @@ import {
   languageSchema,
   countrySchema,
   getPlatformSuggestionsForTypeSchema,
+  getSOSCenterClicksSchema,
 } from "#schemas/statisticsSchemas";
 
 const router = express.Router();
@@ -178,6 +180,24 @@ router.get("/provider-ratings", async (req, res, next) => {
     .strict(true)
     .validate({ country, language })
     .then(getProviderPlatformRatings)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.get("/sos-center-clicks", async (req, res, next) => {
+  /**
+   * #route   GET /admin/v1/statistics/sos-center-clicks
+   * #desc    Get aggregated SOS center click statistics
+   */
+
+  const country = req.header("x-country-alpha-2");
+  const language = req.header("x-language-alpha-2");
+
+  return await getSOSCenterClicksSchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({ country, language })
+    .then(getSOSCenterClicks)
     .then((result) => res.status(200).send(result))
     .catch(next);
 });

@@ -10,6 +10,7 @@ import {
   getProviderStatisticsQuery,
   getProviderPlatformRatingsQuery,
   getPlatformSuggestionsForTypeQuery,
+  getSOSCenterClicksQuery,
 } from "#queries/statistics";
 
 import {
@@ -383,19 +384,104 @@ export const getProviderPlatformRatings = async ({ country }) => {
     });
 };
 
-export const getPlatformSuggestionsForType = async ({ country, type }) => {
-  return await getPlatformSuggestionsForTypeQuery({
-    poolCountry: country,
+export const getPlatformSuggestionsForType = async ({
+  country,
+  language,
+  type,
+}) => {
+  const poolCountry = country;
+
+  const platformSuggestions = await getPlatformSuggestionsForTypeQuery({
+    poolCountry,
     type,
-  })
-    .then((res) => {
-      if (res.rowCount === 0) {
-        return [];
-      } else {
-        return res.rows;
-      }
-    })
-    .catch((err) => {
-      throw err;
+  }).then((result) => {
+    if (result.rows.length === 0) {
+      return [];
+    }
+
+    return result.rows.map((x) => {
+      return {
+        suggestion: x.suggestion,
+        type: x.type,
+        name: x.name,
+        surname: x.surname,
+        nickname: x.nickname,
+        email: x.email,
+        createdAt: x.created_at,
+      };
     });
+  });
+
+  return platformSuggestions;
+};
+
+export const getSOSCenterClicks = async ({ country, language }) => {
+  const poolCountry = country;
+
+  const clicksData = await getSOSCenterClicksQuery({
+    poolCountry,
+  }).then((result) => {
+    if (result.rows.length === 0) {
+      return [];
+    }
+
+    // Group clicks by SOS center
+    const groupedClicks = {};
+
+    result.rows.forEach((row) => {
+      const key = `${row.sos_center_id}_${row.is_main}`;
+
+      if (!groupedClicks[key]) {
+        groupedClicks[key] = {
+          sosCenterId: row.sos_center_id,
+          isMain: row.is_main,
+          timestamps: [],
+          platformBreakdown: {},
+          clientIds: new Set(),
+        };
+      }
+
+      groupedClicks[key].timestamps.push({
+        timestamp: row.created_at,
+        platform: row.platform,
+      });
+      groupedClicks[key].clientIds.add(row.client_detail_id);
+
+      // Count clicks by platform
+      if (!groupedClicks[key].platformBreakdown[row.platform]) {
+        groupedClicks[key].platformBreakdown[row.platform] = 0;
+      }
+      groupedClicks[key].platformBreakdown[row.platform]++;
+    });
+
+    // Convert to array and add calculated fields
+    return Object.values(groupedClicks)
+      .map((group) => ({
+        sosCenterId: group.sosCenterId,
+        isMain: group.isMain,
+        clickCount: group.timestamps.length,
+        uniqueUsers: group.clientIds.size,
+        timestamps: group.timestamps.sort((a, b) => {
+          return new Date(b.timestamp) - new Date(a.timestamp);
+        }),
+        platformBreakdown: group.platformBreakdown,
+        firstClickAt: new Date(
+          Math.min(...group.timestamps.map((t) => new Date(t)))
+        ),
+        lastClickAt: new Date(
+          Math.max(...group.timestamps.map((t) => new Date(t)))
+        ),
+      }))
+      .sort((a, b) => {
+        if (a.isMain) return -1;
+        if (b.isMain) return -1;
+        return b.clickCount - a.clickCount;
+      }); // Sort by click count descending, but put the main on top
+  });
+
+  return {
+    totalClicks: clicksData.reduce((sum, center) => sum + center.clickCount, 0),
+    totalUniqueCenters: clicksData.length,
+    clicksByCenter: clicksData,
+  };
 };
