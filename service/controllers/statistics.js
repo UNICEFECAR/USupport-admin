@@ -389,30 +389,16 @@ export const getPlatformSuggestionsForType = async ({
   language,
   type,
 }) => {
-  const poolCountry = country;
-
-  const platformSuggestions = await getPlatformSuggestionsForTypeQuery({
-    poolCountry,
+  return await getPlatformSuggestionsForTypeQuery({
+    poolCountry: country,
     type,
-  }).then((result) => {
-    if (result.rows.length === 0) {
-      return [];
-    }
-
-    return result.rows.map((x) => {
-      return {
-        suggestion: x.suggestion,
-        type: x.type,
-        name: x.name,
-        surname: x.surname,
-        nickname: x.nickname,
-        email: x.email,
-        createdAt: x.created_at,
-      };
+  })
+    .then((res) => {
+      return res.rows;
+    })
+    .catch((err) => {
+      throw err;
     });
-  });
-
-  return platformSuggestions;
 };
 
 export const getSOSCenterClicks = async ({ country, language }) => {
