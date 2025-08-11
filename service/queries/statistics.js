@@ -163,3 +163,17 @@ export const getPlatformSuggestionsForTypeQuery = async ({
     `,
     [type === "all" ? null : type]
   );
+
+export const getSOSCenterClicksQuery = async ({ poolCountry }) =>
+  await getDBPool("clinicalDb", poolCountry).query(
+    `
+      SELECT 
+        sos_center_id,
+        is_main,
+        platform,
+        created_at,
+        client_detail_id
+      FROM sos_center_click
+      ORDER BY sos_center_id, is_main, created_at DESC
+    `
+  );
