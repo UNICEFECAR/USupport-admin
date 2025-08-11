@@ -30,3 +30,5 @@ export const getPlatformSuggestionsForTypeSchema = getStatsSchema.shape({
       "all",
     ]),
 });
+
+export const getSOSCenterClicksSchema = getStatsSchema;
