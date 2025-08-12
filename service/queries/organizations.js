@@ -849,7 +849,17 @@ export const deleteOrganizationQuery = async ({
   return await getDBPool("piiDb", poolCountry).query(
     `
       UPDATE organization
-      SET is_deleted = true, deleted_at = NOW()
+      SET 
+        name = 'DELETED_' || organization_id::text,
+        email = 'DELETED',
+        website_url = 'DELETED',
+        address = 'DELETED', 
+        phone = 'DELETED',
+        description = 'DELETED',
+        geolocation = NULL,
+        is_deleted = true,
+        deleted_at = NOW(),
+        updated_at = NOW()
       WHERE organization_id = $1
       RETURNING *;
     `,
