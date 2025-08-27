@@ -1,0 +1,23 @@
+export default {
+  platform_not_error: "Հարթակը չի գտնվել",
+  password_validation_error: "Գաղտնաբառը պետք է պարունակի առնվազն 8 նիշ, 1 մեծատառ, 1 փոքրատառ և 1 թիվ",
+  admin_not_found_error: "Ադմինիստրատորը չի գտնվել",
+  email_already_used_error: "Էլեկտրոնային փոստի հասցեն արդեն օգտագործվում է։",
+  incorrect_email_error: "Այս էլեկտրոնային փոստի հասցեով ադմինիստրատոր չի գտնվել։",
+  incorrect_password_error: "Տրամադրված գաղտնաբառը սխալ է։",
+  incorrect_credentials_error: "Գրանցման ոչ ճիշտ տվյալներ",
+  not_authenticated_error: "Ադմինիստրատորը պետք է հաստատի ինքնությունը՝ այս ռեսուրսից օգտվելու համար։",
+  invalid_refresh_token_error: "Նորացման տոկենը վավեր չէ կամ արդեն օգտագործվում է։",
+  invalid_reset_password_token_error: "Գաղտնաբառի վերագործարկման անվավեր կամ ժամկետանց տոկեն։ Խնդրում ենք պահանջեք նորը՝ այստեղ",
+  account_deactivated_error: "Ձեր օգտահաշիվը ապակտիվացված է",
+  invalid_admin_otp_error: "Ոչ վավեր մեկանգամյա գաղտնաբառ (OTP)",
+  too_many_otp_requests_error: "Մեկանգամյա գաղտնաբառի (OTP) չափից ավելի հարցումներ, կրկնեք փորձը ավելի ուշ։",
+  sponsor_email_already_exists_error: "Էլեկտրոնային փոստի այս հասցեով հովանավոր արդեն առկա է։",
+  campaign_code_already_exists_error: "Այս կտրոնով արշավ արդեն առկա է։",
+  campaign_not_found_error: "Արշավը չի գտնվել",
+  provider_not_found_error: "Խորհրդատուն չի գտնվել",
+  question_cant_be_deleted_error: "Հարցը չի կարող ջնջվել",
+  organization_exists_error: "Կազմակերպությունն արդեն առկա է",
+  provider_already_assigned_to_org: "Խորհրդատուն արդեն կցված է կազմակերպությանը",
+  organization_not_found_error: "Կազմակերպությունը չի գտնվել"
+};
