@@ -15,6 +15,7 @@ import {
   getOrganizationMetadataQuery,
   deleteOrganizationQuery,
   getProvidersForOrganizationQuery,
+  checkOrganizationNameExistsQuery,
 } from "#queries/organizations";
 import { getMultipleProvidersDataByIDs } from "#queries/providers";
 import {
@@ -31,21 +32,29 @@ import {
 
 export const createOrganization = async (data) => {
   try {
+    // Check for duplicate names only for non-RO countries
+    if (data.country !== "RO") {
+      const existingOrg = await checkOrganizationNameExistsQuery({
+        name: data.name,
+        country: data.country,
+      });
+
+      if (existingOrg.rows[0].count > 0) {
+        console.log("yeS");
+        throw organizationExists(data.language);
+      }
+    }
+
     return await createOrganizationQuery({
       ...data,
       districtId: data.district,
     })
       .then(async (res) => {
         const organizationId = res.rows[0].organization_id;
-
         await handleOrganizationLinksCreation(data, organizationId);
-
         return res.rows[0];
       })
       .catch((err) => {
-        if (err.code === "23505") {
-          throw organizationExists(data.language);
-        }
         throw err;
       });
   } catch (error) {
@@ -55,21 +64,29 @@ export const createOrganization = async (data) => {
 
 export const editOrganization = async (data) => {
   try {
+    // Check for duplicate names only for non-RO countries
+    if (data.country !== "RO") {
+      const existingOrg = await checkOrganizationNameExistsQuery({
+        name: data.name,
+        country: data.country,
+        excludeId: data.organizationId, // Exclude current organization from check
+      });
+
+      if (existingOrg.rows[0].count > 0) {
+        throw organizationExists(data.language);
+      }
+    }
+
     return await editOrganizationQuery({
       ...data,
       districtId: data.district,
     })
       .then(async (res) => {
         const organizationId = res.rows[0].organization_id;
-
         await handleOrganizationLinksUpdate(data, organizationId);
-
         return res.rows[0];
       })
       .catch((err) => {
-        if (err.code === "23505") {
-          throw organizationExists(data.language);
-        }
         throw err;
       });
   } catch (error) {
