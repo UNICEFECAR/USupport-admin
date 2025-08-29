@@ -187,3 +187,11 @@ export const organizationHasProviders = (language, providers) => {
   };
   return error;
 };
+
+export const baselineAssessmentThresholdNotFound = (language) => {
+  const error = new Error();
+  error.message = t("baseline_assessment_threshold_not_found_error", language);
+  error.name = "BASELINE ASSESSMENT THRESHOLD NOT FOUND";
+  error.status = 404;
+  return error;
+};

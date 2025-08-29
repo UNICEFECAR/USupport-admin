@@ -28,4 +28,5 @@ export default {
   provider_already_assigned_to_org: "Консультант уже назначен организации",
   organization_not_found_error: "Организация не найдена",
   organization_geolocation_not_found_error: "Геолокация организации не найдена",
+  baseline_assessment_threshold_not_found_error: "Шум зоны не найден",
 };

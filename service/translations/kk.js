@@ -27,4 +27,5 @@ export default {
     "Консультант әлдеқашан организацияға тағайындалған",
   organization_not_found_error: "Ұйым табылмады",
   organization_geolocation_not_found_error: "Ұйымның геолокациясы табылмады",
+  baseline_assessment_threshold_not_found_error: "Басым шартты табылмады",
 };
