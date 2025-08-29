@@ -27,4 +27,5 @@ export default {
   organization_not_found_error: "Організацію не знайдено",
   organization_geolocation_not_found_error:
     "Геолокацію організації не знайдено",
+  baseline_assessment_threshold_not_found_error: "Шум зони не знайдено",
 };
