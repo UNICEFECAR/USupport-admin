@@ -30,4 +30,5 @@ export default {
   organization_not_found_error: "Nie znaleziono organizacji",
   organization_geolocation_not_found_error:
     "Nie znaleziono geolokalizacji organizacji",
+  baseline_assessment_threshold_not_found_error: "Nie znaleziono szumu zasięgu",
 };

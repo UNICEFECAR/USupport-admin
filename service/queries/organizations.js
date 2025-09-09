@@ -881,3 +881,23 @@ export const getProvidersForOrganizationQuery = async ({
     [organizationId]
   );
 };
+
+export const checkOrganizationNameExistsQuery = async ({
+  name,
+  country: poolCountry,
+  excludeId = null,
+}) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+      SELECT COUNT(*) as count
+      FROM organization
+      WHERE LOWER(name) = LOWER($1) 
+        AND is_deleted = $2 
+        AND CASE 
+          WHEN $3::uuid IS NULL THEN TRUE 
+          ELSE organization_id != $3::uuid 
+        END
+    `,
+    [name, false, excludeId]
+  );
+};

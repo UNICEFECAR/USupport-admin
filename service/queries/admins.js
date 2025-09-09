@@ -1,15 +1,22 @@
 import { getDBPool } from "#utils/dbConfig";
 
-export const getAdminUserByEmail = async (email, role) =>
+export const getAdminUserByEmail = async (email, role, country) =>
   await getDBPool("masterDb").query(
     `
-        SELECT admin_id, name, surname, phone, email, role, password, is_active
-        FROM admin
-        WHERE email = $1 AND role = $2
-        ORDER BY created_at DESC
+        SELECT a.admin_id, a.name, a.surname, a.phone, a.email, a.role, a.password, a.is_active
+        FROM admin AS a
+        LEFT JOIN admin_country_links AS acl ON a.admin_id = acl.admin_id
+        LEFT JOIN country AS c ON acl.country_id = c.country_id
+        WHERE a.email = $1
+          AND a.role = $2
+          AND (
+            $2 = 'global'
+            OR c.alpha2 = $3
+          )
+        ORDER BY a.created_at DESC
         LIMIT 1;
     `,
-    [email, role]
+    [email, role, country]
   );
 
 export const getAdminUserByID = async (admin_id) =>
