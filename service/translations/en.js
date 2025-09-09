@@ -27,4 +27,6 @@ export default {
   provider_already_assigned_to_org: "Provider already assigned to organization",
   organization_not_found_error: "Organization not found",
   organization_has_providers_error: "Organization has providers",
+  baseline_assessment_threshold_not_found_error:
+    "Baseline assessment threshold not found",
 };

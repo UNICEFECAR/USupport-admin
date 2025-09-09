@@ -28,6 +28,7 @@ app.use("/admin/v1/statistics", v1.StatisticsRouter);
 app.use("/admin/v1/sponsor", v1.SponsorsRouter);
 app.use("/admin/v1/my-qa", v1.MyQARouter);
 app.use("/admin/v1/organization", v1.OrganizationsRouter);
+app.use("/admin/v1/baseline-assessment", v1.BaselineAssessmentRouter);
 
 /*------------- Error middleware -------------*/
 

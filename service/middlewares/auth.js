@@ -168,7 +168,7 @@ passport.use(
     async (req, emailIn, passwordIn, done) => {
       try {
         const language = req.header("x-language-alpha-2");
-        // const country = req.header("x-country-alpha-2");
+        const country = req.header("x-country-alpha-2");
 
         const role = req.body.role;
         const otp = req.body.otp;
@@ -186,7 +186,7 @@ passport.use(
             throw err;
           });
 
-        const adminUser = await getAdminUserByEmail(email, role)
+        const adminUser = await getAdminUserByEmail(email, role, country)
           .then((res) => res.rows[0])
           .catch((err) => {
             throw err;
