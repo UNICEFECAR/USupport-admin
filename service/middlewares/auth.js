@@ -10,8 +10,9 @@ import {
   createAdminToCountryLink,
   createAdminToRegionLink,
   isJwtBlacklisted,
-  getCountryAlpha2CodeByIdQuery,
 } from "#queries/admins";
+
+import { getCountryAlpha2CodeByIdQuery } from "#queries/countries";
 
 import {
   // getAuthOTP,
