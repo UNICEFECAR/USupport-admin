@@ -11,6 +11,7 @@ import {
   getProviderPlatformRatings,
   getPlatformSuggestionsForType,
   getSOSCenterClicks,
+  getProviderAvailabilityReport,
 } from "#controllers/statistics";
 
 import {
@@ -21,6 +22,7 @@ import {
   countrySchema,
   getPlatformSuggestionsForTypeSchema,
   getSOSCenterClicksSchema,
+  getProviderAvailabilityReportSchema,
 } from "#schemas/statisticsSchemas";
 
 const router = express.Router();
@@ -198,6 +200,24 @@ router.get("/sos-center-clicks", async (req, res, next) => {
     .strict(true)
     .validate({ country, language })
     .then(getSOSCenterClicks)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.get("/providers/availability/report", async (req, res, next) => {
+  /**
+   * #route   GET /admin/v1/statistics/providers/availabity
+   * #desc    Get providers availabity for the next 30 days report
+   */
+
+  const country = req.header("x-country-alpha-2");
+  const language = req.header("x-language-alpha-2");
+
+  return await getProviderAvailabilityReportSchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({ country, language })
+    .then(getProviderAvailabilityReport)
     .then((result) => res.status(200).send(result))
     .catch(next);
 });
