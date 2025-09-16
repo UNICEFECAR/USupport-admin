@@ -177,3 +177,60 @@ export const getSOSCenterClicksQuery = async ({ poolCountry }) =>
       ORDER BY sos_center_id, is_main, created_at DESC
     `
   );
+
+export const getAllActiveProvidersQuery = async ({ poolCountry }) =>
+  await getDBPool("piiDb", poolCountry).query(
+    `
+      SELECT 
+        pd.provider_detail_id,
+        pd.name,
+        pd.surname,
+        pd.email,
+        pd.specializations,
+        pd.consultation_price,
+        pd.status
+      FROM provider_detail pd
+      INNER JOIN "user" u ON u.provider_detail_id = pd.provider_detail_id 
+        AND u.deleted_at IS NULL
+      ORDER BY pd.name ASC
+    `
+  );
+
+export const getAvailabilitySlotsInRangeQuery = async ({
+  poolCountry,
+  startDate,
+  endDate,
+}) =>
+  await getDBPool("piiDb", poolCountry).query(
+    `
+      WITH date_range AS (
+        SELECT 
+          $1::timestamptz as target_start,
+          $2::timestamptz as target_end
+      ),
+      week_boundaries AS (
+        SELECT 
+          -- Find the Monday of the week containing startDate
+          date_trunc('week', (SELECT target_start FROM date_range)) as week_start,
+          -- Find the Monday of the week containing endDate, then add 6 days to get end of that week
+          date_trunc('week', (SELECT target_end FROM date_range)) + interval '6 days' + interval '23 hours 59 minutes 59 seconds' as week_end
+      )
+      SELECT 
+        a.availability_id,
+        a.provider_detail_id,
+        a.slots,
+        a.start_date,
+        a.campaign_slots,
+        a.organization_slots
+      FROM availability a, week_boundaries wb
+      WHERE a.start_date >= wb.week_start 
+        AND a.start_date <= wb.week_end
+        AND (
+          (a.slots IS NOT NULL AND array_length(a.slots, 1) > 0) OR
+          (a.campaign_slots IS NOT NULL AND jsonb_typeof(a.campaign_slots) = 'array' AND jsonb_array_length(a.campaign_slots) > 0) OR
+          (a.campaign_slots IS NOT NULL AND jsonb_typeof(a.campaign_slots) = 'object' AND a.campaign_slots != '{}')
+        )
+      ORDER BY a.provider_detail_id ASC, a.start_date ASC
+    `,
+    [startDate, endDate]
+  );
