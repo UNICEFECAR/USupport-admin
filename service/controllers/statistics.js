@@ -11,6 +11,8 @@ import {
   getProviderPlatformRatingsQuery,
   getPlatformSuggestionsForTypeQuery,
   getSOSCenterClicksQuery,
+  getAllActiveProvidersQuery,
+  getAvailabilitySlotsInRangeQuery,
 } from "#queries/statistics";
 
 import {
@@ -28,8 +30,10 @@ import { getCampaignNamesByIds } from "#queries/sponsors";
 
 import { getOrganizationsByIdsQuery } from "#queries/organizations";
 
+import { produceRaiseNotification } from "#utils/kafkaProducers";
 import { countryNotFound } from "#utils/errors";
 import { getClientInitials } from "#utils/helperFunctions";
+import { generateAvailabilityCSV } from "#utils/provider-reports";
 
 export const getCountryStatistics = async ({ language, countryId }) => {
   const country = await getCountryAlpha2CodeByIdQuery({ countryId }).then(
@@ -470,4 +474,137 @@ export const getSOSCenterClicks = async ({ country, language }) => {
     totalUniqueCenters: clicksData.length,
     clicksByCenter: clicksData,
   };
+};
+
+export const getProviderAvailabilityReport = async ({ country, language }) => {
+  const now = new Date();
+  const startDate = new Date(now.getTime());
+  const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
+
+  try {
+    const [providersResult, availabilityResult] = await Promise.all([
+      getAllActiveProvidersQuery({ poolCountry: country }),
+      getAvailabilitySlotsInRangeQuery({
+        poolCountry: country,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+      }),
+    ]);
+
+    const providersMap = new Map();
+    const availabilityRecords = [];
+    const allProviders = providersResult.rows;
+    const allAvailability = availabilityResult.rows;
+
+    allProviders.forEach((provider) => {
+      providersMap.set(provider.provider_detail_id, {
+        provider_detail_id: provider.provider_detail_id,
+        name: provider.name,
+        surname: provider.surname,
+        email: provider.email,
+        specializations: provider.specializations,
+        consultation_price: provider.consultation_price,
+        status: provider.status,
+        total_availability_slots: 0,
+        earliest_availability: null,
+        latest_availability: null,
+      });
+    });
+
+    allAvailability.forEach((availability) => {
+      const providerId = availability.provider_detail_id;
+      const provider = providersMap.get(providerId);
+
+      if (provider && availability.slots && availability.start_date) {
+        provider.total_availability_slots++;
+
+        if (
+          !provider.earliest_availability ||
+          new Date(availability.start_date) <
+            new Date(provider.earliest_availability)
+        ) {
+          provider.earliest_availability = availability.start_date;
+        }
+        if (
+          !provider.latest_availability ||
+          new Date(availability.start_date) >
+            new Date(provider.latest_availability)
+        ) {
+          provider.latest_availability = availability.start_date;
+        }
+
+        availabilityRecords.push({
+          ...availability,
+          name: provider.name,
+          surname: provider.surname,
+          email: provider.email,
+        });
+      }
+    });
+
+    const providers = Array.from(providersMap.values());
+
+    const csvData = generateAvailabilityCSV({
+      availability: availabilityRecords,
+      providers,
+      startDate,
+      endDate,
+    });
+
+    await sendAvailabilityReportEmail({
+      csvData,
+      country,
+      language,
+      startDate,
+      endDate,
+      totalProviders: providers.length,
+      totalSlots: availabilityRecords.length,
+    });
+
+    return {
+      success: true,
+      message: "Availability report generated and sent successfully",
+      totalProviders: providers.length,
+      totalSlots: availabilityRecords.length,
+      dateRange: {
+        start: startDate.toISOString().split("T")[0],
+        end: endDate.toISOString().split("T")[0],
+      },
+    };
+  } catch (error) {
+    console.error("Error generating availability report:", error);
+    throw error;
+  }
+};
+
+const sendAvailabilityReportEmail = async ({
+  csvData,
+  country,
+  language,
+  startDate,
+  endDate,
+  totalProviders,
+  totalSlots,
+}) => {
+  const startDateString = startDate.toISOString().split("T")[0];
+  const endDateString = endDate.toISOString().split("T")[0];
+
+  const fileName = `provider-availability-report-${country}-${startDateString}-to-${endDateString}.csv`;
+
+  await produceRaiseNotification({
+    channels: ["email"],
+    emailArgs: {
+      emailType: "availabilityReport",
+      data: {
+        csvData,
+        fileName,
+        country,
+        startDate: startDateString,
+        endDate: endDateString,
+        totalProviders,
+        totalSlots,
+      },
+    },
+    language,
+  });
 };
