@@ -25,6 +25,8 @@ import {
   getProviderAvailabilityReportSchema,
 } from "#schemas/statisticsSchemas";
 
+import { securedRoute } from "#middlewares/auth";
+
 const router = express.Router();
 
 router.route("/global").get(async (req, res, next) => {
@@ -204,22 +206,38 @@ router.get("/sos-center-clicks", async (req, res, next) => {
     .catch(next);
 });
 
-router.get("/providers/availability/report", async (req, res, next) => {
-  /**
-   * #route   GET /admin/v1/statistics/providers/availabity
-   * #desc    Get providers availabity for the next 30 days report
-   */
+router.get(
+  "/providers/availability/report",
+  securedRoute,
+  async (req, res, next) => {
+    /**
+     * #route   GET /admin/v1/statistics/providers/availabity
+     * #desc    Get providers availabity for the next 30 days report and download as CSV
+     */
 
-  const country = req.header("x-country-alpha-2");
-  const language = req.header("x-language-alpha-2");
+    const country = req.header("x-country-alpha-2");
+    const language = req.header("x-language-alpha-2");
+    const { startDate, endDate } = req.query;
 
-  return await getProviderAvailabilityReportSchema
-    .noUnknown(true)
-    .strict(true)
-    .validate({ country, language })
-    .then(getProviderAvailabilityReport)
-    .then((result) => res.status(200).send(result))
-    .catch(next);
-});
+    return await getProviderAvailabilityReportSchema
+      .noUnknown(true)
+      .strict(true)
+      .validate({ country, language, startDate, endDate })
+      .then(getProviderAvailabilityReport)
+      .then((result) => {
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="${result.fileName}"`
+        );
+        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("Pragma", "no-cache");
+
+        // Send the CSV data
+        res.status(200).send(result.csvData);
+      })
+      .catch(next);
+  }
+);
 
 export { router };
