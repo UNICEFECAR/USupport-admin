@@ -57,7 +57,6 @@ export const generateAvailabilityCSV = ({
   let csvContent = `"Provider Availability Report"\n`;
   csvContent += `"Date Range: ${dateRangeHeader}"\n`;
   csvContent += `"Total Providers: ${providers.length}"\n`;
-  csvContent += `"Total Availability Records: ${availability.length}"\n`;
   csvContent += "\n"; // Empty line for separation
 
   // Add CSV headers
