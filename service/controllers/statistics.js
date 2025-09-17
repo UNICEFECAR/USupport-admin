@@ -476,10 +476,19 @@ export const getSOSCenterClicks = async ({ country, language }) => {
   };
 };
 
-export const getProviderAvailabilityReport = async ({ country, language }) => {
+export const getProviderAvailabilityReport = async ({
+  country,
+  startDate: providedStartDate,
+  endDate: providedEndDate,
+}) => {
   const now = new Date();
-  const startDate = new Date(now.getTime());
-  const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
+
+  const startDate = providedStartDate
+    ? new Date(providedStartDate)
+    : new Date(now.getTime());
+  const endDate = providedEndDate
+    ? new Date(providedEndDate)
+    : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
 
   try {
     const [providersResult, availabilityResult] = await Promise.all([
@@ -551,60 +560,24 @@ export const getProviderAvailabilityReport = async ({ country, language }) => {
       endDate,
     });
 
-    await sendAvailabilityReportEmail({
-      csvData,
-      country,
-      language,
-      startDate,
-      endDate,
-      totalProviders: providers.length,
-      totalSlots: availabilityRecords.length,
-    });
+    const startDateString = startDate.toISOString().split("T")[0];
+    const endDateString = endDate.toISOString().split("T")[0];
+    const fileName = `provider-availability-report-${country}-${startDateString}-to-${endDateString}.csv`;
 
     return {
       success: true,
-      message: "Availability report generated and sent successfully",
+      message: "Availability report generated successfully",
+      csvData,
+      fileName,
       totalProviders: providers.length,
       totalSlots: availabilityRecords.length,
       dateRange: {
-        start: startDate.toISOString().split("T")[0],
-        end: endDate.toISOString().split("T")[0],
+        start: startDateString,
+        end: endDateString,
       },
     };
   } catch (error) {
     console.error("Error generating availability report:", error);
     throw error;
   }
-};
-
-const sendAvailabilityReportEmail = async ({
-  csvData,
-  country,
-  language,
-  startDate,
-  endDate,
-  totalProviders,
-  totalSlots,
-}) => {
-  const startDateString = startDate.toISOString().split("T")[0];
-  const endDateString = endDate.toISOString().split("T")[0];
-
-  const fileName = `provider-availability-report-${country}-${startDateString}-to-${endDateString}.csv`;
-
-  await produceRaiseNotification({
-    channels: ["email"],
-    emailArgs: {
-      emailType: "availabilityReport",
-      data: {
-        csvData,
-        fileName,
-        country,
-        startDate: startDateString,
-        endDate: endDateString,
-        totalProviders,
-        totalSlots,
-      },
-    },
-    language,
-  });
 };

@@ -36,4 +36,6 @@ export const getSOSCenterClicksSchema = getStatsSchema;
 export const getProviderAvailabilityReportSchema = yup.object().shape({
   country: yup.string().required(),
   language: yup.string().required(),
+  startDate: yup.string().optional(),
+  endDate: yup.string().optional(),
 });
