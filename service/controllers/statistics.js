@@ -13,6 +13,7 @@ import {
   getSOSCenterClicksQuery,
   getAllActiveProvidersQuery,
   getAvailabilitySlotsInRangeQuery,
+  getBookedConsultationsInRangeQuery,
 } from "#queries/statistics";
 
 import {
@@ -491,19 +492,26 @@ export const getProviderAvailabilityReport = async ({
     : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
 
   try {
-    const [providersResult, availabilityResult] = await Promise.all([
-      getAllActiveProvidersQuery({ poolCountry: country }),
-      getAvailabilitySlotsInRangeQuery({
-        poolCountry: country,
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-      }),
-    ]);
+    const [providersResult, availabilityResult, consultationsResult] =
+      await Promise.all([
+        getAllActiveProvidersQuery({ poolCountry: country }),
+        getAvailabilitySlotsInRangeQuery({
+          poolCountry: country,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+        }),
+        getBookedConsultationsInRangeQuery({
+          poolCountry: country,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+        }),
+      ]);
 
     const providersMap = new Map();
     const availabilityRecords = [];
     const allProviders = providersResult.rows;
     const allAvailability = availabilityResult.rows;
+    const allConsultations = consultationsResult.rows;
 
     allProviders.forEach((provider) => {
       providersMap.set(provider.provider_detail_id, {
@@ -517,6 +525,10 @@ export const getProviderAvailabilityReport = async ({
         total_availability_slots: 0,
         earliest_availability: null,
         latest_availability: null,
+        normal_consultations_booked: 0,
+        campaign_consultations_booked: 0,
+        normal_consultations_details: [],
+        campaign_consultations_details: [],
       });
     });
 
@@ -548,6 +560,35 @@ export const getProviderAvailabilityReport = async ({
           surname: provider.surname,
           email: provider.email,
         });
+      }
+    });
+
+    // Process consultations data
+    allConsultations.forEach((consultation) => {
+      const providerId = consultation.provider_detail_id;
+      const provider = providersMap.get(providerId);
+
+      if (provider && consultation.time) {
+        const consultationDateTime = new Date(consultation.time);
+        const dateTimeString = consultationDateTime
+          .toLocaleString("en-GB", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          })
+          .replace(",", " -");
+
+        // Check if it's a campaign consultation (has campaign_id)
+        if (consultation.campaign_id) {
+          provider.campaign_consultations_booked++;
+          provider.campaign_consultations_details.push(dateTimeString);
+        } else {
+          provider.normal_consultations_booked++;
+          provider.normal_consultations_details.push(dateTimeString);
+        }
       }
     });
 
