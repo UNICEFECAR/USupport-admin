@@ -234,3 +234,27 @@ export const getAvailabilitySlotsInRangeQuery = async ({
     `,
     [startDate, endDate]
   );
+
+export const getBookedConsultationsInRangeQuery = async ({
+  poolCountry,
+  startDate,
+  endDate,
+}) =>
+  await getDBPool("clinicalDb", poolCountry).query(
+    `
+      SELECT 
+        c.consultation_id,
+        c.provider_detail_id,
+        c.client_detail_id,
+        c.time,
+        c.status,
+        c.campaign_id,
+        c.created_at
+      FROM consultation c
+      WHERE c.time >= $1::timestamptz 
+        AND c.time <= $2::timestamptz
+        AND c.status IN ('scheduled', 'finished', 'active', 'late-canceled', 'canceled', 'suggested')
+      ORDER BY c.provider_detail_id ASC, c.time ASC
+    `,
+    [startDate, endDate]
+  );

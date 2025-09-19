@@ -60,7 +60,7 @@ export const generateAvailabilityCSV = ({
   csvContent += "\n"; // Empty line for separation
 
   // Add CSV headers
-  csvContent += `"Provider Name","Provider Email","Total Slots","Campaign Slots","Normal Slots","Normal Slots (Details)","Campaign Slots (Details)"\n`;
+  csvContent += `"Provider Name","Provider Email","Total Slots","Campaign Slots","Normal Slots","Normal Slots (Details)","Campaign Slots (Details)","Normal Consultations Booked","Normal Consultations (Details)","Campaign Consultations Booked","Campaign Consultations (Details)"\n`;
 
   // First, create a map of all providers with their basic info
   const providerAvailabilityMap = new Map();
@@ -74,6 +74,11 @@ export const generateAvailabilityCSV = ({
       },
       normalSlots: [],
       campaignSlots: [],
+      normalConsultationsBooked: provider.normal_consultations_booked || 0,
+      campaignConsultationsBooked: provider.campaign_consultations_booked || 0,
+      normalConsultationsDetails: provider.normal_consultations_details || [],
+      campaignConsultationsDetails:
+        provider.campaign_consultations_details || [],
     });
   });
 
@@ -130,25 +135,52 @@ export const generateAvailabilityCSV = ({
     const campaignSlotsCount = data.campaignSlots.length;
     const totalSlots = normalSlotsCount + campaignSlotsCount;
 
-    if (totalSlots > 0) {
-      const maxSlots = Math.max(normalSlotsCount, campaignSlotsCount);
+    const normalConsultationsCount = data.normalConsultationsBooked;
+    const campaignConsultationsCount = data.campaignConsultationsBooked;
+    const normalConsultationsDetailsCount =
+      data.normalConsultationsDetails.length;
+    const campaignConsultationsDetailsCount =
+      data.campaignConsultationsDetails.length;
+
+    // Find the maximum number of rows needed for all details
+    const maxRows = Math.max(
+      normalSlotsCount,
+      campaignSlotsCount,
+      normalConsultationsDetailsCount,
+      campaignConsultationsDetailsCount,
+      1 // At least one row for provider info
+    );
+
+    if (
+      totalSlots > 0 ||
+      normalConsultationsCount > 0 ||
+      campaignConsultationsCount > 0
+    ) {
       let providerInfoShown = false;
 
-      for (let i = 0; i < maxSlots; i++) {
+      for (let i = 0; i < maxRows; i++) {
         const normalSlot = i < normalSlotsCount ? data.normalSlots[i] : "";
         const campaignSlot =
           i < campaignSlotsCount ? data.campaignSlots[i] : "";
+        const normalConsultation =
+          i < normalConsultationsDetailsCount
+            ? data.normalConsultationsDetails[i]
+            : "";
+        const campaignConsultation =
+          i < campaignConsultationsDetailsCount
+            ? data.campaignConsultationsDetails[i]
+            : "";
 
         if (!providerInfoShown) {
-          csvContent += `"${data.provider.name}","${data.provider.email}","${totalSlots}","${campaignSlotsCount}","${normalSlotsCount}","${normalSlot}","${campaignSlot}"\n`;
+          csvContent += `"${data.provider.name}","${data.provider.email}","${totalSlots}","${campaignSlotsCount}","${normalSlotsCount}","${normalSlot}","${campaignSlot}","${normalConsultationsCount}","${normalConsultation}","${campaignConsultationsCount}","${campaignConsultation}"\n`;
           providerInfoShown = true;
         } else {
-          csvContent += `"","","","","","${normalSlot}","${campaignSlot}"\n`;
+          csvContent += `"","","","","","${normalSlot}","${campaignSlot}","","${normalConsultation}","","${campaignConsultation}"\n`;
         }
       }
     } else {
-      // Provider with no slots
-      csvContent += `"${data.provider.name}","${data.provider.email}","0","0","0","No normal slots","No campaign slots"\n`;
+      // Provider with no slots or consultations
+      csvContent += `"${data.provider.name}","${data.provider.email}","0","0","0","No normal slots","No campaign slots","0","No normal consultations","0","No campaign consultations"\n`;
     }
 
     csvContent += "\n"; // Empty line between providers
