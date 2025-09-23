@@ -12,6 +12,8 @@ import {
   deleteAdminDataByIdQuery,
   getPlatformAccessLogsQuery,
 } from "#queries/admins";
+import { getClientDemographicsByDetailIds } from "#queries/clients";
+import { getClientDetailsByUserIds } from "#queries/user";
 
 import {
   getScheduledConsultationsWithClientIdForCountryQuery,
@@ -294,7 +296,7 @@ export const PSKZUploadController = async ({ payload }) => {
       const destinationS3 = new AWS.S3({
         accessKeyId: PSKZ_ACCESS_KEY_ID,
         secretAccessKey: PSKZ_SECRET_ACCESS_KEY,
-        endpoint: `archive.pscloud.io`,
+        endpoint: "archive.pscloud.io",
       });
 
       const getObjectParams = {
@@ -330,31 +332,31 @@ export const PSKZUploadController = async ({ payload }) => {
   return response;
 };
 
-export const getPlatformMetrics = async ({ country }) => {
+export const getPlatformMetrics = async ({ country, startDate, endDate }) => {
+  const allClientDetailIds = new Set();
+
   const consultations =
     await getScheduledConsultationsWithClientIdForCountryQuery({
       poolCountry: country,
-    }).then((res) => {
-      return res.rows;
-    });
+      startDate,
+      endDate,
+    })
+      .then((res) => {
+        res.rows.forEach((item) => {
+          allClientDetailIds.add(item.client_detail_id);
+        });
+        return res.rows;
+      })
+      .catch((err) => {
+        console.log("❌ Error getting consultations in", err);
+        return [];
+      });
 
-  const totalConsultations = consultations.length;
-  const uniqueClientsConsultations = new Set(
-    consultations.map((item) => item.client_detail_id)
-  ).size;
-
-  const uniqueClientsThatUsedCoupon = new Set();
-
-  const totalCouponConsultations = consultations.filter((item) => {
-    if (item.campaign_id) {
-      uniqueClientsThatUsedCoupon.add(item.client_detail_id);
-    }
-    return !!item.campaign_id;
-  }).length;
-
-  const { activeClients, activeProviders } =
+  const { activeProviders, activeClientDetailIds } =
     await getClientsAndProvidersLoggedIn15DaysQuery({
       poolCountry: country,
+      startDate,
+      endDate,
     }).then((res) => {
       if (res.rowCount === 0) {
         return {
@@ -362,28 +364,163 @@ export const getPlatformMetrics = async ({ country }) => {
           activeProviders: 0,
         };
       }
+
       const result = res.rows[0];
+      result.client_detail_ids.forEach((id) => {
+        allClientDetailIds.add(id);
+      });
+
       return {
-        activeClients: result.clients_no,
+        activeClientDetailIds: result.client_detail_ids,
         activeProviders: result.providers_no,
       };
     });
 
   const accessLogs = await getPlatformAccessLogsQuery({
     poolCountry: country,
-  }).then((res) => res.rows || []);
+    startDate,
+    endDate,
+  }).then((res) => {
+    return res.rows || [];
+  });
+
+  // Get client details for user_ids found in access logs
+  const uniqueUserIds = [
+    ...new Set(accessLogs.map((log) => log.user_id).filter(Boolean)),
+  ];
+
+  const clientDetailMap = new Map();
+
+  if (uniqueUserIds.length > 0) {
+    const clientDetails = await getClientDetailsByUserIds({
+      poolCountry: country,
+      userIds: uniqueUserIds,
+    }).then((res) => {
+      return res.rows || [];
+    });
+
+    // Create map for fast lookup
+    clientDetails.forEach((row) => {
+      clientDetailMap.set(row.user_id, row.client_detail_id);
+      allClientDetailIds.add(row.client_detail_id);
+    });
+  }
+
+  const positiveClientRatings =
+    await getPositivePlatformRatingsFromClientsQuery({
+      poolCountry: country,
+      startDate,
+      endDate,
+    }).then((res) => {
+      if (!res.rowCount) return [];
+      res.rows.forEach((item) => {
+        allClientDetailIds.add(item.client_detail_id);
+      });
+      return res.rows;
+    });
+
+  const clientDemographics = await getClientDemographicsByDetailIds({
+    poolCountry: country,
+    clientDetailIds: Array.from(allClientDetailIds),
+  }).then((res) => {
+    return res.rows || [];
+  });
+
+  const demographicsById = new Map(
+    clientDemographics.map((d) => [d.client_detail_id, d])
+  );
+
+  const positiveProviderRatings =
+    await getPositivePlatformRatingsFromProvidersQuery({
+      poolCountry: country,
+      startDate,
+      endDate,
+    }).then((res) => {
+      return res.rows ? res.rows[0].count : 0;
+    });
+
+  const inc = (obj, key) => {
+    obj[key] = (obj[key] || 0) + 1;
+  };
 
   let totalWebsiteAccess = 0;
   let totalClientAccess = 0;
+  let totalMobileAccess = 0;
   let totalProviderAccess = 0;
 
   let uniqueWebsiteAccess = new Set();
   let uniqueClientAccess = new Set();
   let uniqueProviderAccess = new Set();
+  let uniqueMobileAccess = new Set();
 
+  const totalClientAccessDemographics = {
+    count: 0,
+    demographics: {
+      year_of_birth: {},
+      urban_rural: {},
+      sex: {},
+    },
+  };
+
+  const uniqueClientAccessDemographics = {
+    clientDetailIds: new Set(),
+    count: 0,
+    demographics: {
+      year_of_birth: {},
+      urban_rural: {},
+      sex: {},
+    },
+  };
+
+  const totalMobileAccessDemographics = {
+    count: 0,
+    demographics: {
+      year_of_birth: {},
+      urban_rural: {},
+      sex: {},
+    },
+  };
+
+  const uniqueMobileAccessDemographics = {
+    clientDetailIds: new Set(),
+    count: 0,
+    demographics: {
+      year_of_birth: {},
+      urban_rural: {},
+      sex: {},
+    },
+  };
+
+  // Access Logs computation
   accessLogs.map((log) => {
+    let demographics;
+
+    const clientDetailId = clientDetailMap.get(log.user_id);
+
+    if (clientDetailId) {
+      demographics = demographicsById.get(clientDetailId);
+    }
+
     if (log.platform === "client") {
       totalClientAccess++;
+
+      if (demographics) {
+        const { year_of_birth: yob, urban_rural: ur, sex: s } = demographics;
+        totalClientAccessDemographics.count++;
+        inc(totalClientAccessDemographics.demographics.year_of_birth, yob);
+        inc(totalClientAccessDemographics.demographics.urban_rural, ur);
+        inc(totalClientAccessDemographics.demographics.sex, s);
+
+        if (
+          !uniqueClientAccessDemographics.clientDetailIds.has(clientDetailId)
+        ) {
+          uniqueClientAccessDemographics.count++;
+          uniqueClientAccessDemographics.clientDetailIds.add(clientDetailId);
+          inc(uniqueClientAccessDemographics.demographics.year_of_birth, yob);
+          inc(uniqueClientAccessDemographics.demographics.urban_rural, ur);
+          inc(uniqueClientAccessDemographics.demographics.sex, s);
+        }
+      }
 
       if (log.user_id) {
         uniqueClientAccess.add(log.user_id);
@@ -397,40 +534,211 @@ export const getPlatformMetrics = async ({ country }) => {
       } else {
         uniqueProviderAccess.add(log.ip_address);
       }
+    } else if (log.platform === "mobile") {
+      if (demographics) {
+        const { year_of_birth: yob, urban_rural: ur, sex: s } = demographics;
+        totalMobileAccessDemographics.count++;
+        inc(totalMobileAccessDemographics.demographics.year_of_birth, yob);
+        inc(totalMobileAccessDemographics.demographics.urban_rural, ur);
+        inc(totalMobileAccessDemographics.demographics.sex, s);
+
+        if (
+          !uniqueMobileAccessDemographics.clientDetailIds.has(clientDetailId)
+        ) {
+          uniqueMobileAccessDemographics.count++;
+          uniqueMobileAccessDemographics.clientDetailIds.add(clientDetailId);
+          inc(uniqueMobileAccessDemographics.demographics.year_of_birth, yob);
+          inc(uniqueMobileAccessDemographics.demographics.urban_rural, ur);
+          inc(uniqueMobileAccessDemographics.demographics.sex, s);
+        }
+      }
+
+      totalMobileAccess++;
+      uniqueMobileAccess.add(log.ip_address);
     } else {
       totalWebsiteAccess++;
       uniqueWebsiteAccess.add(log.ip_address);
     }
   });
 
-  const positiveClientRatings =
-    await getPositivePlatformRatingsFromClientsQuery({
-      poolCountry: country,
-    }).then((res) => {
-      return res.rows ? res.rows[0].count : 0;
-    });
+  const consultationsData = {
+    uniqueClientDetailIds: new Set(),
+    count: 0,
+    demographics: {
+      year_of_birth: {},
+      urban_rural: {},
+      sex: {},
+    },
+  };
 
-  const positiveProviderRatings =
-    await getPositivePlatformRatingsFromProvidersQuery({
-      poolCountry: country,
-    }).then((res) => {
-      return res.rows ? res.rows[0].count : 0;
-    });
+  const uniqueConsultationsData = {
+    clientDetailIds: new Set(),
+    count: 0,
+    demographics: {
+      year_of_birth: {},
+      urban_rural: {},
+      sex: {},
+    },
+  };
+
+  const totalCouponConsultationsData = {
+    uniqueClientDetailIds: new Set(),
+    count: 0,
+    demographics: {
+      year_of_birth: {},
+      urban_rural: {},
+      sex: {},
+    },
+  };
+
+  const uniqueCouponConsultationsData = {
+    clientDetailIds: new Set(),
+    count: 0,
+    demographics: {
+      year_of_birth: {},
+      urban_rural: {},
+      sex: {},
+    },
+  };
+
+  const uniqueClientsThatUsedCoupon = new Set();
+
+  for (let i = 0; i < consultations.length; i++) {
+    const c = consultations[i];
+    const d = demographicsById.get(c.client_detail_id);
+    if (!d || !d.year_of_birth) continue;
+
+    const { year_of_birth: yob, urban_rural: ur, sex: s } = d;
+
+    consultationsData.count++;
+
+    if (!uniqueConsultationsData.clientDetailIds.has(c.client_detail_id)) {
+      inc(consultationsData.demographics.year_of_birth, yob);
+      inc(consultationsData.demographics.urban_rural, ur);
+      inc(consultationsData.demographics.sex, s);
+      consultationsData.uniqueClientDetailIds.add(c.client_detail_id);
+    }
+
+    if (c.campaign_id) {
+      uniqueClientsThatUsedCoupon.add(c.client_detail_id);
+      totalCouponConsultationsData.count++;
+      if (
+        !totalCouponConsultationsData.uniqueClientDetailIds.has(
+          c.client_detail_id
+        )
+      ) {
+        inc(totalCouponConsultationsData.demographics.year_of_birth, yob);
+        inc(totalCouponConsultationsData.demographics.urban_rural, ur);
+        inc(totalCouponConsultationsData.demographics.sex, s);
+        totalCouponConsultationsData.uniqueClientDetailIds.add(
+          c.client_detail_id
+        );
+      }
+
+      if (
+        !uniqueCouponConsultationsData.clientDetailIds.has(c.client_detail_id)
+      ) {
+        uniqueCouponConsultationsData.clientDetailIds.add(c.client_detail_id);
+        inc(uniqueCouponConsultationsData.demographics.year_of_birth, yob);
+        inc(uniqueCouponConsultationsData.demographics.urban_rural, ur);
+        inc(uniqueCouponConsultationsData.demographics.sex, s);
+        uniqueCouponConsultationsData.count++;
+      }
+    }
+  }
+
+  const activeClientsDemographics = {
+    count: 0,
+    demographics: {
+      year_of_birth: {},
+      urban_rural: {},
+      sex: {},
+    },
+  };
+
+  activeClientDetailIds.forEach((id) => {
+    const d = demographicsById.get(id);
+    if (!d || !d.year_of_birth) return;
+    activeClientsDemographics.count++;
+    inc(activeClientsDemographics.demographics.year_of_birth, d.year_of_birth);
+    inc(activeClientsDemographics.demographics.urban_rural, d.urban_rural);
+    inc(activeClientsDemographics.demographics.sex, d.sex);
+  });
+
+  const positiveClientRatingsDemographics = {
+    count: 0,
+    demographics: {
+      year_of_birth: {},
+      urban_rural: {},
+      sex: {},
+    },
+  };
+
+  positiveClientRatings.forEach((item) => {
+    const d = demographicsById.get(item.client_detail_id);
+    if (!d || !d.year_of_birth) return;
+    positiveClientRatingsDemographics.count++;
+    inc(
+      positiveClientRatingsDemographics.demographics.year_of_birth,
+      d.year_of_birth
+    );
+    inc(
+      positiveClientRatingsDemographics.demographics.urban_rural,
+      d.urban_rural
+    );
+    inc(positiveClientRatingsDemographics.demographics.sex, d.sex);
+  });
+
+  const uniqueClientsThatUsedCouponDemographics = {
+    clientDetailIds: new Set(),
+    count: 0,
+    demographics: {
+      year_of_birth: {},
+      urban_rural: {},
+      sex: {},
+    },
+  };
+
+  uniqueClientsThatUsedCoupon.forEach((id) => {
+    const d = demographicsById.get(id);
+    if (!d || !d.year_of_birth) return;
+    uniqueClientsThatUsedCouponDemographics.count++;
+    if (!uniqueClientsThatUsedCouponDemographics.clientDetailIds.has(id)) {
+      uniqueClientsThatUsedCouponDemographics.clientDetailIds.add(id);
+      inc(
+        uniqueClientsThatUsedCouponDemographics.demographics.year_of_birth,
+        d.year_of_birth
+      );
+      inc(
+        uniqueClientsThatUsedCouponDemographics.demographics.urban_rural,
+        d.urban_rural
+      );
+      inc(uniqueClientsThatUsedCouponDemographics.demographics.sex, d.sex);
+    }
+  });
 
   return {
-    totalConsultations,
-    uniqueClientsConsultations,
-    activeClients,
+    totalConsultations: {
+      ...consultationsData,
+      uniqueCount: consultationsData.uniqueClientDetailIds.size,
+    },
+    // uniqueClientsConsultations: uniqueConsultationsData,
+    totalCouponConsultations: {
+      ...totalCouponConsultationsData,
+      uniqueCount: totalCouponConsultationsData.uniqueClientDetailIds.size,
+    },
+    // uniqueClientsThatUsedCoupon: uniqueClientsThatUsedCouponDemographics,
+    activeClients: activeClientsDemographics,
     activeProviders,
     totalWebsiteAccess,
-    totalClientAccess,
+    totalClientAccess: totalClientAccessDemographics,
     totalProviderAccess,
+    totalMobileAccess: totalMobileAccessDemographics,
+    uniqueMobileAccess: uniqueMobileAccessDemographics,
     uniqueWebsiteAccess: uniqueWebsiteAccess.size,
-    uniqueClientAccess: uniqueClientAccess.size,
+    uniqueClientAccess: uniqueClientAccessDemographics,
     uniqueProviderAccess: uniqueProviderAccess.size,
-    uniqueClientsThatUsedCoupon: uniqueClientsThatUsedCoupon.size,
-    totalCouponConsultations,
-    positiveClientRatings,
+    positiveClientRatings: positiveClientRatingsDemographics,
     positiveProviderRatings,
   };
 };

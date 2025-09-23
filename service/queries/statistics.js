@@ -41,14 +41,20 @@ export const getScheduledConsultationsNoForCountryQuery = async ({
 
 export const getScheduledConsultationsWithClientIdForCountryQuery = async ({
   poolCountry,
-}) =>
-  await getDBPool("clinicalDb", poolCountry).query(
+  startDate,
+  endDate,
+}) => {
+  return await getDBPool("clinicalDb", poolCountry).query(
     `
       SELECT client_detail_id, campaign_id
       FROM consultation
-      WHERE status = 'scheduled';
-    `
+      WHERE status = 'scheduled' 
+        AND ($1::double precision IS NULL OR created_at >= to_timestamp($1))
+        AND ($2::double precision IS NULL OR created_at <= to_timestamp($2));
+    `,
+    [startDate, endDate]
   );
+};
 
 export const getSecurityCheckAnswersQuery = async ({ poolCountry }) =>
   await getDBPool("clinicalDb", poolCountry).query(
@@ -106,39 +112,61 @@ export const getProviderStatisticsQuery = async ({ poolCountry, providerId }) =>
 
 export const getClientsAndProvidersLoggedIn15DaysQuery = async ({
   poolCountry,
+  startDate,
+  endDate,
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
     SELECT 
-    COUNT(*) FILTER (WHERE type = 'client') AS clients_no,
-    COUNT(*) FILTER (WHERE type = 'provider') AS providers_no
+    COUNT(*) FILTER (WHERE type = 'provider') AS providers_no,
+    COALESCE(
+    ARRAY_AGG(client_detail_id) FILTER (
+      WHERE type = 'client' AND client_detail_id IS NOT NULL
+    ),
+    '{}'
+  ) AS client_detail_ids
     FROM "user"
-    WHERE deleted_at is NULL AND last_login > now() - interval '15 days';
-      `
+    WHERE deleted_at is NULL 
+      AND last_login > now() - interval '15 days'
+      AND ($1::double precision IS NULL OR last_login >= to_timestamp($1))
+      AND ($2::double precision IS NULL OR last_login <= to_timestamp($2));
+      `,
+    [startDate, endDate]
   );
 };
 
 export const getPositivePlatformRatingsFromClientsQuery = async ({
   poolCountry,
+  startDate,
+  endDate,
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
-    SELECT COUNT(*)
+    SELECT client_detail_id 
     FROM client_rating
     WHERE rating > 3
-    `
+      AND ($1::double precision IS NULL OR created_at >= to_timestamp($1))
+      AND ($2::double precision IS NULL OR created_at <= to_timestamp($2))
+    
+    `,
+    [startDate, endDate]
   );
 };
 
 export const getPositivePlatformRatingsFromProvidersQuery = async ({
   poolCountry,
+  startDate,
+  endDate,
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
     SELECT COUNT(*)
     FROM provider_rating
     WHERE rating > 3
-    `
+      AND ($1::double precision IS NULL OR created_at >= to_timestamp($1))
+      AND ($2::double precision IS NULL OR created_at <= to_timestamp($2))
+    `,
+    [startDate, endDate]
   );
 };
 
