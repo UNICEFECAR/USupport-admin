@@ -1,4 +1,5 @@
 import { getMultipleClientsDataByIDs } from "#queries/clients";
+
 import {
   assignProviderToOrganizationQuery,
   checkProvidersFutureConsultationsForOrgQuery,
@@ -17,14 +18,18 @@ import {
   getProvidersForOrganizationQuery,
   checkOrganizationNameExistsQuery,
 } from "#queries/organizations";
+
 import { getMultipleProvidersDataByIDs } from "#queries/providers";
+
 import {
   organizationExists,
   organizationNotFound,
   providerAlreadyAssignedToOrg,
   organizationHasProviders,
 } from "#utils/errors";
+
 import { removeProvidersCacheRequest } from "#utils/helperFunctions";
+
 import {
   handleOrganizationLinksCreation,
   handleOrganizationLinksUpdate,
@@ -40,7 +45,6 @@ export const createOrganization = async (data) => {
       });
 
       if (existingOrg.rows[0].count > 0) {
-        console.log("yeS");
         throw organizationExists(data.language);
       }
     }
