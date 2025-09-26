@@ -105,11 +105,12 @@ router.route("/analysis").get(async (req, res, next) => {
    */
   const language = req.header("x-language-alpha-2");
   const country = req.header("x-country-alpha-2");
+  const { startDate, endDate } = req.query;
 
   return await getCompletedBaselineAssessmentsAnalysisSchema
     .noUnknown(true)
     .strict(true)
-    .validate({ country, language })
+    .validate({ country, language, startDate, endDate })
     .then(getCompletedBaselineAssessmentsAnalysis)
     .then((result) => res.status(200).send(result))
     .catch(next);

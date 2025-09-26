@@ -27,4 +27,6 @@ export const getCompletedBaselineAssessmentsAnalysisSchema = yup
   .shape({
     country: yup.string().required(),
     language: yup.string().required(),
+    startDate: yup.string().nullable().notRequired(),
+    endDate: yup.string().nullable().notRequired(),
   });

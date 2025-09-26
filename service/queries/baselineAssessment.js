@@ -68,9 +68,10 @@ export const updateBaselineAssessmentThresholdByIdQuery = async ({
 
 export const getAllCompletedBaselineAssessmentsWithAnswersQuery = async ({
   country,
+  startDate,
+  endDate,
 }) => {
-  return await getDBPool("clinicalDb", country).query(
-    `
+  const query = `
       SELECT 
         ss.baseline_assessment_id,
         ss.completed_at,
@@ -86,12 +87,24 @@ export const getAllCompletedBaselineAssessmentsWithAnswersQuery = async ({
           ) ORDER BY sq.position
         ) as answers
       FROM baseline_assessment_session ss
-      INNER JOIN baseline_assessment_answer sa ON ss.baseline_assessment_id = sa.baseline_assessment_id
-      INNER JOIN baseline_assessment_question sq ON sa.question_id = sq.question_id
+      INNER JOIN baseline_assessment_answer sa 
+        ON ss.baseline_assessment_id = sa.baseline_assessment_id
+      INNER JOIN baseline_assessment_question sq 
+        ON sa.question_id = sq.question_id
       WHERE ss.status = 'completed'
-      GROUP BY ss.baseline_assessment_id, ss.completed_at, 
-               ss.psychological_score, ss.biological_score, ss.social_score
+        AND ($1::timestamptz IS NULL OR ss.created_at >= $1)
+        AND ($2::timestamptz IS NULL OR ss.created_at <= $2)
+      GROUP BY 
+        ss.baseline_assessment_id, 
+        ss.completed_at, 
+        ss.psychological_score, 
+        ss.biological_score, 
+        ss.social_score
       ORDER BY ss.created_at ASC
-    `
-  );
+    `;
+
+  return await getDBPool("clinicalDb", country).query(query, [
+    startDate || null,
+    endDate || null,
+  ]);
 };
