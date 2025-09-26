@@ -12,10 +12,13 @@ export const getClientsNoForCountryQuery = async ({ poolCountry }) =>
 export const getProvidersNoForCountryQuery = async ({ poolCountry }) =>
   await getDBPool("piiDb", poolCountry).query(
     `
-      SELECT COUNT(*) AS providers_no
-      FROM "user"
-      WHERE type = 'provider' AND deleted_at is NULL;
-    `
+        SELECT COUNT(*) AS providers_no
+        FROM "user" u
+        LEFT JOIN provider_detail pd ON pd.provider_detail_id = u.provider_detail_id
+        WHERE u.type = 'provider'
+          AND u.deleted_at IS NULL
+          AND pd.status = 'active';
+      `
   );
 
 export const getPublishedArticlesNoForCountryQuery = async ({ countryId }) =>
