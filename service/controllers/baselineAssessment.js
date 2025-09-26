@@ -126,12 +126,23 @@ const calculateMedian = (values) => {
 export const getCompletedBaselineAssessmentsAnalysis = async ({
   country,
   language,
+  startDate: providedStartDate,
+  endDate: providedEndDate,
 }) => {
   try {
+    const startDate = providedStartDate ? new Date(providedStartDate) : null;
+    const endDate = providedEndDate ? new Date(providedEndDate) : null;
+
+    if (startDate && endDate && startDate > endDate) {
+      throw new Error("Start date cannot be after end date");
+    }
+
     // Get all completed baseline assessments with their answers
     const assessmentsResult =
       await getAllCompletedBaselineAssessmentsWithAnswersQuery({
         country,
+        startDate: startDate ? startDate.toISOString() : null,
+        endDate: endDate ? endDate.toISOString() : null,
       });
 
     if (assessmentsResult.rowCount === 0) {

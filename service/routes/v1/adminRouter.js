@@ -141,8 +141,14 @@ router.get("/platform-metrics", async (req, res, next) => {
 
   const country = req.header("x-country-alpha-2");
   const language = req.header("x-language-alpha-2");
+  const { startDate, endDate } = req.query;
 
-  return await getPlatformMetrics({ country, language })
+  return await getPlatformMetrics({
+    country,
+    language,
+    startDate: startDate ? Number(startDate) : null,
+    endDate: endDate ? Number(endDate) : null,
+  })
     .then((result) => res.status(200).send(result))
     .catch(next);
 });

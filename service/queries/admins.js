@@ -207,11 +207,21 @@ export const isJwtBlacklisted = async ({ token, poolCountry }) => {
   );
 };
 
-export const getPlatformAccessLogsQuery = async ({ poolCountry }) => {
+export const getPlatformAccessLogsQuery = async ({
+  poolCountry,
+  startDate,
+  endDate,
+}) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
-      SELECT user_id, platform, ip_address
-      FROM platform_access
-        `
+      SELECT
+        pa.user_id,
+        pa.platform,
+        pa.ip_address
+      FROM platform_access pa
+      WHERE ($1::double precision IS NULL OR pa.created_at >= to_timestamp($1))
+        AND ($2::double precision IS NULL OR pa.created_at <= to_timestamp($2));
+      `,
+    [startDate, endDate]
   );
 };
