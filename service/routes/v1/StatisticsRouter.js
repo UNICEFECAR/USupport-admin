@@ -12,6 +12,7 @@ import {
   getPlatformSuggestionsForType,
   getSOSCenterClicks,
   getProviderAvailabilityReport,
+  getMoodTrackerReport,
 } from "#controllers/statistics";
 
 import {
@@ -23,6 +24,7 @@ import {
   getPlatformSuggestionsForTypeSchema,
   getSOSCenterClicksSchema,
   getProviderAvailabilityReportSchema,
+  getMoodTrackerReportSchema,
 } from "#schemas/statisticsSchemas";
 
 import { securedRoute } from "#middlewares/auth";
@@ -146,6 +148,25 @@ router.route("/contact-forms").get(async (req, res, next) => {
     .strict(true)
     .validate({ country, language })
     .then(getContactForms)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.route("/mood-tracker-report").get(async (req, res, next) => {
+  /**
+   * #route   GET /admin/v1/statistics/mood-tracker-report
+   * #desc    Get mood tracker aggregated statistics
+   */
+
+  const country = req.header("x-country-alpha-2");
+  const language = req.header("x-language-alpha-2");
+  const { startDate, endDate } = req.query;
+
+  return await getMoodTrackerReportSchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({ country, language, startDate, endDate })
+    .then(getMoodTrackerReport)
     .then((result) => res.status(200).send(result))
     .catch(next);
 });

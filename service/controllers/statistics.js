@@ -14,6 +14,7 @@ import {
   getAllActiveProvidersQuery,
   getAvailabilitySlotsInRangeQuery,
   getBookedConsultationsInRangeQuery,
+  getMoodTrackerReportQuery,
 } from "#queries/statistics";
 
 import {
@@ -474,6 +475,60 @@ export const getSOSCenterClicks = async ({ country, language }) => {
     totalClicks: clicksData.reduce((sum, center) => sum + center.clickCount, 0),
     totalUniqueCenters: clicksData.length,
     clicksByCenter: clicksData,
+  };
+};
+
+const normalizeDate = (value, type) => {
+  if (!value) return null;
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  if (type === "start") {
+    date.setUTCHours(0, 0, 0, 0);
+  } else {
+    date.setUTCHours(23, 59, 59, 999);
+  }
+
+  return date.toISOString();
+};
+
+export const getMoodTrackerReport = async ({ country, startDate, endDate }) => {
+  const normalizedStartDate = normalizeDate(startDate, "start");
+  const normalizedEndDate = normalizeDate(endDate, "end");
+
+  const result = await getMoodTrackerReportQuery({
+    poolCountry: country,
+    startDate: normalizedStartDate,
+    endDate: normalizedEndDate,
+  })
+    .then((res) => res.rows)
+    .catch((err) => {
+      throw err;
+    });
+
+  const totalStats = result.find((row) => row.row_type === "total") || {
+    total_count: 0,
+    unique_clients: 0,
+    critical_count: 0,
+  };
+
+  const moodBreakdown = result
+    .filter((row) => row.row_type === "mood")
+    .map((row) => ({
+      mood: row.mood,
+      totalCount: Number(row.total_count) || 0,
+      uniqueClients: Number(row.unique_clients) || 0,
+      criticalCount: Number(row.critical_count) || 0,
+    }));
+
+  return {
+    totalCount: Number(totalStats.total_count) || 0,
+    uniqueClients: Number(totalStats.unique_clients) || 0,
+    criticalCount: Number(totalStats.critical_count) || 0,
+    moodBreakdown,
   };
 };
 
