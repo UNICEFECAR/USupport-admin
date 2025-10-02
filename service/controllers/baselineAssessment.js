@@ -7,6 +7,7 @@ import {
 } from "#queries/baselineAssessment";
 
 import { baselineAssessmentThresholdNotFound as notFound } from "#utils/errors";
+import { calculateBaselineAssessmentScore } from "#utils/helperFunctions";
 
 export const getAllBaselineAssessmentThresholds = async ({ country }) => {
   return await getAllBaselineAssessmentThresholdsQuery(country)
@@ -176,6 +177,8 @@ export const getCompletedBaselineAssessmentsAnalysis = async ({
         }
       );
 
+    let result = {};
+
     if (totalAssessments < 10) {
       const { psychologicalValues, biologicalValues, socialValues } =
         assessments.reduce(
@@ -188,7 +191,7 @@ export const getCompletedBaselineAssessmentsAnalysis = async ({
           { psychologicalValues: [], biologicalValues: [], socialValues: [] }
         );
 
-      return {
+      result = {
         totalAssessments,
         isSplit: false,
         analysis: {
@@ -257,7 +260,7 @@ export const getCompletedBaselineAssessmentsAnalysis = async ({
         }
       );
 
-      return {
+      result = {
         totalAssessments,
         isSplit: true,
         splitAt: splitIndex,
@@ -303,6 +306,69 @@ export const getCompletedBaselineAssessmentsAnalysis = async ({
         },
       };
     }
+
+    const nonAnonimizedAssesments = assessments.filter(
+      (assessment) => assessment.client_detail_id !== null
+    );
+    const nonAnonimizedWithScore = await Promise.all(
+      nonAnonimizedAssesments.map(async (assessment) => {
+        return {
+          clientDetailId: assessment.client_detail_id,
+          baselineAssessmentId: assessment.baseline_assessment_id,
+          score: await calculateBaselineAssessmentScore(
+            {
+              psychological: assessment.psychological_score,
+              biological: assessment.biological_score,
+              social: assessment.social_score,
+            },
+            country
+          ),
+        };
+      })
+    );
+
+    const factorsOverview = nonAnonimizedWithScore.reduce(
+      (acc, assessment) => {
+        // if the score is low, add 1 to the low count, if the score is high add 1 to the high count
+        if (assessment.score.psychological === "low") {
+          acc.psychologicalLow++;
+        } else if (assessment.score.psychological === "high") {
+          acc.psychologicalHigh++;
+        }
+        if (assessment.score.biological === "low") {
+          acc.biologicalLow++;
+        } else if (assessment.score.biological === "high") {
+          acc.biologicalHigh++;
+        }
+        if (assessment.score.social === "low") {
+          acc.socialLow++;
+        } else if (assessment.score.social === "high") {
+          acc.socialHigh++;
+        }
+        return acc;
+      },
+      {
+        psychologicalLow: 0,
+        psychologicalHigh: 0,
+        biologicalLow: 0,
+        biologicalHigh: 0,
+        socialLow: 0,
+        socialHigh: 0,
+      }
+    );
+
+    result.analysis.psychological.belowCount = factorsOverview.psychologicalLow;
+    result.analysis.psychological.aboveCount =
+      factorsOverview.psychologicalHigh;
+
+    result.analysis.biological.belowCount = factorsOverview.biologicalLow;
+    result.analysis.biological.aboveCount = factorsOverview.biologicalHigh;
+
+    result.analysis.social.belowCount = factorsOverview.socialLow;
+    result.analysis.social.aboveCount = factorsOverview.socialHigh;
+
+    console.log(factorsOverview);
+    return result;
   } catch (err) {
     console.log("Error in getCompletedBaselineAssessmentsAnalysis:", err);
     throw err;
