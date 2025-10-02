@@ -138,6 +138,53 @@ export const getClientsAndProvidersLoggedIn15DaysQuery = async ({
   );
 };
 
+export const getMoodTrackerReportQuery = async ({
+  poolCountry,
+  startDate,
+  endDate,
+}) =>
+  await getDBPool("clinicalDb", poolCountry).query(
+    `
+WITH filtered AS (
+    SELECT mood, client_detail_id, is_critical
+    FROM mood_tracker
+    WHERE is_deleted = false
+      AND ($1::timestamptz IS NULL OR time >= $1::timestamptz)
+      AND ($2::timestamptz IS NULL OR time <= $2::timestamptz)
+),
+total_stats AS (
+    SELECT 'total'::text AS row_type,
+           NULL::text AS mood,
+           COUNT(*) AS total_count,
+           COUNT(DISTINCT client_detail_id) AS unique_clients,
+           COUNT(*) FILTER (WHERE is_critical = true) AS critical_count
+    FROM filtered
+),
+mood_stats AS (
+    SELECT 'mood'::text AS row_type,
+           mood::text AS mood,
+           COUNT(*) AS total_count,
+           COUNT(DISTINCT client_detail_id) AS unique_clients,
+           COUNT(*) FILTER (WHERE is_critical = true) AS critical_count
+    FROM filtered
+    GROUP BY mood
+),
+combined AS (
+    SELECT * FROM total_stats
+    UNION ALL
+    SELECT * FROM mood_stats
+)
+SELECT *
+FROM combined
+ORDER BY 
+    CASE WHEN row_type = 'total' THEN 0 ELSE 1 END,
+    mood NULLS LAST;
+
+
+    `,
+    [startDate, endDate]
+  );
+
 export const getPositivePlatformRatingsFromClientsQuery = async ({
   poolCountry,
   startDate,

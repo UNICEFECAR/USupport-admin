@@ -74,6 +74,7 @@ export const getAllCompletedBaselineAssessmentsWithAnswersQuery = async ({
   const query = `
       SELECT 
         ss.baseline_assessment_id,
+        ss.client_detail_id,
         ss.completed_at,
         ss.psychological_score,
         ss.biological_score,
@@ -96,6 +97,7 @@ export const getAllCompletedBaselineAssessmentsWithAnswersQuery = async ({
         AND ($2::timestamptz IS NULL OR ss.created_at <= $2)
       GROUP BY 
         ss.baseline_assessment_id, 
+        ss.client_detail_id,
         ss.completed_at, 
         ss.psychological_score, 
         ss.biological_score, 

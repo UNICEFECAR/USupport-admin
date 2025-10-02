@@ -18,6 +18,11 @@ export const getProviderStatisticsSchema = getStatsSchema.shape({
   providerId: yup.string().uuid().required(),
 });
 
+export const getMoodTrackerReportSchema = getStatsSchema.shape({
+  startDate: yup.string().optional(),
+  endDate: yup.string().optional(),
+});
+
 export const getPlatformSuggestionsForTypeSchema = getStatsSchema.shape({
   type: yup
     .string()
