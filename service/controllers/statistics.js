@@ -536,6 +536,7 @@ export const getProviderAvailabilityReport = async ({
   country,
   startDate: providedStartDate,
   endDate: providedEndDate,
+  language = "en",
 }) => {
   const now = new Date();
 
@@ -654,6 +655,7 @@ export const getProviderAvailabilityReport = async ({
       providers,
       startDate,
       endDate,
+      language,
     });
 
     const startDateString = startDate.toISOString().split("T")[0];

@@ -28,7 +28,7 @@ const translations = {
 export function t(key, language = "en") {
   // Make sure the language exists and if not return the default language
   if (!Object.keys(translations).includes(language)) {
-    return translations["en"][key];
+    return translations["en"][key] || key;
   }
-  return translations[language][key];
+  return translations[language][key] || translations["en"][key] || key;
 }

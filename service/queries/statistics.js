@@ -307,7 +307,9 @@ export const getAvailabilitySlotsInRangeQuery = async ({
         AND (
           (a.slots IS NOT NULL AND array_length(a.slots, 1) > 0) OR
           (a.campaign_slots IS NOT NULL AND jsonb_typeof(a.campaign_slots) = 'array' AND jsonb_array_length(a.campaign_slots) > 0) OR
-          (a.campaign_slots IS NOT NULL AND jsonb_typeof(a.campaign_slots) = 'object' AND a.campaign_slots != '{}')
+          (a.campaign_slots IS NOT NULL AND jsonb_typeof(a.campaign_slots) = 'object' AND a.campaign_slots != '{}') OR
+          (a.organization_slots IS NOT NULL AND jsonb_typeof(a.organization_slots) = 'array' AND jsonb_array_length(a.organization_slots) > 0) OR
+          (a.organization_slots IS NOT NULL AND jsonb_typeof(a.organization_slots) = 'object' AND a.organization_slots != '{}')
         )
       ORDER BY a.provider_detail_id ASC, a.start_date ASC
     `,
