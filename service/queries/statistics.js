@@ -269,7 +269,8 @@ export const getAllActiveProvidersQuery = async ({ poolCountry }) =>
         pd.status
       FROM provider_detail pd
       INNER JOIN "user" u ON u.provider_detail_id = pd.provider_detail_id 
-        AND u.deleted_at IS NULL
+        AND u.deleted_at IS NULL 
+        AND pd.status = 'active'
       ORDER BY pd.name ASC
     `
   );
