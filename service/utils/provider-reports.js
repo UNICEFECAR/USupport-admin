@@ -57,7 +57,8 @@ export const generateAvailabilityCSV = ({
     startDate
   )} - ${formatDateToDDMMYYYY(endDate)}`;
 
-  let csvContent = `"${t("provider_availability_report", language)}"\n`;
+  let csvContent = "\uFEFF";
+  csvContent += `"${t("provider_availability_report", language)}"\n`;
   csvContent += `"${t("date_range", language)}: ${dateRangeHeader}"\n`;
   csvContent += `"${t("total_providers", language)}: ${providers.length}"\n`;
   csvContent += "\n"; // Empty line for separation
