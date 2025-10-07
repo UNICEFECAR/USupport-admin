@@ -1,3 +1,5 @@
+import { t } from "#translations/index";
+
 /**
  * Combines provider data with their availability data for legacy compatibility
  * @param {Array} providersRows - Array of provider objects from getAllActiveProvidersQuery
@@ -49,18 +51,41 @@ export const generateAvailabilityCSV = ({
   providers,
   startDate,
   endDate,
+  language = "en",
 }) => {
   const dateRangeHeader = `${formatDateToDDMMYYYY(
     startDate
   )} - ${formatDateToDDMMYYYY(endDate)}`;
 
-  let csvContent = `"Provider Availability Report"\n`;
-  csvContent += `"Date Range: ${dateRangeHeader}"\n`;
-  csvContent += `"Total Providers: ${providers.length}"\n`;
+  let csvContent = "\uFEFF";
+  csvContent += `"${t("provider_availability_report", language)}"\n`;
+  csvContent += `"${t("date_range", language)}: ${dateRangeHeader}"\n`;
+  csvContent += `"${t("total_providers", language)}: ${providers.length}"\n`;
   csvContent += "\n"; // Empty line for separation
 
   // Add CSV headers
-  csvContent += `"Provider Name","Provider Email","Total Slots","Campaign Slots","Normal Slots","Normal Slots (Details)","Campaign Slots (Details)","Normal Consultations Booked","Normal Consultations (Details)","Campaign Consultations Booked","Campaign Consultations (Details)"\n`;
+  csvContent += `"${t("provider_name", language)}","${t(
+    "provider_email",
+    language
+  )}","${t("total_slots", language)}","${t("campaign_slots", language)}","${t(
+    "organization_slots",
+    language
+  )}","${t("normal_slots", language)}","${t(
+    "normal_slots_details",
+    language
+  )}","${t("campaign_slots_details", language)}","${t(
+    "organization_slots_details",
+    language
+  )}","${t("normal_consultations_booked", language)}","${t(
+    "normal_consultations_details",
+    language
+  )}","${t("campaign_consultations_booked", language)}","${t(
+    "campaign_consultations_details",
+    language
+  )}","${t("organization_consultations_booked", language)}","${t(
+    "organization_consultations_details",
+    language
+  )}"\n`;
 
   // First, create a map of all providers with their basic info
   const providerAvailabilityMap = new Map();
@@ -74,11 +99,16 @@ export const generateAvailabilityCSV = ({
       },
       normalSlots: [],
       campaignSlots: [],
+      organizationSlots: [],
       normalConsultationsBooked: provider.normal_consultations_booked || 0,
       campaignConsultationsBooked: provider.campaign_consultations_booked || 0,
+      organizationConsultationsBooked:
+        provider.organization_consultations_booked || 0,
       normalConsultationsDetails: provider.normal_consultations_details || [],
       campaignConsultationsDetails:
         provider.campaign_consultations_details || [],
+      organizationConsultationsDetails:
+        provider.organization_consultations_details || [],
     });
   });
 
@@ -125,6 +155,37 @@ export const generateAvailabilityCSV = ({
           }
         });
       }
+
+      // Process organization slots - filter by date range
+      if (
+        record.organization_slots &&
+        typeof record.organization_slots === "object"
+      ) {
+        // organization_slots is JSONB, could be an object with slot arrays or direct array
+        let organizationSlotsList = [];
+
+        if (Array.isArray(record.organization_slots)) {
+          organizationSlotsList = record.organization_slots;
+        } else if (
+          record.organization_slots &&
+          typeof record.organization_slots === "object"
+        ) {
+          // If it's an object, extract all slot arrays from it
+          Object.values(record.organization_slots).forEach((value) => {
+            if (Array.isArray(value)) {
+              organizationSlotsList = organizationSlotsList.concat(value);
+            }
+          });
+        }
+
+        organizationSlotsList.forEach((slot) => {
+          // Handle different slot formats (timestamp vs object with time property)
+          const slotTime = slot.time ? new Date(slot.time) : new Date(slot);
+          if (slotTime >= startDate && slotTime <= endDate) {
+            providerData.organizationSlots.push(formatSlotDateTime(slotTime));
+          }
+        });
+      }
     }
   });
 
@@ -133,28 +194,36 @@ export const generateAvailabilityCSV = ({
     const data = providerAvailabilityMap.get(provider.provider_detail_id);
     const normalSlotsCount = data.normalSlots.length;
     const campaignSlotsCount = data.campaignSlots.length;
-    const totalSlots = normalSlotsCount + campaignSlotsCount;
+    const organizationSlotsCount = data.organizationSlots.length;
+    const totalSlots =
+      normalSlotsCount + campaignSlotsCount + organizationSlotsCount;
 
     const normalConsultationsCount = data.normalConsultationsBooked;
     const campaignConsultationsCount = data.campaignConsultationsBooked;
+    const organizationConsultationsCount = data.organizationConsultationsBooked;
     const normalConsultationsDetailsCount =
       data.normalConsultationsDetails.length;
     const campaignConsultationsDetailsCount =
       data.campaignConsultationsDetails.length;
+    const organizationConsultationsDetailsCount =
+      data.organizationConsultationsDetails.length;
 
     // Find the maximum number of rows needed for all details
     const maxRows = Math.max(
       normalSlotsCount,
       campaignSlotsCount,
+      organizationSlotsCount,
       normalConsultationsDetailsCount,
       campaignConsultationsDetailsCount,
+      organizationConsultationsDetailsCount,
       1 // At least one row for provider info
     );
 
     if (
       totalSlots > 0 ||
       normalConsultationsCount > 0 ||
-      campaignConsultationsCount > 0
+      campaignConsultationsCount > 0 ||
+      organizationConsultationsCount > 0
     ) {
       let providerInfoShown = false;
 
@@ -162,6 +231,8 @@ export const generateAvailabilityCSV = ({
         const normalSlot = i < normalSlotsCount ? data.normalSlots[i] : "";
         const campaignSlot =
           i < campaignSlotsCount ? data.campaignSlots[i] : "";
+        const organizationSlot =
+          i < organizationSlotsCount ? data.organizationSlots[i] : "";
         const normalConsultation =
           i < normalConsultationsDetailsCount
             ? data.normalConsultationsDetails[i]
@@ -170,17 +241,32 @@ export const generateAvailabilityCSV = ({
           i < campaignConsultationsDetailsCount
             ? data.campaignConsultationsDetails[i]
             : "";
+        const organizationConsultation =
+          i < organizationConsultationsDetailsCount
+            ? data.organizationConsultationsDetails[i]
+            : "";
 
         if (!providerInfoShown) {
-          csvContent += `"${data.provider.name}","${data.provider.email}","${totalSlots}","${campaignSlotsCount}","${normalSlotsCount}","${normalSlot}","${campaignSlot}","${normalConsultationsCount}","${normalConsultation}","${campaignConsultationsCount}","${campaignConsultation}"\n`;
+          csvContent += `"${data.provider.name}","${data.provider.email}","${totalSlots}","${campaignSlotsCount}","${organizationSlotsCount}","${normalSlotsCount}","${normalSlot}","${campaignSlot}","${organizationSlot}","${normalConsultationsCount}","${normalConsultation}","${campaignConsultationsCount}","${campaignConsultation}","${organizationConsultationsCount}","${organizationConsultation}"\n`;
           providerInfoShown = true;
         } else {
-          csvContent += `"","","","","","${normalSlot}","${campaignSlot}","","${normalConsultation}","","${campaignConsultation}"\n`;
+          csvContent += `"","","","","","","${normalSlot}","${campaignSlot}","${organizationSlot}","","${normalConsultation}","","${campaignConsultation}","","${organizationConsultation}"\n`;
         }
       }
     } else {
       // Provider with no slots or consultations
-      csvContent += `"${data.provider.name}","${data.provider.email}","0","0","0","No normal slots","No campaign slots","0","No normal consultations","0","No campaign consultations"\n`;
+      csvContent += `"${data.provider.name}","${
+        data.provider.email
+      }","0","0","0","0","${t("no_normal_slots", language)}","${t(
+        "no_campaign_slots",
+        language
+      )}","${t("no_organization_slots", language)}","0","${t(
+        "no_normal_consultations",
+        language
+      )}","0","${t("no_campaign_consultations", language)}","0","${t(
+        "no_organization_consultations",
+        language
+      )}"\n`;
     }
 
     csvContent += "\n"; // Empty line between providers
