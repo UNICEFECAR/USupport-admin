@@ -32,7 +32,6 @@ import { getCampaignNamesByIds } from "#queries/sponsors";
 
 import { getOrganizationsByIdsQuery } from "#queries/organizations";
 
-import { produceRaiseNotification } from "#utils/kafkaProducers";
 import { countryNotFound } from "#utils/errors";
 import { getClientInitials } from "#utils/helperFunctions";
 import { generateAvailabilityCSV } from "#utils/provider-reports";
@@ -540,12 +539,15 @@ export const getProviderAvailabilityReport = async ({
 }) => {
   const now = new Date();
 
-  const startDate = providedStartDate
-    ? new Date(providedStartDate)
-    : new Date(now.getTime());
-  const endDate = providedEndDate
-    ? new Date(providedEndDate)
-    : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
+  // Normalize dates to ensure start is at 00:00:00 and end is at 23:59:59.999
+  const normalizedStartDate = normalizeDate(providedStartDate || now, "start");
+  const normalizedEndDate = normalizeDate(
+    providedEndDate || new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+    "end"
+  );
+
+  const startDate = new Date(normalizedStartDate);
+  const endDate = new Date(normalizedEndDate);
 
   try {
     const [providersResult, availabilityResult, consultationsResult] =
@@ -553,13 +555,13 @@ export const getProviderAvailabilityReport = async ({
         getAllActiveProvidersQuery({ poolCountry: country }),
         getAvailabilitySlotsInRangeQuery({
           poolCountry: country,
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
+          startDate: normalizedStartDate,
+          endDate: normalizedEndDate,
         }),
         getBookedConsultationsInRangeQuery({
           poolCountry: country,
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
+          startDate: normalizedStartDate,
+          endDate: normalizedEndDate,
         }),
       ]);
 
