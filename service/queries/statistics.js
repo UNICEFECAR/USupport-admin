@@ -293,25 +293,83 @@ export const getAvailabilitySlotsInRangeQuery = async ({
           date_trunc('week', (SELECT target_start FROM date_range)) as week_start,
           -- Find the Monday of the week containing endDate, then add 6 days to get end of that week
           date_trunc('week', (SELECT target_end FROM date_range)) + interval '6 days' + interval '23 hours 59 minutes 59 seconds' as week_end
+      ),
+      -- Expand campaign slots with campaign names
+      campaign_slots_with_names AS (
+        SELECT 
+          a.availability_id,
+          a.provider_detail_id,
+          a.slots,
+          a.start_date,
+          a.organization_slots,
+          CASE 
+            WHEN a.campaign_slots IS NULL THEN NULL
+            WHEN jsonb_typeof(a.campaign_slots) = 'array' THEN
+              COALESCE(
+                (
+                  SELECT jsonb_agg(
+                    CASE 
+                      WHEN cs.elem->>'campaign_id' IS NOT NULL THEN
+                        cs.elem || jsonb_build_object('campaign_name', COALESCE(c.name, 'Unknown Campaign'))
+                      ELSE cs.elem
+                    END
+                  )
+                  FROM jsonb_array_elements(a.campaign_slots) AS cs(elem)
+                  LEFT JOIN campaign c ON c.campaign_id = (cs.elem->>'campaign_id')::uuid
+                ),
+                '[]'::jsonb
+              )
+            ELSE a.campaign_slots
+          END as campaign_slots
+        FROM availability a, week_boundaries wb
+        WHERE a.start_date >= wb.week_start 
+          AND a.start_date <= wb.week_end
+          AND (
+            (a.slots IS NOT NULL AND array_length(a.slots, 1) > 0) OR
+            (a.campaign_slots IS NOT NULL AND jsonb_typeof(a.campaign_slots) = 'array' AND jsonb_array_length(a.campaign_slots) > 0) OR
+            (a.campaign_slots IS NOT NULL AND jsonb_typeof(a.campaign_slots) = 'object' AND a.campaign_slots != '{}') OR
+            (a.organization_slots IS NOT NULL AND jsonb_typeof(a.organization_slots) = 'array' AND jsonb_array_length(a.organization_slots) > 0) OR
+            (a.organization_slots IS NOT NULL AND jsonb_typeof(a.organization_slots) = 'object' AND a.organization_slots != '{}')
+          )
+      ),
+      -- Expand organization slots with organization names
+      organization_slots_with_names AS (
+        SELECT 
+          csw.availability_id,
+          csw.provider_detail_id,
+          csw.slots,
+          csw.start_date,
+          csw.campaign_slots,
+          CASE 
+            WHEN csw.organization_slots IS NULL THEN NULL
+            WHEN jsonb_typeof(csw.organization_slots) = 'array' THEN
+              COALESCE(
+                (
+                  SELECT jsonb_agg(
+                    CASE 
+                      WHEN os.elem->>'organization_id' IS NOT NULL THEN
+                        os.elem || jsonb_build_object('organization_name', COALESCE(o.name, 'Unknown Organization'))
+                      ELSE os.elem
+                    END
+                  )
+                  FROM jsonb_array_elements(csw.organization_slots) AS os(elem)
+                  LEFT JOIN organization o ON o.organization_id = (os.elem->>'organization_id')::uuid
+                ),
+                '[]'::jsonb
+              )
+            ELSE csw.organization_slots
+          END as organization_slots
+        FROM campaign_slots_with_names csw
       )
       SELECT 
-        a.availability_id,
-        a.provider_detail_id,
-        a.slots,
-        a.start_date,
-        a.campaign_slots,
-        a.organization_slots
-      FROM availability a, week_boundaries wb
-      WHERE a.start_date >= wb.week_start 
-        AND a.start_date <= wb.week_end
-        AND (
-          (a.slots IS NOT NULL AND array_length(a.slots, 1) > 0) OR
-          (a.campaign_slots IS NOT NULL AND jsonb_typeof(a.campaign_slots) = 'array' AND jsonb_array_length(a.campaign_slots) > 0) OR
-          (a.campaign_slots IS NOT NULL AND jsonb_typeof(a.campaign_slots) = 'object' AND a.campaign_slots != '{}') OR
-          (a.organization_slots IS NOT NULL AND jsonb_typeof(a.organization_slots) = 'array' AND jsonb_array_length(a.organization_slots) > 0) OR
-          (a.organization_slots IS NOT NULL AND jsonb_typeof(a.organization_slots) = 'object' AND a.organization_slots != '{}')
-        )
-      ORDER BY a.provider_detail_id ASC, a.start_date ASC
+        availability_id,
+        provider_detail_id,
+        slots,
+        start_date,
+        campaign_slots,
+        organization_slots
+      FROM organization_slots_with_names
+      ORDER BY provider_detail_id ASC, start_date ASC
     `,
     [startDate, endDate]
   );
