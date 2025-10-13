@@ -33,19 +33,6 @@ const formatDateToDDMMYYYY = (date) => {
   return `${day}.${month}.${year}`;
 };
 
-const formatTimeFromSlot = (slot) => {
-  const date = new Date(slot);
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  return `${hours}:${minutes}`;
-};
-
-const formatSlotDateTime = (slot) => {
-  const date = formatDateToDDMMYYYY(slot);
-  const time = formatTimeFromSlot(slot);
-  return `${date} - ${time}`;
-};
-
 export const generateAvailabilityCSV = ({
   availability,
   providers,
@@ -53,41 +40,95 @@ export const generateAvailabilityCSV = ({
   endDate,
   language = "en",
 }) => {
-  const dateRangeHeader = `${formatDateToDDMMYYYY(
-    startDate
-  )} - ${formatDateToDDMMYYYY(endDate)}`;
-
   let csvContent = "\uFEFF";
-  csvContent += `"${t("provider_availability_report", language)}"\n`;
-  csvContent += `"${t("date_range", language)}: ${dateRangeHeader}"\n`;
-  csvContent += `"${t("total_providers", language)}: ${providers.length}"\n`;
-  csvContent += "\n"; // Empty line for separation
 
-  // Add CSV headers
-  csvContent += `"${t("provider_name", language)}","${t(
-    "provider_email",
-    language
-  )}","${t("total_slots", language)}","${t("campaign_slots", language)}","${t(
-    "organization_slots",
-    language
-  )}","${t("normal_slots", language)}","${t(
-    "normal_slots_details",
-    language
-  )}","${t("campaign_slots_details", language)}","${t(
-    "organization_slots_details",
-    language
-  )}","${t("normal_consultations_booked", language)}","${t(
-    "normal_consultations_details",
-    language
-  )}","${t("campaign_consultations_booked", language)}","${t(
-    "campaign_consultations_details",
-    language
-  )}","${t("organization_consultations_booked", language)}","${t(
-    "organization_consultations_details",
-    language
-  )}"\n`;
+  // Collect all unique organization and campaign names from availability data
+  const organizationNames = new Map(); // Map of org_id -> org_name
+  const campaignNames = new Map(); // Map of campaign_id -> campaign_name
+  const organizationOrder = []; // Keep track of order for consistent column ordering
+  const campaignOrder = []; // Keep track of order for consistent column ordering
 
-  // First, create a map of all providers with their basic info
+  // Extract organization and campaign names from availability data
+  availability.forEach((record) => {
+    // Extract organization names from organization_slots
+    if (
+      record.organization_slots &&
+      typeof record.organization_slots === "object"
+    ) {
+      let organizationSlotsList = [];
+      if (Array.isArray(record.organization_slots)) {
+        organizationSlotsList = record.organization_slots;
+      } else if (typeof record.organization_slots === "object") {
+        Object.values(record.organization_slots).forEach((value) => {
+          if (Array.isArray(value)) {
+            organizationSlotsList = organizationSlotsList.concat(value);
+          }
+        });
+      }
+      organizationSlotsList.forEach((slot) => {
+        if (slot.organization_id && slot.organization_name) {
+          if (!organizationNames.has(slot.organization_id)) {
+            organizationNames.set(slot.organization_id, slot.organization_name);
+            organizationOrder.push(slot.organization_id);
+          }
+        }
+      });
+    }
+
+    // Extract campaign names from campaign_slots
+    if (record.campaign_slots && typeof record.campaign_slots === "object") {
+      let campaignSlotsList = [];
+      if (Array.isArray(record.campaign_slots)) {
+        campaignSlotsList = record.campaign_slots;
+      } else if (typeof record.campaign_slots === "object") {
+        Object.values(record.campaign_slots).forEach((value) => {
+          if (Array.isArray(value)) {
+            campaignSlotsList = campaignSlotsList.concat(value);
+          }
+        });
+      }
+      campaignSlotsList.forEach((slot) => {
+        if (slot.campaign_id && slot.campaign_name) {
+          if (!campaignNames.has(slot.campaign_id)) {
+            campaignNames.set(slot.campaign_id, slot.campaign_name);
+            campaignOrder.push(slot.campaign_id);
+          }
+        }
+      });
+    }
+  });
+
+  // Create headers with better organization - group related columns together
+  let headerColumns = [
+    // Provider Information Section
+    t("provider_name", language),
+    t("provider_email", language),
+
+    // Slot Summary Section
+    t("total_slots", language),
+
+    // Individual Slot Types Section
+    t("normal_slots", language),
+    t("campaign_slots", language),
+    t("organization_slots", language),
+  ];
+
+  // Add organization-specific columns with actual names (limit to first 2)
+  organizationOrder.slice(0, 2).forEach((orgId) => {
+    const orgName = organizationNames.get(orgId);
+    headerColumns.push(orgName || `Organization ${orgId.substring(0, 8)}`);
+  });
+
+  // Add consultation summary section
+  headerColumns.push(
+    t("normal_consultations_booked", language),
+    t("campaign_consultations_booked", language)
+  );
+
+  // Generate CSV header
+  csvContent += headerColumns.map((col) => `"${col}"`).join(",") + "\n";
+
+  // Create a map of all providers with their basic info
   const providerAvailabilityMap = new Map();
 
   // Initialize all providers (including those with no availability)
@@ -100,15 +141,14 @@ export const generateAvailabilityCSV = ({
       normalSlots: [],
       campaignSlots: [],
       organizationSlots: [],
+      // Store slots by organization/campaign ID for detailed tracking
+      organizationSlotsByOrg: new Map(),
+      campaignSlotsByCampaign: new Map(),
       normalConsultationsBooked: provider.normal_consultations_booked || 0,
       campaignConsultationsBooked: provider.campaign_consultations_booked || 0,
-      organizationConsultationsBooked:
-        provider.organization_consultations_booked || 0,
       normalConsultationsDetails: provider.normal_consultations_details || [],
       campaignConsultationsDetails:
         provider.campaign_consultations_details || [],
-      organizationConsultationsDetails:
-        provider.organization_consultations_details || [],
     });
   });
 
@@ -123,14 +163,13 @@ export const generateAvailabilityCSV = ({
         record.slots.forEach((slot) => {
           const slotDate = new Date(slot);
           if (slotDate >= startDate && slotDate <= endDate) {
-            providerData.normalSlots.push(formatSlotDateTime(slot));
+            providerData.normalSlots.push({ time: slot });
           }
         });
       }
 
-      // Process campaign slots - filter by date range
+      // Process campaign slots - filter by date range and group by campaign ID
       if (record.campaign_slots && typeof record.campaign_slots === "object") {
-        // campaign_slots is JSONB, could be an object with slot arrays or direct array
         let campaignSlotsList = [];
 
         if (Array.isArray(record.campaign_slots)) {
@@ -139,7 +178,6 @@ export const generateAvailabilityCSV = ({
           record.campaign_slots &&
           typeof record.campaign_slots === "object"
         ) {
-          // If it's an object, extract all slot arrays from it
           Object.values(record.campaign_slots).forEach((value) => {
             if (Array.isArray(value)) {
               campaignSlotsList = campaignSlotsList.concat(value);
@@ -148,20 +186,28 @@ export const generateAvailabilityCSV = ({
         }
 
         campaignSlotsList.forEach((slot) => {
-          // Handle different slot formats (timestamp vs object with time property)
           const slotTime = slot.time ? new Date(slot.time) : new Date(slot);
           if (slotTime >= startDate && slotTime <= endDate) {
-            providerData.campaignSlots.push(formatSlotDateTime(slotTime));
+            providerData.campaignSlots.push(slot);
+
+            // Group by campaign ID
+            if (slot.campaign_id) {
+              if (!providerData.campaignSlotsByCampaign.has(slot.campaign_id)) {
+                providerData.campaignSlotsByCampaign.set(slot.campaign_id, []);
+              }
+              providerData.campaignSlotsByCampaign
+                .get(slot.campaign_id)
+                .push(slot);
+            }
           }
         });
       }
 
-      // Process organization slots - filter by date range
+      // Process organization slots - filter by date range and group by organization ID
       if (
         record.organization_slots &&
         typeof record.organization_slots === "object"
       ) {
-        // organization_slots is JSONB, could be an object with slot arrays or direct array
         let organizationSlotsList = [];
 
         if (Array.isArray(record.organization_slots)) {
@@ -170,7 +216,6 @@ export const generateAvailabilityCSV = ({
           record.organization_slots &&
           typeof record.organization_slots === "object"
         ) {
-          // If it's an object, extract all slot arrays from it
           Object.values(record.organization_slots).forEach((value) => {
             if (Array.isArray(value)) {
               organizationSlotsList = organizationSlotsList.concat(value);
@@ -179,98 +224,158 @@ export const generateAvailabilityCSV = ({
         }
 
         organizationSlotsList.forEach((slot) => {
-          // Handle different slot formats (timestamp vs object with time property)
           const slotTime = slot.time ? new Date(slot.time) : new Date(slot);
           if (slotTime >= startDate && slotTime <= endDate) {
-            providerData.organizationSlots.push(formatSlotDateTime(slotTime));
+            providerData.organizationSlots.push(slot);
+
+            // Group by organization ID
+            if (slot.organization_id) {
+              if (
+                !providerData.organizationSlotsByOrg.has(slot.organization_id)
+              ) {
+                providerData.organizationSlotsByOrg.set(
+                  slot.organization_id,
+                  []
+                );
+              }
+              providerData.organizationSlotsByOrg
+                .get(slot.organization_id)
+                .push(slot);
+            }
           }
         });
       }
     }
   });
 
-  // Generate CSV content for each provider (including those with no slots)
+  // Calculate totals for summary
+  let totalNormalSlots = 0;
+  let totalCampaignSlots = 0;
+  let totalOrganizationSlots = 0;
+  let totalNormalConsultations = 0;
+  let totalCampaignConsultations = 0;
+
+  // Helper function to format slot information for a provider
+  const formatProviderSlotsInfo = (slots) => {
+    if (!slots || slots.length === 0) {
+      return "N/A";
+    }
+
+    const earliest = new Date(
+      Math.min(...slots.map((slot) => new Date(slot.time || slot)))
+    );
+    const latest = new Date(
+      Math.max(...slots.map((slot) => new Date(slot.time || slot)))
+    );
+
+    const earliestFormatted = formatDateToDDMMYYYY(earliest);
+    const latestFormatted = formatDateToDDMMYYYY(latest);
+
+    return `${slots.length} total slots From ${earliestFormatted} to ${latestFormatted}`;
+  };
+
+  // Generate individual provider rows
   providers.forEach((provider) => {
     const data = providerAvailabilityMap.get(provider.provider_detail_id);
+
     const normalSlotsCount = data.normalSlots.length;
     const campaignSlotsCount = data.campaignSlots.length;
     const organizationSlotsCount = data.organizationSlots.length;
     const totalSlots =
       normalSlotsCount + campaignSlotsCount + organizationSlotsCount;
 
-    const normalConsultationsCount = data.normalConsultationsBooked;
-    const campaignConsultationsCount = data.campaignConsultationsBooked;
-    const organizationConsultationsCount = data.organizationConsultationsBooked;
-    const normalConsultationsDetailsCount =
-      data.normalConsultationsDetails.length;
-    const campaignConsultationsDetailsCount =
-      data.campaignConsultationsDetails.length;
-    const organizationConsultationsDetailsCount =
-      data.organizationConsultationsDetails.length;
-
-    // Find the maximum number of rows needed for all details
-    const maxRows = Math.max(
-      normalSlotsCount,
-      campaignSlotsCount,
-      organizationSlotsCount,
-      normalConsultationsDetailsCount,
-      campaignConsultationsDetailsCount,
-      organizationConsultationsDetailsCount,
-      1 // At least one row for provider info
+    // Format slot information for this provider
+    const normalSlotsInfo = formatProviderSlotsInfo(data.normalSlots);
+    const campaignSlotsInfo = formatProviderSlotsInfo(data.campaignSlots);
+    const organizationSlotsInfo = formatProviderSlotsInfo(
+      data.organizationSlots
     );
 
-    if (
-      totalSlots > 0 ||
-      normalConsultationsCount > 0 ||
-      campaignConsultationsCount > 0 ||
-      organizationConsultationsCount > 0
-    ) {
-      let providerInfoShown = false;
+    // Create row data following the new organized column structure
+    let rowData = [
+      // Provider Information Section
+      data.provider.name,
+      data.provider.email,
 
-      for (let i = 0; i < maxRows; i++) {
-        const normalSlot = i < normalSlotsCount ? data.normalSlots[i] : "";
-        const campaignSlot =
-          i < campaignSlotsCount ? data.campaignSlots[i] : "";
-        const organizationSlot =
-          i < organizationSlotsCount ? data.organizationSlots[i] : "";
-        const normalConsultation =
-          i < normalConsultationsDetailsCount
-            ? data.normalConsultationsDetails[i]
-            : "";
-        const campaignConsultation =
-          i < campaignConsultationsDetailsCount
-            ? data.campaignConsultationsDetails[i]
-            : "";
-        const organizationConsultation =
-          i < organizationConsultationsDetailsCount
-            ? data.organizationConsultationsDetails[i]
-            : "";
+      // Slot Summary Section
+      totalSlots,
 
-        if (!providerInfoShown) {
-          csvContent += `"${data.provider.name}","${data.provider.email}","${totalSlots}","${campaignSlotsCount}","${organizationSlotsCount}","${normalSlotsCount}","${normalSlot}","${campaignSlot}","${organizationSlot}","${normalConsultationsCount}","${normalConsultation}","${campaignConsultationsCount}","${campaignConsultation}","${organizationConsultationsCount}","${organizationConsultation}"\n`;
-          providerInfoShown = true;
-        } else {
-          csvContent += `"","","","","","","${normalSlot}","${campaignSlot}","${organizationSlot}","","${normalConsultation}","","${campaignConsultation}","","${organizationConsultation}"\n`;
-        }
-      }
-    } else {
-      // Provider with no slots or consultations
-      csvContent += `"${data.provider.name}","${
-        data.provider.email
-      }","0","0","0","0","${t("no_normal_slots", language)}","${t(
-        "no_campaign_slots",
-        language
-      )}","${t("no_organization_slots", language)}","0","${t(
-        "no_normal_consultations",
-        language
-      )}","0","${t("no_campaign_consultations", language)}","0","${t(
-        "no_organization_consultations",
-        language
-      )}"\n`;
-    }
+      // Individual Slot Types Section
+      normalSlotsInfo,
+      campaignSlotsInfo,
+      organizationSlotsInfo,
+    ];
 
-    csvContent += "\n"; // Empty line between providers
+    // Add organization-specific columns (up to 2 organizations) using the order from headers
+    organizationOrder.slice(0, 2).forEach((orgId) => {
+      const orgSlots = data.organizationSlotsByOrg.get(orgId) || [];
+      const orgSlotsInfo = formatProviderSlotsInfo(orgSlots);
+      rowData.push(orgSlotsInfo);
+    });
+
+    // Add consultation summary section
+    rowData.push(
+      data.normalConsultationsBooked,
+      data.campaignConsultationsBooked
+    );
+
+    csvContent += rowData.map((cell) => `"${cell}"`).join(",") + "\n";
   });
+
+  // Calculate totals for summary
+  providers.forEach((provider) => {
+    const data = providerAvailabilityMap.get(provider.provider_detail_id);
+
+    totalNormalSlots += data.normalSlots.length;
+    totalCampaignSlots += data.campaignSlots.length;
+    totalOrganizationSlots += data.organizationSlots.length;
+    totalNormalConsultations += data.normalConsultationsBooked;
+    totalCampaignConsultations += data.campaignConsultationsBooked;
+  });
+
+  // Generate summary row at the bottom
+  const totalSlots =
+    totalNormalSlots + totalCampaignSlots + totalOrganizationSlots;
+
+  // Format slot information for summary - show only totals
+  const normalSlotsInfo = totalNormalSlots > 0 ? `${totalNormalSlots}` : "N/A";
+  const campaignSlotsInfo =
+    totalCampaignSlots > 0 ? `${totalCampaignSlots}` : "N/A";
+  const organizationSlotsInfo =
+    totalOrganizationSlots > 0 ? `${totalOrganizationSlots}` : "N/A";
+
+  // Create summary row data following the new organized column structure
+  let summaryRowData = [
+    // Provider Information Section (empty for summary)
+    "", // Provider name
+    "", // Provider email
+
+    // Slot Summary Section
+    totalSlots,
+
+    // Individual Slot Types Section
+    normalSlotsInfo,
+    campaignSlotsInfo,
+    organizationSlotsInfo,
+  ];
+
+  // Add organization summary columns using the order from headers
+  organizationOrder.slice(0, 2).forEach((orgId) => {
+    let totalOrgSlots = 0;
+    providers.forEach((provider) => {
+      const data = providerAvailabilityMap.get(provider.provider_detail_id);
+      const orgSlots = data.organizationSlotsByOrg.get(orgId) || [];
+      totalOrgSlots += orgSlots.length;
+    });
+
+    const orgSummaryInfo = totalOrgSlots > 0 ? `${totalOrgSlots}` : "N/A";
+    summaryRowData.push(orgSummaryInfo);
+  });
+
+  // Add consultation summary section
+  summaryRowData.push(totalNormalConsultations, totalCampaignConsultations);
+
+  csvContent += summaryRowData.map((cell) => `"${cell}"`).join(",") + "\n";
 
   return csvContent;
 };
