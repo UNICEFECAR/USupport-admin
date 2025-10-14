@@ -388,6 +388,7 @@ export const getBookedConsultationsInRangeQuery = async ({
         c.time,
         c.status,
         c.campaign_id,
+        c.organization_id,
         c.created_at
       FROM consultation c
       WHERE c.time >= $1::timestamptz 
