@@ -374,38 +374,44 @@ export const getPlatformMetrics = async ({
         return [];
       });
 
-  const { activeProviders, activeClientDetailIds, clientDemographics } =
-    await getClientsAndProvidersLoggedIn15DaysQuery({
-      poolCountry: country,
-      startDate,
-      endDate,
-    })
-      .then((res) => {
-        if (res.rowCount === 0) {
-          return {
-            activeClients: 0,
-            activeProviders: 0,
-            clientDemographics: [],
-          };
-        }
-        const result = res.rows[0];
+  const {
+    totalProviders,
+    activeProviders,
+    activeClientDetailIds,
+    clientDemographics,
+  } = await getClientsAndProvidersLoggedIn15DaysQuery({
+    poolCountry: country,
+    startDate,
+    endDate,
+  })
+    .then((res) => {
+      if (res.rowCount === 0) {
         return {
-          activeClientDetailIds: result.active_client_detail_ids,
-          activeProviders: result.providers_no,
-          clientDemographics: result.client_demographics,
-        };
-      })
-      .catch((err) => {
-        console.log(
-          "❌ Error getting clients and providers logged in 15 days: ",
-          err
-        );
-        return {
-          activeClientDetailIds: [],
+          totalProviders: 0,
+          activeClients: 0,
           activeProviders: 0,
           clientDemographics: [],
         };
-      });
+      }
+      const result = res.rows[0];
+      return {
+        activeClientDetailIds: result.active_client_detail_ids,
+        activeProviders: result.providers_no,
+        totalProviders: result.total_providers_no,
+        clientDemographics: result.client_demographics,
+      };
+    })
+    .catch((err) => {
+      console.log(
+        "❌ Error getting clients and providers logged in 15 days: ",
+        err
+      );
+      return {
+        activeClientDetailIds: [],
+        activeProviders: 0,
+        clientDemographics: [],
+      };
+    });
 
   const accessLogs = await getPlatformAccessLogsQuery({
     poolCountry: country,
@@ -639,6 +645,8 @@ export const getPlatformMetrics = async ({
     },
   };
 
+  const attendedConsultationsData = createDemographicsObject();
+
   for (let i = 0; i < consultations.length; i++) {
     const c = consultations[i];
     const d = demographicsById.get(c.client_detail_id);
@@ -651,6 +659,19 @@ export const getPlatformMetrics = async ({
     const s = sex || "missing";
 
     consultationsData.count++;
+
+    const hasClientJoined = c.client_join_time || c.client_leave_time;
+
+    if (
+      hasClientJoined &&
+      !attendedConsultationsData.clientDetailIds.has(c.client_detail_id)
+    ) {
+      attendedConsultationsData.count++;
+      inc(attendedConsultationsData.demographics.year_of_birth, yob);
+      inc(attendedConsultationsData.demographics.urban_rural, ur);
+      inc(attendedConsultationsData.demographics.sex, s);
+      attendedConsultationsData.clientDetailIds.add(c.client_detail_id);
+    }
 
     if (!uniqueConsultationsData.clientDetailIds.has(c.client_detail_id)) {
       inc(consultationsData.demographics.year_of_birth, yob);
@@ -747,12 +768,13 @@ export const getPlatformMetrics = async ({
 
     scheduleButtonClick: scheduleButtonClickDemographics,
     mobileScheduleButtonClick: mobileScheduleButtonClickDemographics,
+    clientsAttendedConsultations: attendedConsultationsData,
 
     totalCouponConsultations: {
       ...totalCouponConsultationsData,
       // uniqueCount: totalCouponConsultationsData.uniqueClientDetailIds.size,
     },
-
+    totalProviders,
     activeProviders,
 
     allClients: allClientsDemographics,

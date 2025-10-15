@@ -49,7 +49,7 @@ export const getScheduledConsultationsWithClientIdForCountryQuery = async ({
 }) => {
   return await getDBPool("clinicalDb", poolCountry).query(
     `
-      SELECT client_detail_id, campaign_id, status
+      SELECT client_detail_id, campaign_id, status, client_join_time, client_leave_time
       FROM consultation
       WHERE (status = 'scheduled' OR status = 'finished' OR status = 'late-canceled' OR status = 'canceled')
             AND ($1::double precision IS NULL OR created_at >= to_timestamp($1))
@@ -121,6 +121,7 @@ export const getClientsAndProvidersLoggedIn15DaysQuery = async ({
   return await getDBPool("piiDb", poolCountry).query(
     `
       SELECT 
+        -- Count of active providers (logged in within 15 days)
         COUNT(*) FILTER (
           WHERE "user".type = 'provider'
             AND "user".deleted_at IS NULL
@@ -129,6 +130,13 @@ export const getClientsAndProvidersLoggedIn15DaysQuery = async ({
             AND ($2::double precision IS NULL OR last_login <= to_timestamp($2))
         ) AS providers_no,
 
+        -- ✅ Count of all registered (non-deleted) providers
+        COUNT(*) FILTER (
+          WHERE "user".type = 'provider'
+            AND "user".deleted_at IS NULL
+        ) AS total_providers_no,
+
+        -- Active client detail IDs
         COALESCE(
           ARRAY_AGG("user".client_detail_id) FILTER (
             WHERE "user".type = 'client'
@@ -141,6 +149,7 @@ export const getClientsAndProvidersLoggedIn15DaysQuery = async ({
           '{}'
         ) AS active_client_detail_ids,
 
+        -- Client demographics
         COALESCE(
           JSON_AGG(
             DISTINCT jsonb_build_object(
@@ -159,6 +168,7 @@ export const getClientsAndProvidersLoggedIn15DaysQuery = async ({
       FROM "user"
       LEFT JOIN client_detail 
         ON client_detail.client_detail_id = "user".client_detail_id;
+
       `,
     [startDate, endDate]
   );
