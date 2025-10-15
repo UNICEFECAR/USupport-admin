@@ -11,6 +11,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3007;
 
+global.structuredClone =
+  global.structuredClone ||
+  ((obj) => {
+    return JSON.parse(JSON.stringify(obj));
+  });
+
 /*------------- Security Config -------------*/
 
 app.use(express.json());
