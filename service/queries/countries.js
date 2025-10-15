@@ -22,6 +22,17 @@ export const getCountryAlpha2CodeByIdQuery = async ({ countryId }) =>
     [countryId]
   );
 
+export const getCountryIdByAlpha2CodeQuery = async ({ country }) =>
+  await getDBPool("masterDb").query(
+    `
+      SELECT country_id
+      FROM "country"
+      WHERE alpha2 = $1
+      LIMIT 1;
+    `,
+    [country]
+  );
+
 export const getWebsiteCountryFaqsQuery = async ({ country }) => {
   return await getDBPool("masterDb").query(
     `

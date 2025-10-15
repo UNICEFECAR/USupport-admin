@@ -585,8 +585,10 @@ export const getProviderAvailabilityReport = async ({
         latest_availability: null,
         normal_consultations_booked: 0,
         campaign_consultations_booked: 0,
+        organization_consultations_booked: 0,
         normal_consultations_details: [],
         campaign_consultations_details: [],
+        organization_consultations_details: [],
       });
     });
 
@@ -639,10 +641,21 @@ export const getProviderAvailabilityReport = async ({
           })
           .replace(",", " -");
 
-        // Check if it's a campaign consultation (has campaign_id)
+        // Categorize consultation: campaign, organization, or normal
         if (consultation.campaign_id) {
           provider.campaign_consultations_booked++;
-          provider.campaign_consultations_details.push(dateTimeString);
+          provider.campaign_consultations_details.push({
+            dateTimeString,
+            campaign_id: consultation.campaign_id,
+            time: consultationDateTime,
+          });
+        } else if (consultation.organization_id) {
+          provider.organization_consultations_booked++;
+          provider.organization_consultations_details.push({
+            dateTimeString,
+            organization_id: consultation.organization_id,
+            time: consultationDateTime,
+          });
         } else {
           provider.normal_consultations_booked++;
           provider.normal_consultations_details.push(dateTimeString);

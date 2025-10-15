@@ -12,14 +12,17 @@ import {
   deleteAdminDataByIdQuery,
   getPlatformAccessLogsQuery,
 } from "#queries/admins";
-import { getClientDemographicsByDetailIds } from "#queries/clients";
+
 import { getClientDetailsByUserIds } from "#queries/user";
+
+import { getCountryIdByAlpha2CodeQuery } from "#queries/countries";
 
 import {
   getScheduledConsultationsWithClientIdForCountryQuery,
   getClientsAndProvidersLoggedIn15DaysQuery,
   getPositivePlatformRatingsFromClientsQuery,
   getPositivePlatformRatingsFromProvidersQuery,
+  getCountryEventsQuery,
 } from "#queries/statistics";
 
 import {
@@ -28,7 +31,12 @@ import {
 } from "#queries/providers";
 
 import { formatSpecializations, updatePassword } from "#utils/helperFunctions";
-import { emailUsed, adminNotFound, incorrectPassword } from "#utils/errors";
+import {
+  emailUsed,
+  adminNotFound,
+  incorrectPassword,
+  countryNotFound,
+} from "#utils/errors";
 
 const PROVIDER_LOCAL_HOST = "http://localhost:3002";
 
@@ -332,8 +340,25 @@ export const PSKZUploadController = async ({ payload }) => {
   return response;
 };
 
-export const getPlatformMetrics = async ({ country, startDate, endDate }) => {
-  const allClientDetailIds = new Set();
+export const getPlatformMetrics = async ({
+  country,
+  language,
+  startDate,
+  endDate,
+}) => {
+  const countryId = await getCountryIdByAlpha2CodeQuery({ country }).then(
+    (res) => {
+      if (res.rowCount === 0) {
+        throw countryNotFound(language);
+      }
+      return res.rows[0].country_id;
+    }
+  );
+  const countryEvents = await getCountryEventsQuery({ countryId }).then(
+    (res) => {
+      return res.rows || [];
+    }
+  );
 
   const consultations =
     await getScheduledConsultationsWithClientIdForCountryQuery({
@@ -342,9 +367,6 @@ export const getPlatformMetrics = async ({ country, startDate, endDate }) => {
       endDate,
     })
       .then((res) => {
-        res.rows.forEach((item) => {
-          allClientDetailIds.add(item.client_detail_id);
-        });
         return res.rows;
       })
       .catch((err) => {
@@ -352,27 +374,42 @@ export const getPlatformMetrics = async ({ country, startDate, endDate }) => {
         return [];
       });
 
-  const { activeProviders, activeClientDetailIds } =
-    await getClientsAndProvidersLoggedIn15DaysQuery({
-      poolCountry: country,
-      startDate,
-      endDate,
-    }).then((res) => {
+  const {
+    totalProviders,
+    activeProviders,
+    activeClientDetailIds,
+    clientDemographics,
+  } = await getClientsAndProvidersLoggedIn15DaysQuery({
+    poolCountry: country,
+    startDate,
+    endDate,
+  })
+    .then((res) => {
       if (res.rowCount === 0) {
         return {
+          totalProviders: 0,
           activeClients: 0,
           activeProviders: 0,
+          clientDemographics: [],
         };
       }
-
       const result = res.rows[0];
-      result.client_detail_ids.forEach((id) => {
-        allClientDetailIds.add(id);
-      });
-
       return {
-        activeClientDetailIds: result.client_detail_ids,
+        activeClientDetailIds: result.active_client_detail_ids,
         activeProviders: result.providers_no,
+        totalProviders: result.total_providers_no,
+        clientDemographics: result.client_demographics,
+      };
+    })
+    .catch((err) => {
+      console.log(
+        "❌ Error getting clients and providers logged in 15 days: ",
+        err
+      );
+      return {
+        activeClientDetailIds: [],
+        activeProviders: 0,
+        clientDemographics: [],
       };
     });
 
@@ -389,20 +426,24 @@ export const getPlatformMetrics = async ({ country, startDate, endDate }) => {
     ...new Set(accessLogs.map((log) => log.user_id).filter(Boolean)),
   ];
 
-  const clientDetailMap = new Map();
+  const accessLogsClientDetailMap = new Map();
 
   if (uniqueUserIds.length > 0) {
     const clientDetails = await getClientDetailsByUserIds({
       poolCountry: country,
       userIds: uniqueUserIds,
-    }).then((res) => {
-      return res.rows || [];
-    });
+    })
+      .then((res) => {
+        return res.rows || [];
+      })
+      .catch((err) => {
+        console.log("❌ Error getting client details in", err);
+        return [];
+      });
 
     // Create map for fast lookup
     clientDetails.forEach((row) => {
-      clientDetailMap.set(row.user_id, row.client_detail_id);
-      allClientDetailIds.add(row.client_detail_id);
+      accessLogsClientDetailMap.set(row.user_id, row.client_detail_id);
     });
   }
 
@@ -413,18 +454,8 @@ export const getPlatformMetrics = async ({ country, startDate, endDate }) => {
       endDate,
     }).then((res) => {
       if (!res.rowCount) return [];
-      res.rows.forEach((item) => {
-        allClientDetailIds.add(item.client_detail_id);
-      });
       return res.rows;
     });
-
-  const clientDemographics = await getClientDemographicsByDetailIds({
-    poolCountry: country,
-    clientDetailIds: Array.from(allClientDetailIds),
-  }).then((res) => {
-    return res.rows || [];
-  });
 
   const demographicsById = new Map(
     clientDemographics.map((d) => [d.client_detail_id, d])
@@ -444,107 +475,141 @@ export const getPlatformMetrics = async ({ country, startDate, endDate }) => {
   };
 
   let totalWebsiteAccess = 0;
-  let totalClientAccess = 0;
-  let totalMobileAccess = 0;
   let totalProviderAccess = 0;
 
-  let uniqueWebsiteAccess = new Set();
-  let uniqueClientAccess = new Set();
-  let uniqueProviderAccess = new Set();
-  let uniqueMobileAccess = new Set();
-
-  const totalClientAccessDemographics = {
+  const createDemographicsObject = () => ({
     count: 0,
     demographics: {
       year_of_birth: {},
       urban_rural: {},
       sex: {},
     },
-  };
-
-  const uniqueClientAccessDemographics = {
     clientDetailIds: new Set(),
-    count: 0,
-    demographics: {
-      year_of_birth: {},
-      urban_rural: {},
-      sex: {},
-    },
-  };
+  });
 
-  const totalMobileAccessDemographics = {
+  const createCounterObject = () => ({
     count: 0,
-    demographics: {
-      year_of_birth: {},
-      urban_rural: {},
-      sex: {},
-    },
-  };
+  });
 
-  const uniqueMobileAccessDemographics = {
-    clientDetailIds: new Set(),
-    count: 0,
-    demographics: {
-      year_of_birth: {},
-      urban_rural: {},
-      sex: {},
-    },
-  };
+  const emailRegisterClickCounter = createCounterObject();
+  const anonymousRegisterClickCounter = createCounterObject();
+  const guestRegisterClickCounter = createCounterObject();
+  const mobileEmailRegisterClickCounter = createCounterObject();
+
+  const mobileAnonymousRegisterClickCounter = createCounterObject();
+  const mobileGuestRegisterClickCounter = createCounterObject();
+
+  const scheduledConsultationsDemographics = createDemographicsObject();
+  const mobileScheduledConsultationsDemographics = createDemographicsObject();
+
+  const scheduleButtonClickDemographics = createDemographicsObject();
+  const joinConsultationClickDemographics = createDemographicsObject();
+  const mobileScheduleButtonClickDemographics = createDemographicsObject();
+  const mobileJoinConsultationClickDemographics = createDemographicsObject();
+
+  const eventMap = new Map([
+    ["web_email_register_click", emailRegisterClickCounter],
+    ["web_anonymous_register_click", anonymousRegisterClickCounter],
+    ["web_guest_register_click", guestRegisterClickCounter],
+    ["mobile_email_register_click", mobileEmailRegisterClickCounter],
+    ["mobile_anonymous_register_click", mobileAnonymousRegisterClickCounter],
+    ["mobile_guest_register_click", mobileGuestRegisterClickCounter],
+  ]);
+
+  const eventDemographicsMap = new Map([
+    ["web_schedule_button_click", scheduleButtonClickDemographics],
+    ["web_join_consultation_click", joinConsultationClickDemographics],
+    ["mobile_schedule_button_click", mobileScheduleButtonClickDemographics],
+    ["mobile_join_consultation_click", mobileJoinConsultationClickDemographics],
+    ["web_consultation_scheduled", scheduledConsultationsDemographics],
+    ["mobile_consultation_scheduled", mobileScheduledConsultationsDemographics],
+  ]);
+
+  for (const event of countryEvents) {
+    const demographicsToUpdate = eventDemographicsMap.get(event.event_type);
+    const clientDetails = demographicsById.get(event.client_detail_id);
+    if (demographicsToUpdate && clientDetails) {
+      const { year_of_birth, urban_rural, sex } = clientDetails;
+      const yob = year_of_birth || "missing";
+      const ur = urban_rural || "missing";
+      const s = sex || "missing";
+
+      demographicsToUpdate.count++;
+
+      inc(demographicsToUpdate.demographics.year_of_birth, yob);
+      inc(demographicsToUpdate.demographics.urban_rural, ur);
+      inc(demographicsToUpdate.demographics.sex, s);
+
+      demographicsToUpdate.clientDetailIds.add(event.client_detail_id);
+    } else {
+      const objectToUpdate = eventMap.get(event.event_type);
+      objectToUpdate.count++;
+    }
+  }
+
+  const clientAccessVisitorIds = new Set();
+  const mobileAccessVisitorIds = new Set();
+  const providerAccessVisitorIds = new Set();
+  const websiteAccessVisitorIds = new Set();
+
+  const totalClientAccessDemographics = createDemographicsObject();
+  const uniqueClientAccessDemographics = createDemographicsObject();
+  const totalMobileAccessDemographics = createDemographicsObject();
+  const uniqueMobileAccessDemographics = createDemographicsObject();
 
   // Access Logs computation
   accessLogs.map((log) => {
     let demographics;
 
-    const clientDetailId = clientDetailMap.get(log.user_id);
+    const clientDetailId = accessLogsClientDetailMap.get(log.user_id);
+    const visitorId = log.visitor_id;
 
     if (clientDetailId) {
       demographics = demographicsById.get(clientDetailId);
     }
 
     if (log.platform === "client") {
-      totalClientAccess++;
+      clientAccessVisitorIds.add(visitorId);
 
       if (demographics) {
-        const { year_of_birth: yob, urban_rural: ur, sex: s } = demographics;
+        const { year_of_birth, urban_rural, sex } = demographics;
         totalClientAccessDemographics.count++;
-        inc(totalClientAccessDemographics.demographics.year_of_birth, yob);
-        inc(totalClientAccessDemographics.demographics.urban_rural, ur);
-        inc(totalClientAccessDemographics.demographics.sex, s);
+
+        const yob = year_of_birth || "missing";
+        const ur = urban_rural || "missing";
+        const s = sex || "missing";
 
         if (
           !uniqueClientAccessDemographics.clientDetailIds.has(clientDetailId)
         ) {
-          uniqueClientAccessDemographics.count++;
-          uniqueClientAccessDemographics.clientDetailIds.add(clientDetailId);
+          inc(totalClientAccessDemographics.demographics.year_of_birth, yob);
+          inc(totalClientAccessDemographics.demographics.urban_rural, ur);
+          inc(totalClientAccessDemographics.demographics.sex, s);
+
           inc(uniqueClientAccessDemographics.demographics.year_of_birth, yob);
           inc(uniqueClientAccessDemographics.demographics.urban_rural, ur);
           inc(uniqueClientAccessDemographics.demographics.sex, s);
-        }
-      }
 
-      if (log.user_id) {
-        uniqueClientAccess.add(log.user_id);
-      } else {
-        uniqueClientAccess.add(log.ip_address);
+          uniqueClientAccessDemographics.count++;
+          uniqueClientAccessDemographics.clientDetailIds.add(clientDetailId);
+        }
       }
     } else if (log.platform === "provider") {
       totalProviderAccess++;
-      if (log.user_id) {
-        uniqueProviderAccess.add(log.user_id);
-      } else {
-        uniqueProviderAccess.add(log.ip_address);
-      }
+      providerAccessVisitorIds.add(visitorId);
     } else if (log.platform === "mobile") {
+      mobileAccessVisitorIds.add(visitorId);
+      totalMobileAccessDemographics.count++;
       if (demographics) {
         const { year_of_birth: yob, urban_rural: ur, sex: s } = demographics;
-        totalMobileAccessDemographics.count++;
-        inc(totalMobileAccessDemographics.demographics.year_of_birth, yob);
-        inc(totalMobileAccessDemographics.demographics.urban_rural, ur);
-        inc(totalMobileAccessDemographics.demographics.sex, s);
 
         if (
           !uniqueMobileAccessDemographics.clientDetailIds.has(clientDetailId)
         ) {
+          inc(totalMobileAccessDemographics.demographics.year_of_birth, yob);
+          inc(totalMobileAccessDemographics.demographics.urban_rural, ur);
+          inc(totalMobileAccessDemographics.demographics.sex, s);
+
           uniqueMobileAccessDemographics.count++;
           uniqueMobileAccessDemographics.clientDetailIds.add(clientDetailId);
           inc(uniqueMobileAccessDemographics.demographics.year_of_birth, yob);
@@ -552,12 +617,9 @@ export const getPlatformMetrics = async ({ country, startDate, endDate }) => {
           inc(uniqueMobileAccessDemographics.demographics.sex, s);
         }
       }
-
-      totalMobileAccess++;
-      uniqueMobileAccess.add(log.ip_address);
     } else {
+      websiteAccessVisitorIds.add(visitorId);
       totalWebsiteAccess++;
-      uniqueWebsiteAccess.add(log.ip_address);
     }
   });
 
@@ -571,15 +633,7 @@ export const getPlatformMetrics = async ({ country, startDate, endDate }) => {
     },
   };
 
-  const uniqueConsultationsData = {
-    clientDetailIds: new Set(),
-    count: 0,
-    demographics: {
-      year_of_birth: {},
-      urban_rural: {},
-      sex: {},
-    },
-  };
+  const uniqueConsultationsData = createDemographicsObject();
 
   const totalCouponConsultationsData = {
     uniqueClientDetailIds: new Set(),
@@ -591,36 +645,43 @@ export const getPlatformMetrics = async ({ country, startDate, endDate }) => {
     },
   };
 
-  const uniqueCouponConsultationsData = {
-    clientDetailIds: new Set(),
-    count: 0,
-    demographics: {
-      year_of_birth: {},
-      urban_rural: {},
-      sex: {},
-    },
-  };
-
-  const uniqueClientsThatUsedCoupon = new Set();
+  const attendedConsultationsData = createDemographicsObject();
 
   for (let i = 0; i < consultations.length; i++) {
     const c = consultations[i];
     const d = demographicsById.get(c.client_detail_id);
-    if (!d || !d.year_of_birth) continue;
 
-    const { year_of_birth: yob, urban_rural: ur, sex: s } = d;
+    if (!d) continue;
+
+    const { year_of_birth, urban_rural, sex } = d;
+    const yob = year_of_birth || "missing";
+    const ur = urban_rural || "missing";
+    const s = sex || "missing";
 
     consultationsData.count++;
+
+    const hasClientJoined = c.client_join_time || c.client_leave_time;
+
+    if (
+      hasClientJoined &&
+      !attendedConsultationsData.clientDetailIds.has(c.client_detail_id)
+    ) {
+      attendedConsultationsData.count++;
+      inc(attendedConsultationsData.demographics.year_of_birth, yob);
+      inc(attendedConsultationsData.demographics.urban_rural, ur);
+      inc(attendedConsultationsData.demographics.sex, s);
+      attendedConsultationsData.clientDetailIds.add(c.client_detail_id);
+    }
 
     if (!uniqueConsultationsData.clientDetailIds.has(c.client_detail_id)) {
       inc(consultationsData.demographics.year_of_birth, yob);
       inc(consultationsData.demographics.urban_rural, ur);
       inc(consultationsData.demographics.sex, s);
       consultationsData.uniqueClientDetailIds.add(c.client_detail_id);
+      uniqueConsultationsData.clientDetailIds.add(c.client_detail_id);
     }
 
     if (c.campaign_id) {
-      uniqueClientsThatUsedCoupon.add(c.client_detail_id);
       totalCouponConsultationsData.count++;
       if (
         !totalCouponConsultationsData.uniqueClientDetailIds.has(
@@ -634,110 +695,114 @@ export const getPlatformMetrics = async ({ country, startDate, endDate }) => {
           c.client_detail_id
         );
       }
-
-      if (
-        !uniqueCouponConsultationsData.clientDetailIds.has(c.client_detail_id)
-      ) {
-        uniqueCouponConsultationsData.clientDetailIds.add(c.client_detail_id);
-        inc(uniqueCouponConsultationsData.demographics.year_of_birth, yob);
-        inc(uniqueCouponConsultationsData.demographics.urban_rural, ur);
-        inc(uniqueCouponConsultationsData.demographics.sex, s);
-        uniqueCouponConsultationsData.count++;
-      }
     }
   }
 
-  const activeClientsDemographics = {
-    count: 0,
+  const allClientsDemographics = {
+    count: clientDemographics.length,
     demographics: {
       year_of_birth: {},
       urban_rural: {},
       sex: {},
     },
   };
+
+  clientDemographics.forEach((d) => {
+    const { year_of_birth, urban_rural, sex } = d;
+    const yob = year_of_birth || "missing";
+    const ur = urban_rural || "missing";
+    const s = sex || "missing";
+
+    inc(allClientsDemographics.demographics.year_of_birth, yob);
+    inc(allClientsDemographics.demographics.urban_rural, ur);
+    inc(allClientsDemographics.demographics.sex, s);
+  });
+
+  const activeClientsDemographics = createDemographicsObject();
 
   activeClientDetailIds.forEach((id) => {
     const d = demographicsById.get(id);
-    if (!d || !d.year_of_birth) return;
+    if (!d) return;
+
+    const { year_of_birth, urban_rural, sex } = d;
+    const yob = year_of_birth || "missing";
+    const ur = urban_rural || "missing";
+    const s = sex || "missing";
+
     activeClientsDemographics.count++;
-    inc(activeClientsDemographics.demographics.year_of_birth, d.year_of_birth);
-    inc(activeClientsDemographics.demographics.urban_rural, d.urban_rural);
-    inc(activeClientsDemographics.demographics.sex, d.sex);
+    inc(activeClientsDemographics.demographics.year_of_birth, yob);
+    inc(activeClientsDemographics.demographics.urban_rural, ur);
+    inc(activeClientsDemographics.demographics.sex, s);
   });
 
-  const positiveClientRatingsDemographics = {
-    count: 0,
-    demographics: {
-      year_of_birth: {},
-      urban_rural: {},
-      sex: {},
-    },
-  };
+  const positiveClientRatingsDemographics = createDemographicsObject();
 
   positiveClientRatings.forEach((item) => {
     const d = demographicsById.get(item.client_detail_id);
-    if (!d || !d.year_of_birth) return;
+    if (!d) return;
+
+    const { year_of_birth, urban_rural, sex } = d;
+    const yob = year_of_birth || "missing";
+    const ur = urban_rural || "missing";
+    const s = sex || "missing";
+
     positiveClientRatingsDemographics.count++;
-    inc(
-      positiveClientRatingsDemographics.demographics.year_of_birth,
-      d.year_of_birth
-    );
-    inc(
-      positiveClientRatingsDemographics.demographics.urban_rural,
-      d.urban_rural
-    );
-    inc(positiveClientRatingsDemographics.demographics.sex, d.sex);
+    inc(positiveClientRatingsDemographics.demographics.year_of_birth, yob);
+    inc(positiveClientRatingsDemographics.demographics.urban_rural, ur);
+    inc(positiveClientRatingsDemographics.demographics.sex, s);
   });
 
-  const uniqueClientsThatUsedCouponDemographics = {
-    clientDetailIds: new Set(),
-    count: 0,
-    demographics: {
-      year_of_birth: {},
-      urban_rural: {},
-      sex: {},
-    },
-  };
-
-  uniqueClientsThatUsedCoupon.forEach((id) => {
-    const d = demographicsById.get(id);
-    if (!d || !d.year_of_birth) return;
-    uniqueClientsThatUsedCouponDemographics.count++;
-    if (!uniqueClientsThatUsedCouponDemographics.clientDetailIds.has(id)) {
-      uniqueClientsThatUsedCouponDemographics.clientDetailIds.add(id);
-      inc(
-        uniqueClientsThatUsedCouponDemographics.demographics.year_of_birth,
-        d.year_of_birth
-      );
-      inc(
-        uniqueClientsThatUsedCouponDemographics.demographics.urban_rural,
-        d.urban_rural
-      );
-      inc(uniqueClientsThatUsedCouponDemographics.demographics.sex, d.sex);
-    }
-  });
+  const cancelledConsultations = consultations.filter(
+    (c) => c.status === "canceled" || c.status === "late-canceled"
+  );
 
   return {
     totalConsultations: {
       ...consultationsData,
-      uniqueCount: consultationsData.uniqueClientDetailIds.size,
+      // uniqueCount: consultationsData.uniqueClientDetailIds.size,
     },
+    cancelledConsultations: cancelledConsultations.length,
     // uniqueClientsConsultations: uniqueConsultationsData,
+    scheduledConsultations: scheduledConsultationsDemographics,
+    mobileScheduledConsultations: mobileScheduledConsultationsDemographics,
+
+    scheduleButtonClick: scheduleButtonClickDemographics,
+    mobileScheduleButtonClick: mobileScheduleButtonClickDemographics,
+    clientsAttendedConsultations: attendedConsultationsData,
+
     totalCouponConsultations: {
       ...totalCouponConsultationsData,
-      uniqueCount: totalCouponConsultationsData.uniqueClientDetailIds.size,
+      // uniqueCount: totalCouponConsultationsData.uniqueClientDetailIds.size,
     },
-    // uniqueClientsThatUsedCoupon: uniqueClientsThatUsedCouponDemographics,
-    activeClients: activeClientsDemographics,
+    totalProviders,
     activeProviders,
+
+    allClients: allClientsDemographics,
+    activeClients: activeClientsDemographics,
+
     totalWebsiteAccess,
+    uniqueWebsiteAccess: websiteAccessVisitorIds.size,
+
     totalClientAccess: totalClientAccessDemographics,
+    uniqueClientAccess: clientAccessVisitorIds.size,
+
     totalProviderAccess,
+    uniqueProviderAccess: providerAccessVisitorIds.size,
     totalMobileAccess: totalMobileAccessDemographics,
-    uniqueMobileAccess: uniqueMobileAccessDemographics,
-    uniqueWebsiteAccess: uniqueWebsiteAccess.size,
-    uniqueClientAccess: uniqueClientAccessDemographics,
-    uniqueProviderAccess: uniqueProviderAccess.size,
+    uniqueMobileAccess: mobileAccessVisitorIds.size,
+
+    emailRegisterClick: emailRegisterClickCounter.count,
+    mobileEmailRegisterClick: mobileEmailRegisterClickCounter.count,
+
+    anonymousRegisterClick: anonymousRegisterClickCounter.count,
+    mobileAnonymousRegisterClick: mobileAnonymousRegisterClickCounter.count,
+
+    guestRegisterClick: guestRegisterClickCounter.count,
+    mobileGuestRegisterClick: mobileGuestRegisterClickCounter.count,
+
+    joinConsultationClick: joinConsultationClickDemographics,
+    mobileJoinConsultationClick: mobileJoinConsultationClickDemographics,
+
     positiveClientRatings: positiveClientRatingsDemographics,
     positiveProviderRatings,
   };
