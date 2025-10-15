@@ -217,7 +217,8 @@ export const getPlatformAccessLogsQuery = async ({
       SELECT
         pa.user_id,
         pa.platform,
-        pa.ip_address
+        pa.ip_address,
+        pa.visitor_id
       FROM platform_access pa
       WHERE ($1::double precision IS NULL OR pa.created_at >= to_timestamp($1))
         AND ($2::double precision IS NULL OR pa.created_at <= to_timestamp($2));

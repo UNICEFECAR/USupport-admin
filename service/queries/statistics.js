@@ -49,11 +49,11 @@ export const getScheduledConsultationsWithClientIdForCountryQuery = async ({
 }) => {
   return await getDBPool("clinicalDb", poolCountry).query(
     `
-      SELECT client_detail_id, campaign_id
+      SELECT client_detail_id, campaign_id, status
       FROM consultation
-      WHERE status = 'scheduled' 
-        AND ($1::double precision IS NULL OR created_at >= to_timestamp($1))
-        AND ($2::double precision IS NULL OR created_at <= to_timestamp($2));
+      WHERE (status = 'scheduled' OR status = 'finished' OR status = 'late-canceled' OR status = 'canceled')
+            AND ($1::double precision IS NULL OR created_at >= to_timestamp($1))
+            AND ($2::double precision IS NULL OR created_at <= to_timestamp($2));
     `,
     [startDate, endDate]
   );
@@ -120,19 +120,45 @@ export const getClientsAndProvidersLoggedIn15DaysQuery = async ({
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
-    SELECT 
-    COUNT(*) FILTER (WHERE type = 'provider') AS providers_no,
-    COALESCE(
-    ARRAY_AGG(client_detail_id) FILTER (
-      WHERE type = 'client' AND client_detail_id IS NOT NULL
-    ),
-    '{}'
-  ) AS client_detail_ids
-    FROM "user"
-    WHERE deleted_at is NULL 
-      AND last_login > now() - interval '15 days'
-      AND ($1::double precision IS NULL OR last_login >= to_timestamp($1))
-      AND ($2::double precision IS NULL OR last_login <= to_timestamp($2));
+      SELECT 
+        COUNT(*) FILTER (
+          WHERE "user".type = 'provider'
+            AND "user".deleted_at IS NULL
+            AND "user".last_login > now() - interval '15 days'
+            AND ($1::double precision IS NULL OR last_login >= to_timestamp($1))
+            AND ($2::double precision IS NULL OR last_login <= to_timestamp($2))
+        ) AS providers_no,
+
+        COALESCE(
+          ARRAY_AGG("user".client_detail_id) FILTER (
+            WHERE "user".type = 'client'
+              AND "user".deleted_at IS NULL
+              AND "user".client_detail_id IS NOT NULL
+              AND "user".last_login > now() - interval '15 days'
+              AND ($1::double precision IS NULL OR last_login >= to_timestamp($1))
+              AND ($2::double precision IS NULL OR last_login <= to_timestamp($2))
+          ),
+          '{}'
+        ) AS active_client_detail_ids,
+
+        COALESCE(
+          JSON_AGG(
+            DISTINCT jsonb_build_object(
+              'client_detail_id', client_detail.client_detail_id,
+              'sex', client_detail.sex,
+              'year_of_birth', client_detail.year_of_birth,
+              'urban_rural', client_detail.urban_rural
+            )
+          ) FILTER (
+            WHERE "user".deleted_at IS NULL
+              AND "user".client_detail_id IS NOT NULL
+          ),
+          '[]'
+        ) AS client_demographics
+
+      FROM "user"
+      LEFT JOIN client_detail 
+        ON client_detail.client_detail_id = "user".client_detail_id;
       `,
     [startDate, endDate]
   );
@@ -398,3 +424,12 @@ export const getBookedConsultationsInRangeQuery = async ({
     `,
     [startDate, endDate]
   );
+
+export const getCountryEventsQuery = async ({ countryId }) => {
+  return await getDBPool("masterDb").query(
+    `
+        SELECT * FROM country_event WHERE country_id = $1
+      `,
+    [countryId]
+  );
+};
