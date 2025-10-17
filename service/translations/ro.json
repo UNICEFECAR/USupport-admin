@@ -32,5 +32,12 @@
   "organization_campaign": "Organizație / Campanie",
   "period": "Perioadă",
   "booked": "Rezervate",
-  "booked_period": "Perioadă rezervări"
+  "booked_period": "Perioadă rezervări",
+  "from": "De la",
+  "to": "la",
+  "slot_type_normal": "Normale",
+  "slot_type_campaign": "Campanie",
+  "slot_type_organization": "Organizație",
+  "unknown_campaign": "Campanie necunoscută",
+  "unknown_organization": "Organizație necunoscută"
 }
