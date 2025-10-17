@@ -32,5 +32,12 @@
   "organization_campaign": "Ұйым / Науқан",
   "period": "Кезең",
   "booked": "Брондалған",
-  "booked_period": "Брондау кезеңі"
+  "booked_period": "Брондау кезеңі",
+  "from": "Бастап",
+  "to": "дейін",
+  "slot_type_normal": "Қалыпты",
+  "slot_type_campaign": "Науқан",
+  "slot_type_organization": "Ұйым",
+  "unknown_campaign": "Белгісіз науқан",
+  "unknown_organization": "Белгісіз ұйым"
 }
