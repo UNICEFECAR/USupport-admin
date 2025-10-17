@@ -596,7 +596,17 @@ export const getProviderAvailabilityReport = async ({
       const providerId = availability.provider_detail_id;
       const provider = providersMap.get(providerId);
 
-      if (provider && availability.slots && availability.start_date) {
+      const hasNormalSlots =
+        availability.slots && availability.slots.length > 0;
+      const hasCampaignSlots =
+        availability.campaign_slots.filter((x) => !!x.time).length > 0;
+      const hasOrganizationSlots =
+        availability.organization_slots.filter((x) => !!x.time).length > 0;
+
+      const hasSlots =
+        hasNormalSlots || hasCampaignSlots || hasOrganizationSlots;
+
+      if (provider && hasSlots && availability.start_date) {
         provider.total_availability_slots++;
 
         if (
