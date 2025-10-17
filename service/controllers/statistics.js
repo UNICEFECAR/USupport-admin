@@ -599,8 +599,10 @@ export const getProviderAvailabilityReport = async ({
       const hasNormalSlots =
         availability.slots && availability.slots.length > 0;
       const hasCampaignSlots =
+        Array.isArray(availability.campaign_slots) &&
         availability.campaign_slots.filter((x) => !!x.time).length > 0;
       const hasOrganizationSlots =
+        Array.isArray(availability.organization_slots) &&
         availability.organization_slots.filter((x) => !!x.time).length > 0;
 
       const hasSlots =
