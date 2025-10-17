@@ -32,5 +32,12 @@
   "organization_campaign": "Organizacja / Kampania",
   "period": "Okres",
   "booked": "Zarezerwowane",
-  "booked_period": "Okres rezerwacji"
+  "booked_period": "Okres rezerwacji",
+  "from": "Od",
+  "to": "do",
+  "slot_type_normal": "Zwykłe",
+  "slot_type_campaign": "Kampania",
+  "slot_type_organization": "Organizacja",
+  "unknown_campaign": "Nieznana kampania",
+  "unknown_organization": "Nieznana organizacja"
 }

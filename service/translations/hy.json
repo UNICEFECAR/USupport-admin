@@ -30,5 +30,12 @@
   "organization_campaign": "Կազմակերպություն / Արշավ",
   "period": "Ժամանակահատված",
   "booked": "Պահպանված",
-  "booked_period": "Պահպանման ժամանակահատված"
+  "booked_period": "Պահպանման ժամանակահատված",
+  "from": "Սկսած",
+  "to": "մինչև",
+  "slot_type_normal": "Սովորական",
+  "slot_type_campaign": "Արշավ",
+  "slot_type_organization": "Կազմակերպություն",
+  "unknown_campaign": "Անհայտ արշավ",
+  "unknown_organization": "Անհայտ կազմակերպություն"
 }
