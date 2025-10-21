@@ -32,5 +32,12 @@
   "organization_campaign": "Організація / Кампанія",
   "period": "Період",
   "booked": "Заброньовано",
-  "booked_period": "Період бронювання"
+  "booked_period": "Період бронювання",
+  "from": "Від",
+  "to": "до",
+  "slot_type_normal": "Звичайні",
+  "slot_type_campaign": "Кампанія",
+  "slot_type_organization": "Організація",
+  "unknown_campaign": "Невідома кампанія",
+  "unknown_organization": "Невідома організація"
 }

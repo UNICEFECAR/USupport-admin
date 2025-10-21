@@ -32,5 +32,12 @@
   "organization_campaign": "Organization / Campaign",
   "period": "Period",
   "booked": "Booked",
-  "booked_period": "Booked Period"
+  "booked_period": "Booked Period",
+  "from": "From",
+  "to": "to",
+  "slot_type_normal": "Normal",
+  "slot_type_campaign": "Campaign",
+  "slot_type_organization": "Organization",
+  "unknown_campaign": "Unknown Campaign",
+  "unknown_organization": "Unknown Organization"
 }

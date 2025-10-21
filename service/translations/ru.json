@@ -32,5 +32,12 @@
   "organization_campaign": "Организация / Кампания",
   "period": "Период",
   "booked": "Забронировано",
-  "booked_period": "Период бронирования"
+  "booked_period": "Период бронирования",
+  "from": "С",
+  "to": "по",
+  "slot_type_normal": "Обычные",
+  "slot_type_campaign": "Кампания",
+  "slot_type_organization": "Организация",
+  "unknown_campaign": "Неизвестная кампания",
+  "unknown_organization": "Неизвестная организация"
 }

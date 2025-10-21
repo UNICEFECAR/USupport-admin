@@ -109,7 +109,11 @@ export const generateAvailabilityCSV = ({
         const slotTime = slot.time ? new Date(slot.time) : new Date(slot);
         if (slotTime >= startDate && slotTime <= endDate) {
           const campaignId = slot.campaign_id;
-          const campaignName = slot.campaign_name || "Unknown Campaign";
+          const rawCampaignName = slot.campaign_name;
+          const campaignName =
+            rawCampaignName && rawCampaignName !== "Unknown Campaign"
+              ? rawCampaignName
+              : t("unknown_campaign", language);
 
           if (campaignId) {
             if (!providerData.campaignSlotsById.has(campaignId)) {
@@ -145,8 +149,12 @@ export const generateAvailabilityCSV = ({
         const slotTime = slot.time ? new Date(slot.time) : new Date(slot);
         if (slotTime >= startDate && slotTime <= endDate) {
           const organizationId = slot.organization_id;
+          const rawOrganizationName = slot.organization_name;
           const organizationName =
-            slot.organization_name || "Unknown Organization";
+            rawOrganizationName &&
+            rawOrganizationName !== "Unknown Organization"
+              ? rawOrganizationName
+              : t("unknown_organization", language);
 
           if (organizationId) {
             if (!providerData.organizationSlotsById.has(organizationId)) {
@@ -245,9 +253,10 @@ export const generateAvailabilityCSV = ({
     if (!dates || dates.length === 0) return "-";
     const earliest = new Date(Math.min(...dates.map((d) => d.getTime())));
     const latest = new Date(Math.max(...dates.map((d) => d.getTime())));
-    return `From ${formatDateToDDMMYYYY(earliest)} to ${formatDateToDDMMYYYY(
-      latest
-    )}`;
+    return `${t("from", language)} ${formatDateToDDMMYYYY(earliest)} ${t(
+      "to",
+      language
+    )} ${formatDateToDDMMYYYY(latest)}`;
   };
 
   // Generate CSV rows
@@ -276,7 +285,7 @@ export const generateAvailabilityCSV = ({
         providerData.name,
         providerData.email,
         totalProviderSlots,
-        "Normal",
+        t("slot_type_normal", language),
         "-",
         providerData.normalSlots.length,
         providerData.normalSlots.length > 0
@@ -302,7 +311,7 @@ export const generateAvailabilityCSV = ({
         providerData.name,
         providerData.email,
         totalProviderSlots,
-        "Campaign",
+        t("slot_type_campaign", language),
         campaignData.name,
         campaignData.slots.length,
         formatPeriod(campaignData.slots),
@@ -324,7 +333,7 @@ export const generateAvailabilityCSV = ({
         providerData.name,
         providerData.email,
         totalProviderSlots,
-        "Organization",
+        t("slot_type_organization", language),
         organizationData.name,
         organizationData.slots.length,
         formatPeriod(organizationData.slots),
