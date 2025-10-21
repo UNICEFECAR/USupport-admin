@@ -551,8 +551,8 @@ export const getPlatformMetrics = async ({
       const objectToUpdate = eventMap.get(event.event_type);
       if (objectToUpdate) {
         objectToUpdate.count++;
-        if (event.visitor_id) {
-          objectToUpdate.visitorIds.add(event.visitor_id);
+        if (event.visitor_id && objectToUpdate.visitorIds) {
+          objectToUpdate.visitorIds?.add(event.visitor_id);
         }
       }
     }
