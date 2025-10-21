@@ -507,6 +507,11 @@ export const getPlatformMetrics = async ({
   const mobileScheduleButtonClickDemographics = createDemographicsObject();
   const mobileJoinConsultationClickDemographics = createDemographicsObject();
 
+  const globalVisitCounter = {
+    count: 0,
+    visitorIds: new Set(),
+  };
+
   const eventMap = new Map([
     ["web_email_register_click", emailRegisterClickCounter],
     ["web_anonymous_register_click", anonymousRegisterClickCounter],
@@ -514,6 +519,7 @@ export const getPlatformMetrics = async ({
     ["mobile_email_register_click", mobileEmailRegisterClickCounter],
     ["mobile_anonymous_register_click", mobileAnonymousRegisterClickCounter],
     ["mobile_guest_register_click", mobileGuestRegisterClickCounter],
+    ["global_visit", globalVisitCounter],
   ]);
 
   const eventDemographicsMap = new Map([
@@ -543,7 +549,12 @@ export const getPlatformMetrics = async ({
       demographicsToUpdate.clientDetailIds.add(event.client_detail_id);
     } else {
       const objectToUpdate = eventMap.get(event.event_type);
-      objectToUpdate.count++;
+      if (objectToUpdate) {
+        objectToUpdate.count++;
+        if (event.visitor_id) {
+          objectToUpdate.visitorIds.add(event.visitor_id);
+        }
+      }
     }
   }
 
@@ -757,6 +768,11 @@ export const getPlatformMetrics = async ({
   );
 
   return {
+    globalWebsiteVisits: {
+      count: globalVisitCounter.count,
+      uniqueCount: globalVisitCounter.visitorIds.size,
+    },
+
     totalConsultations: {
       ...consultationsData,
       // uniqueCount: consultationsData.uniqueClientDetailIds.size,

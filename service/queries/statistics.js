@@ -438,7 +438,9 @@ export const getBookedConsultationsInRangeQuery = async ({
 export const getCountryEventsQuery = async ({ countryId }) => {
   return await getDBPool("masterDb").query(
     `
-        SELECT * FROM country_event WHERE country_id = $1
+        SELECT * 
+        FROM country_event 
+        WHERE country_id = $1 OR event_type = 'global_visit'
       `,
     [countryId]
   );
