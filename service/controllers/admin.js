@@ -768,10 +768,10 @@ export const getPlatformMetrics = async ({
   );
 
   return {
-    // globalWebsiteVisits: {
-    //   count: globalVisitCounter.count,
-    //   uniqueCount: globalVisitCounter.visitorIds.size,
-    // },
+    globalWebsiteVisits: {
+      count: globalVisitCounter.count,
+      uniqueCount: globalVisitCounter.visitorIds.size,
+    },
 
     totalConsultations: {
       ...consultationsData,
