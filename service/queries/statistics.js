@@ -445,3 +445,14 @@ export const getCountryEventsQuery = async ({ countryId }) => {
     [countryId]
   );
 };
+
+export const getPlayAndHealVisitsQuery = async () => {
+  return await getDBPool("masterDb").query(
+    `
+        SELECT *
+        FROM country_event
+        WHERE event_type IN ('playandheal_visit', 'playandheal_visit_qr')
+        ORDER BY created_at DESC
+      `
+  );
+};

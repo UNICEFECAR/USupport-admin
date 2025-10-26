@@ -15,6 +15,7 @@ import {
   getAvailabilitySlotsInRangeQuery,
   getBookedConsultationsInRangeQuery,
   getMoodTrackerReportQuery,
+  getPlayAndHealVisitsQuery,
 } from "#queries/statistics";
 
 import {
@@ -705,4 +706,12 @@ export const getProviderAvailabilityReport = async ({
     console.error("Error generating availability report:", error);
     throw error;
   }
+};
+
+export const getPlayAndHealVisits = async () => {
+  return await getPlayAndHealVisitsQuery()
+    .then((res) => res.rows || [])
+    .catch((err) => {
+      throw err;
+    });
 };
