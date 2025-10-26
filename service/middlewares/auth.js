@@ -356,7 +356,7 @@ passport.use(
 
         const rawJWT = req.headers.authorization.split(" ")[1];
 
-        if (country !== "global") {
+        if (country !== "global" && country !== "PS") {
           const isBlacklisted = await isJwtBlacklisted({
             token: rawJWT,
             poolCountry: country,
