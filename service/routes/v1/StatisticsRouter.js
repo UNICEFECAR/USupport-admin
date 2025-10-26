@@ -13,6 +13,7 @@ import {
   getSOSCenterClicks,
   getProviderAvailabilityReport,
   getMoodTrackerReport,
+  getPlayAndHealVisits,
 } from "#controllers/statistics";
 
 import {
@@ -260,5 +261,22 @@ router.get(
       .catch(next);
   }
 );
+
+router.get("/playandheal-visits", async (req, res, next) => {
+  /**
+   * #route   GET /admin/v1/statistics/playandheal-visits
+   * #desc    Get country events for Play&Heal visits (web and QR)
+   */
+  const country = req.header("x-country-alpha-2");
+  const language = req.header("x-language-alpha-2");
+
+  return await getStatsSchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({ country, language })
+    .then(getPlayAndHealVisits)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
 
 export { router };
