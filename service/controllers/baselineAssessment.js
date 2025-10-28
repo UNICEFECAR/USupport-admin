@@ -179,6 +179,58 @@ export const getCompletedBaselineAssessmentsAnalysis = async ({
 
     let result = {};
 
+    const nonAnonimizedAssesments = assessments.filter(
+      (assessment) => assessment.client_detail_id !== null
+    );
+    const nonAnonimizedWithScore = await Promise.all(
+      nonAnonimizedAssesments.map(async (assessment) => {
+        return {
+          clientDetailId: assessment.client_detail_id,
+          baselineAssessmentId: assessment.baseline_assessment_id,
+          psychologicalScore: assessment.psychological_score,
+          biologicalScore: assessment.biological_score,
+          socialScore: assessment.social_score,
+          score: await calculateBaselineAssessmentScore(
+            {
+              psychological: assessment.psychological_score,
+              biological: assessment.biological_score,
+              social: assessment.social_score,
+            },
+            country
+          ),
+        };
+      })
+    );
+    const factorsOverview = nonAnonimizedWithScore.reduce(
+      (acc, assessment) => {
+        // if the score is low, add 1 to the low count, if the score is high add 1 to the high count
+        if (assessment.score.psychological === "low") {
+          acc.psychologicalLow++;
+        } else if (assessment.score.psychological === "high") {
+          acc.psychologicalHigh++;
+        }
+        if (assessment.score.biological === "low") {
+          acc.biologicalLow++;
+        } else if (assessment.score.biological === "high") {
+          acc.biologicalHigh++;
+        }
+        if (assessment.score.social === "low") {
+          acc.socialLow++;
+        } else if (assessment.score.social === "high") {
+          acc.socialHigh++;
+        }
+        return acc;
+      },
+      {
+        psychologicalLow: 0,
+        psychologicalHigh: 0,
+        biologicalLow: 0,
+        biologicalHigh: 0,
+        socialLow: 0,
+        socialHigh: 0,
+      }
+    );
+
     if (totalAssessments < 10) {
       const { psychologicalValues, biologicalValues, socialValues } =
         assessments.reduce(
@@ -306,68 +358,93 @@ export const getCompletedBaselineAssessmentsAnalysis = async ({
         },
       };
     }
+    // Attach below/above counts for overall or per half
+    if (!result.isSplit) {
+      result.analysis.psychological.belowCount =
+        factorsOverview.psychologicalLow;
+      result.analysis.psychological.aboveCount =
+        factorsOverview.psychologicalHigh;
 
-    const nonAnonimizedAssesments = assessments.filter(
-      (assessment) => assessment.client_detail_id !== null
-    );
-    const nonAnonimizedWithScore = await Promise.all(
-      nonAnonimizedAssesments.map(async (assessment) => {
-        return {
-          clientDetailId: assessment.client_detail_id,
-          baselineAssessmentId: assessment.baseline_assessment_id,
-          score: await calculateBaselineAssessmentScore(
-            {
-              psychological: assessment.psychological_score,
-              biological: assessment.biological_score,
-              social: assessment.social_score,
-            },
-            country
-          ),
-        };
-      })
-    );
+      result.analysis.biological.belowCount = factorsOverview.biologicalLow;
+      result.analysis.biological.aboveCount = factorsOverview.biologicalHigh;
 
-    const factorsOverview = nonAnonimizedWithScore.reduce(
-      (acc, assessment) => {
-        // if the score is low, add 1 to the low count, if the score is high add 1 to the high count
-        if (assessment.score.psychological === "low") {
-          acc.psychologicalLow++;
-        } else if (assessment.score.psychological === "high") {
-          acc.psychologicalHigh++;
-        }
-        if (assessment.score.biological === "low") {
-          acc.biologicalLow++;
-        } else if (assessment.score.biological === "high") {
-          acc.biologicalHigh++;
-        }
-        if (assessment.score.social === "low") {
-          acc.socialLow++;
-        } else if (assessment.score.social === "high") {
-          acc.socialHigh++;
-        }
-        return acc;
-      },
-      {
+      result.analysis.social.belowCount = factorsOverview.socialLow;
+      result.analysis.social.aboveCount = factorsOverview.socialHigh;
+    } else {
+      const firstHalfIds = new Set(
+        result.assessments.firstHalf.map((a) => a.baseline_assessment_id)
+      );
+      const secondHalfIds = new Set(
+        result.assessments.secondHalf.map((a) => a.baseline_assessment_id)
+      );
+
+      const emptyOverview = {
         psychologicalLow: 0,
         psychologicalHigh: 0,
         biologicalLow: 0,
         biologicalHigh: 0,
         socialLow: 0,
         socialHigh: 0,
-      }
-    );
+      };
 
-    result.analysis.psychological.belowCount = factorsOverview.psychologicalLow;
-    result.analysis.psychological.aboveCount =
-      factorsOverview.psychologicalHigh;
+      const firstHalfOverview = nonAnonimizedWithScore.reduce(
+        (acc, item) => {
+          if (!firstHalfIds.has(item.baselineAssessmentId)) return acc;
+          if (item.score.psychological === "low") acc.psychologicalLow++;
+          else if (item.score.psychological === "high") acc.psychologicalHigh++;
+          if (item.score.biological === "low") acc.biologicalLow++;
+          else if (item.score.biological === "high") acc.biologicalHigh++;
+          if (item.score.social === "low") acc.socialLow++;
+          else if (item.score.social === "high") acc.socialHigh++;
+          return acc;
+        },
+        { ...emptyOverview }
+      );
 
-    result.analysis.biological.belowCount = factorsOverview.biologicalLow;
-    result.analysis.biological.aboveCount = factorsOverview.biologicalHigh;
+      const secondHalfOverview = nonAnonimizedWithScore.reduce(
+        (acc, item) => {
+          if (!secondHalfIds.has(item.baselineAssessmentId)) return acc;
+          if (item.score.psychological === "low") acc.psychologicalLow++;
+          else if (item.score.psychological === "high") acc.psychologicalHigh++;
+          if (item.score.biological === "low") acc.biologicalLow++;
+          else if (item.score.biological === "high") acc.biologicalHigh++;
+          if (item.score.social === "low") acc.socialLow++;
+          else if (item.score.social === "high") acc.socialHigh++;
+          return acc;
+        },
+        { ...emptyOverview }
+      );
 
-    result.analysis.social.belowCount = factorsOverview.socialLow;
-    result.analysis.social.aboveCount = factorsOverview.socialHigh;
+      result.analysis.firstHalf.psychological.belowCount =
+        firstHalfOverview.psychologicalLow;
+      result.analysis.firstHalf.psychological.aboveCount =
+        firstHalfOverview.psychologicalHigh;
 
-    console.log(factorsOverview);
+      result.analysis.firstHalf.biological.belowCount =
+        firstHalfOverview.biologicalLow;
+      result.analysis.firstHalf.biological.aboveCount =
+        firstHalfOverview.biologicalHigh;
+
+      result.analysis.firstHalf.social.belowCount = firstHalfOverview.socialLow;
+      result.analysis.firstHalf.social.aboveCount =
+        firstHalfOverview.socialHigh;
+
+      result.analysis.secondHalf.psychological.belowCount =
+        secondHalfOverview.psychologicalLow;
+      result.analysis.secondHalf.psychological.aboveCount =
+        secondHalfOverview.psychologicalHigh;
+
+      result.analysis.secondHalf.biological.belowCount =
+        secondHalfOverview.biologicalLow;
+      result.analysis.secondHalf.biological.aboveCount =
+        secondHalfOverview.biologicalHigh;
+
+      result.analysis.secondHalf.social.belowCount =
+        secondHalfOverview.socialLow;
+      result.analysis.secondHalf.social.aboveCount =
+        secondHalfOverview.socialHigh;
+    }
+
     return result;
   } catch (err) {
     console.log("Error in getCompletedBaselineAssessmentsAnalysis:", err);
