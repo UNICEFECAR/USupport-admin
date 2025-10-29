@@ -43,4 +43,6 @@ export const getProviderAvailabilityReportSchema = yup.object().shape({
   language: yup.string().required(),
   startDate: yup.string().optional(),
   endDate: yup.string().optional(),
+  startTime: yup.string().optional(),
+  endTime: yup.string().optional(),
 });

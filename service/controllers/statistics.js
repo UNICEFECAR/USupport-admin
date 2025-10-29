@@ -35,7 +35,11 @@ import { getOrganizationsByIdsQuery } from "#queries/organizations";
 
 import { countryNotFound } from "#utils/errors";
 import { getClientInitials } from "#utils/helperFunctions";
-import { generateAvailabilityCSV } from "#utils/provider-reports";
+import {
+  generateAvailabilityCSV,
+  normalizeDate,
+  parseTime,
+} from "#utils/provider-reports";
 
 export const getCountryStatistics = async ({ language, countryId }) => {
   const country = await getCountryAlpha2CodeByIdQuery({ countryId }).then(
@@ -478,23 +482,6 @@ export const getSOSCenterClicks = async ({ country, language }) => {
   };
 };
 
-const normalizeDate = (value, type) => {
-  if (!value) return null;
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  if (type === "start") {
-    date.setUTCHours(0, 0, 0, 0);
-  } else {
-    date.setUTCHours(23, 59, 59, 999);
-  }
-
-  return date.toISOString();
-};
-
 export const getMoodTrackerReport = async ({ country, startDate, endDate }) => {
   const normalizedStartDate = normalizeDate(startDate, "start");
   const normalizedEndDate = normalizeDate(endDate, "end");
@@ -536,16 +523,20 @@ export const getProviderAvailabilityReport = async ({
   country,
   startDate: providedStartDate,
   endDate: providedEndDate,
+  startTime,
+  endTime,
   language = "en",
 }) => {
   const now = new Date();
 
-  // Normalize dates to ensure start is at 00:00:00 and end is at 23:59:59.999
   const normalizedStartDate = normalizeDate(providedStartDate || now, "start");
   const normalizedEndDate = normalizeDate(
     providedEndDate || new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
     "end"
   );
+
+  const startHour = parseTime(startTime).getHours();
+  const endHour = parseTime(endTime).getHours();
 
   const startDate = new Date(normalizedStartDate);
   const endDate = new Date(normalizedEndDate);
@@ -597,20 +588,47 @@ export const getProviderAvailabilityReport = async ({
       const providerId = availability.provider_detail_id;
       const provider = providersMap.get(providerId);
 
-      const hasNormalSlots =
-        availability.slots && availability.slots.length > 0;
-      const hasCampaignSlots =
-        Array.isArray(availability.campaign_slots) &&
-        availability.campaign_slots.filter((x) => !!x.time).length > 0;
-      const hasOrganizationSlots =
-        Array.isArray(availability.organization_slots) &&
-        availability.organization_slots.filter((x) => !!x.time).length > 0;
+      //Filter slots by time
+      const filteredSlotsByTime = availability.slots.filter((x) => {
+        const slotTime = parseTime(x).getHours();
+        return slotTime >= startHour && slotTime < endHour;
+      });
 
-      const hasSlots =
-        hasNormalSlots || hasCampaignSlots || hasOrganizationSlots;
+      // Ensure campaign_slots and organization_slots are arrays before filtering
+      const campaignSlotsArray = Array.isArray(availability.campaign_slots)
+        ? availability.campaign_slots
+        : [];
+      const organizationSlotsArray = Array.isArray(
+        availability.organization_slots
+      )
+        ? availability.organization_slots
+        : [];
+
+      const filteredCampaignSlotsByTime = campaignSlotsArray
+        .filter((x) => x && Object.keys(x).length > 0 && x.time)
+        .filter((x) => {
+          const slotTime = parseTime(x.time).getHours();
+          return slotTime >= startHour && slotTime < endHour;
+        });
+      const filteredOrganizationSlotsByTime = organizationSlotsArray
+        .filter((x) => x && Object.keys(x).length > 0 && x.time)
+        .filter((x) => {
+          const slotTime = parseTime(x.time).getHours();
+          return slotTime >= startHour && slotTime < endHour;
+        });
+
+      const normalSlotsCount = filteredSlotsByTime?.length || 0;
+      const campaignSlotsCount = filteredCampaignSlotsByTime?.length || 0;
+      const organizationSlotsCount =
+        filteredOrganizationSlotsByTime?.length || 0;
+
+      const totalFilteredSlots =
+        normalSlotsCount + campaignSlotsCount + organizationSlotsCount;
+
+      const hasSlots = totalFilteredSlots > 0;
 
       if (provider && hasSlots && availability.start_date) {
-        provider.total_availability_slots++;
+        provider.total_availability_slots += totalFilteredSlots;
 
         if (
           !provider.earliest_availability ||
@@ -629,6 +647,9 @@ export const getProviderAvailabilityReport = async ({
 
         availabilityRecords.push({
           ...availability,
+          slots: filteredSlotsByTime,
+          campaign_slots: filteredCampaignSlotsByTime,
+          organization_slots: filteredOrganizationSlotsByTime,
           name: provider.name,
           surname: provider.surname,
           email: provider.email,
@@ -636,8 +657,14 @@ export const getProviderAvailabilityReport = async ({
       }
     });
 
+    //Filter consultations by time range
+    const filteredConsultations = allConsultations.filter((x) => {
+      const consultationTime = parseTime(x.time).getHours();
+      return consultationTime >= startHour && consultationTime < endHour;
+    });
+
     // Process consultations data
-    allConsultations.forEach((consultation) => {
+    filteredConsultations.forEach((consultation) => {
       const providerId = consultation.provider_detail_id;
       const provider = providersMap.get(providerId);
 
