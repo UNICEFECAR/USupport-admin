@@ -523,8 +523,8 @@ export const getProviderAvailabilityReport = async ({
   country,
   startDate: providedStartDate,
   endDate: providedEndDate,
-  startTime,
-  endTime,
+  startHour,
+  endHour,
   language = "en",
 }) => {
   const now = new Date();
@@ -535,9 +535,6 @@ export const getProviderAvailabilityReport = async ({
     "end"
   );
 
-  const startHour = parseTime(startTime).getHours();
-  const endHour = parseTime(endTime).getHours();
-
   const startDate = new Date(normalizedStartDate);
   const endDate = new Date(normalizedEndDate);
 
@@ -547,13 +544,13 @@ export const getProviderAvailabilityReport = async ({
         getAllActiveProvidersQuery({ poolCountry: country }),
         getAvailabilitySlotsInRangeQuery({
           poolCountry: country,
-          startDate: normalizedStartDate,
-          endDate: normalizedEndDate,
+          startDate: startDate,
+          endDate: endDate,
         }),
         getBookedConsultationsInRangeQuery({
           poolCountry: country,
-          startDate: normalizedStartDate,
-          endDate: normalizedEndDate,
+          startDate: startDate,
+          endDate: endDate,
         }),
       ]);
 
@@ -591,7 +588,7 @@ export const getProviderAvailabilityReport = async ({
       //Filter slots by time
       const filteredSlotsByTime = availability.slots.filter((x) => {
         const slotTime = parseTime(x).getHours();
-        return slotTime >= startHour && slotTime < endHour;
+        return slotTime >= startHour && slotTime <= endHour;
       });
 
       // Ensure campaign_slots and organization_slots are arrays before filtering
@@ -608,13 +605,13 @@ export const getProviderAvailabilityReport = async ({
         .filter((x) => x && Object.keys(x).length > 0 && x.time)
         .filter((x) => {
           const slotTime = parseTime(x.time).getHours();
-          return slotTime >= startHour && slotTime < endHour;
+          return slotTime >= startHour && slotTime <= endHour;
         });
       const filteredOrganizationSlotsByTime = organizationSlotsArray
         .filter((x) => x && Object.keys(x).length > 0 && x.time)
         .filter((x) => {
           const slotTime = parseTime(x.time).getHours();
-          return slotTime >= startHour && slotTime < endHour;
+          return slotTime >= startHour && slotTime <= endHour;
         });
 
       const normalSlotsCount = filteredSlotsByTime?.length || 0;
@@ -660,7 +657,7 @@ export const getProviderAvailabilityReport = async ({
     //Filter consultations by time range
     const filteredConsultations = allConsultations.filter((x) => {
       const consultationTime = parseTime(x.time).getHours();
-      return consultationTime >= startHour && consultationTime < endHour;
+      return consultationTime >= startHour && consultationTime <= endHour;
     });
 
     // Process consultations data
