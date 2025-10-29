@@ -404,11 +404,14 @@ export const normalizeDate = (value, type) => {
 export const parseTime = (value) => {
   if (!value) return new Date();
 
-  // Convert to number if it's a string or number (Unix timestamp in seconds or milliseconds)
+  if (value instanceof Date) return value;
+
+  if (typeof value === "string" && /[^\d]/.test(value)) {
+    return new Date(value);
+  }
+
   let timestamp = typeof value === "string" ? Number(value) : value;
 
-  // If the value is a Unix timestamp in seconds (less than a reasonable millisecond timestamp)
-  // Convert to milliseconds. Timestamps less than 10000000000 are likely in seconds
   if (!isNaN(timestamp) && timestamp < 10000000000) {
     timestamp = timestamp * 1000;
   }
