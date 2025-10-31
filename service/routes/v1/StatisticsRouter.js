@@ -239,12 +239,22 @@ router.get(
 
     const country = req.header("x-country-alpha-2");
     const language = req.header("x-language-alpha-2");
-    const { startDate, endDate } = req.query;
+    const { startDate, endDate, startTime, endTime } = req.query;
+
+    const startTimeNumber = parseInt(startTime);
+    const endTimeNumber = parseInt(endTime);
 
     return await getProviderAvailabilityReportSchema
       .noUnknown(true)
       .strict(true)
-      .validate({ country, language, startDate, endDate })
+      .validate({
+        country,
+        language,
+        startDate,
+        endDate,
+        startHour: startTimeNumber,
+        endHour: endTimeNumber,
+      })
       .then(getProviderAvailabilityReport)
       .then((result) => {
         res.setHeader("Content-Type", "text/csv");

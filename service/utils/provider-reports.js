@@ -49,10 +49,12 @@ export const generateAvailabilityCSV = ({
     t("total_slots", language),
     t("slot_type", language),
     t("organization_campaign", language),
-    t("total_slots", language), // Total slots for this specific type
-    t("period", language),
+    t("total_slots", language),
+    t("from", language),
+    t("to", language),
     t("booked", language),
-    t("booked_period", language),
+    t("from", language),
+    t("to", language),
   ];
 
   csvContent += headerColumns.map((col) => `"${col}"`).join(",") + "\n";
@@ -248,15 +250,12 @@ export const generateAvailabilityCSV = ({
     }
   });
 
-  // Helper function to format period
+  // Helper function to format period - returns [from, to] dates
   const formatPeriod = (dates) => {
-    if (!dates || dates.length === 0) return "-";
+    if (!dates || dates.length === 0) return ["-", "-"];
     const earliest = new Date(Math.min(...dates.map((d) => d.getTime())));
     const latest = new Date(Math.max(...dates.map((d) => d.getTime())));
-    return `${t("from", language)} ${formatDateToDDMMYYYY(earliest)} ${t(
-      "to",
-      language
-    )} ${formatDateToDDMMYYYY(latest)}`;
+    return [formatDateToDDMMYYYY(earliest), formatDateToDDMMYYYY(latest)];
   };
 
   // Generate CSV rows
@@ -281,6 +280,15 @@ export const generateAvailabilityCSV = ({
       (providerData.campaignSlotsById.size === 0 &&
         providerData.organizationSlotsById.size === 0)
     ) {
+      const slotsPeriod =
+        providerData.normalSlots.length > 0
+          ? formatPeriod(providerData.normalSlots)
+          : ["-", "-"];
+      const consultationsPeriod =
+        providerData.normalConsultations.length > 0
+          ? formatPeriod(providerData.normalConsultations)
+          : ["-", "-"];
+
       rows.push([
         providerData.name,
         providerData.email,
@@ -288,13 +296,9 @@ export const generateAvailabilityCSV = ({
         t("slot_type_normal", language),
         "-",
         providerData.normalSlots.length,
-        providerData.normalSlots.length > 0
-          ? formatPeriod(providerData.normalSlots)
-          : "-",
+        ...slotsPeriod,
         providerData.normalConsultations.length,
-        providerData.normalConsultations.length > 0
-          ? formatPeriod(providerData.normalConsultations)
-          : "-",
+        ...consultationsPeriod,
       ]);
     }
 
@@ -307,6 +311,10 @@ export const generateAvailabilityCSV = ({
       const consultations =
         providerData.campaignConsultationsById.get(campaignId) || [];
 
+      const slotsPeriod = formatPeriod(campaignData.slots);
+      const consultationsPeriod =
+        consultations.length > 0 ? formatPeriod(consultations) : ["-", "-"];
+
       rows.push([
         providerData.name,
         providerData.email,
@@ -314,9 +322,9 @@ export const generateAvailabilityCSV = ({
         t("slot_type_campaign", language),
         campaignData.name,
         campaignData.slots.length,
-        formatPeriod(campaignData.slots),
+        ...slotsPeriod,
         consultations.length,
-        consultations.length > 0 ? formatPeriod(consultations) : "-",
+        ...consultationsPeriod,
       ]);
     });
 
@@ -329,6 +337,10 @@ export const generateAvailabilityCSV = ({
       const consultations =
         providerData.organizationConsultationsById.get(organizationId) || [];
 
+      const slotsPeriod = formatPeriod(organizationData.slots);
+      const consultationsPeriod =
+        consultations.length > 0 ? formatPeriod(consultations) : ["-", "-"];
+
       rows.push([
         providerData.name,
         providerData.email,
@@ -336,9 +348,9 @@ export const generateAvailabilityCSV = ({
         t("slot_type_organization", language),
         organizationData.name,
         organizationData.slots.length,
-        formatPeriod(organizationData.slots),
+        ...slotsPeriod,
         consultations.length,
-        consultations.length > 0 ? formatPeriod(consultations) : "-",
+        ...consultationsPeriod,
       ]);
     });
 
@@ -349,4 +361,60 @@ export const generateAvailabilityCSV = ({
   });
 
   return csvContent;
+};
+
+export const checkIfStartTimeIsBetweenStartAndEndTime = (
+  startTime,
+  endTime,
+  currentTime
+) => {
+  const startTimeDate = new Date(startTime);
+  const endTimeDate = new Date(endTime);
+  const currentTimeDate = new Date(currentTime);
+
+  return currentTimeDate >= startTimeDate && currentTimeDate <= endTimeDate;
+};
+
+export const normalizeDate = (value, type) => {
+  if (!value) return null;
+
+  // Convert to number if it's a string or number (Unix timestamp in seconds or milliseconds)
+  let timestamp = typeof value === "string" ? Number(value) : value;
+
+  // If the value is a Unix timestamp in seconds (less than a reasonable millisecond timestamp)
+  // Convert to milliseconds. Timestamps less than 10000000000 are likely in seconds
+  if (!isNaN(timestamp) && timestamp < 10000000000) {
+    timestamp = timestamp * 1000;
+  }
+
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  if (type === "start") {
+    date.setUTCHours(0, 0, 0, 0);
+  } else {
+    date.setUTCHours(23, 59, 59, 999);
+  }
+
+  return date.toISOString();
+};
+
+export const parseTime = (value) => {
+  if (!value) return new Date();
+
+  if (value instanceof Date) return value;
+
+  if (typeof value === "string" && /[^\d]/.test(value)) {
+    return new Date(value);
+  }
+
+  let timestamp = typeof value === "string" ? Number(value) : value;
+
+  if (!isNaN(timestamp) && timestamp < 10000000000) {
+    timestamp = timestamp * 1000;
+  }
+
+  return new Date(timestamp);
 };
