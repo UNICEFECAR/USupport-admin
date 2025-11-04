@@ -31,6 +31,7 @@
   "total_slots": "Всього слотів",
   "slot_type": "Тип слота",
   "organization_campaign": "Організація / Кампанія",
+  "total_slots_campaign_organization": "Всього слотів (Кампанія / Організація)",
   "period": "Період",
   "booked": "Заброньовано",
   "booked_period": "Період бронювання",
