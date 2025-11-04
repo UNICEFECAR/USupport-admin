@@ -201,6 +201,12 @@ export const getCompletedBaselineAssessmentsAnalysis = async ({
         };
       })
     );
+    // Get unique client IDs for percentage calculations
+    const uniqueClientIds = [
+      ...new Set(nonAnonimizedWithScore.map((item) => item.clientDetailId)),
+    ];
+    const totalUniqueClients = uniqueClientIds.length;
+
     const factorsOverview = nonAnonimizedWithScore.reduce(
       (acc, assessment) => {
         // if the score is low, add 1 to the low count, if the score is high add 1 to the high count
@@ -358,18 +364,51 @@ export const getCompletedBaselineAssessmentsAnalysis = async ({
         },
       };
     }
+
+    const calculateFactorPercentage = (target, field, total) => {
+      if (total === 0) return "0.0";
+      const targetCount = target[field];
+      return ((targetCount / total) * 100).toFixed(1);
+    };
+
     // Attach below/above counts for overall or per half
     if (!result.isSplit) {
-      result.analysis.psychological.belowCount =
-        factorsOverview.psychologicalLow;
-      result.analysis.psychological.aboveCount =
-        factorsOverview.psychologicalHigh;
+      result.analysis.psychological.belowPercentage = calculateFactorPercentage(
+        factorsOverview,
+        "psychologicalLow",
+        totalUniqueClients
+      );
+      result.analysis.psychological.abovePercentage = calculateFactorPercentage(
+        factorsOverview,
+        "psychologicalHigh",
+        totalUniqueClients
+      );
 
       result.analysis.biological.belowCount = factorsOverview.biologicalLow;
       result.analysis.biological.aboveCount = factorsOverview.biologicalHigh;
+      result.analysis.biological.belowPercentage = calculateFactorPercentage(
+        factorsOverview,
+        "biologicalLow",
+        totalUniqueClients
+      );
+      result.analysis.biological.abovePercentage = calculateFactorPercentage(
+        factorsOverview,
+        "biologicalHigh",
+        totalUniqueClients
+      );
 
       result.analysis.social.belowCount = factorsOverview.socialLow;
       result.analysis.social.aboveCount = factorsOverview.socialHigh;
+      result.analysis.social.belowPercentage = calculateFactorPercentage(
+        factorsOverview,
+        "socialLow",
+        totalUniqueClients
+      );
+      result.analysis.social.abovePercentage = calculateFactorPercentage(
+        factorsOverview,
+        "socialHigh",
+        totalUniqueClients
+      );
     } else {
       const firstHalfIds = new Set(
         result.assessments.firstHalf.map((a) => a.baseline_assessment_id)
@@ -377,6 +416,24 @@ export const getCompletedBaselineAssessmentsAnalysis = async ({
       const secondHalfIds = new Set(
         result.assessments.secondHalf.map((a) => a.baseline_assessment_id)
       );
+
+      // Get unique client IDs for each half for percentage calculations
+      const firstHalfUniqueClients = [
+        ...new Set(
+          nonAnonimizedWithScore
+            .filter((item) => firstHalfIds.has(item.baselineAssessmentId))
+            .map((item) => item.clientDetailId)
+        ),
+      ];
+      const secondHalfUniqueClients = [
+        ...new Set(
+          nonAnonimizedWithScore
+            .filter((item) => secondHalfIds.has(item.baselineAssessmentId))
+            .map((item) => item.clientDetailId)
+        ),
+      ];
+      const firstHalfUniqueClientCount = firstHalfUniqueClients.length;
+      const secondHalfUniqueClientCount = secondHalfUniqueClients.length;
 
       const emptyOverview = {
         psychologicalLow: 0,
@@ -415,34 +472,107 @@ export const getCompletedBaselineAssessmentsAnalysis = async ({
         { ...emptyOverview }
       );
 
-      result.analysis.firstHalf.psychological.belowCount =
-        firstHalfOverview.psychologicalLow;
-      result.analysis.firstHalf.psychological.aboveCount =
-        firstHalfOverview.psychologicalHigh;
+      const firstHalfPsychologicalData = {
+        ...result.analysis.firstHalf.psychological,
+        belowCount: firstHalfOverview.psychologicalLow,
+        aboveCount: firstHalfOverview.psychologicalHigh,
+        belowPercentage: calculateFactorPercentage(
+          firstHalfOverview,
+          "psychologicalLow",
+          firstHalfUniqueClientCount
+        ),
+        abovePercentage: calculateFactorPercentage(
+          firstHalfOverview,
+          "psychologicalHigh",
+          firstHalfUniqueClientCount
+        ),
+      };
+      result.analysis.firstHalf.psychological = firstHalfPsychologicalData;
 
-      result.analysis.firstHalf.biological.belowCount =
-        firstHalfOverview.biologicalLow;
-      result.analysis.firstHalf.biological.aboveCount =
-        firstHalfOverview.biologicalHigh;
+      const firstHalfBiologicalData = {
+        ...result.analysis.firstHalf.biological,
+        belowCount: firstHalfOverview.biologicalLow,
+        aboveCount: firstHalfOverview.biologicalHigh,
+        belowPercentage: calculateFactorPercentage(
+          firstHalfOverview,
+          "biologicalLow",
+          firstHalfUniqueClientCount
+        ),
+        abovePercentage: calculateFactorPercentage(
+          firstHalfOverview,
+          "biologicalHigh",
+          firstHalfUniqueClientCount
+        ),
+      };
+      result.analysis.firstHalf.biological = firstHalfBiologicalData;
 
-      result.analysis.firstHalf.social.belowCount = firstHalfOverview.socialLow;
-      result.analysis.firstHalf.social.aboveCount =
-        firstHalfOverview.socialHigh;
+      const firstHalfSocialData = {
+        ...result.analysis.firstHalf.social,
+        belowCount: firstHalfOverview.socialLow,
+        aboveCount: firstHalfOverview.socialHigh,
+        belowPercentage: calculateFactorPercentage(
+          firstHalfOverview,
+          "socialLow",
+          firstHalfUniqueClientCount
+        ),
+        abovePercentage: calculateFactorPercentage(
+          firstHalfOverview,
+          "socialHigh",
+          firstHalfUniqueClientCount
+        ),
+      };
+      result.analysis.firstHalf.social = firstHalfSocialData;
 
-      result.analysis.secondHalf.psychological.belowCount =
-        secondHalfOverview.psychologicalLow;
-      result.analysis.secondHalf.psychological.aboveCount =
-        secondHalfOverview.psychologicalHigh;
+      const secondHalfPsychologicalData = {
+        ...result.analysis.secondHalf.psychological,
+        belowCount: secondHalfOverview.psychologicalLow,
+        aboveCount: secondHalfOverview.psychologicalHigh,
+        belowPercentage: calculateFactorPercentage(
+          secondHalfOverview,
+          "psychologicalLow",
+          secondHalfUniqueClientCount
+        ),
+        abovePercentage: calculateFactorPercentage(
+          secondHalfOverview,
+          "psychologicalHigh",
+          secondHalfUniqueClientCount
+        ),
+      };
+      result.analysis.secondHalf.psychological = secondHalfPsychologicalData;
 
-      result.analysis.secondHalf.biological.belowCount =
-        secondHalfOverview.biologicalLow;
-      result.analysis.secondHalf.biological.aboveCount =
-        secondHalfOverview.biologicalHigh;
+      const secondHalfBiologicalData = {
+        ...result.analysis.secondHalf.biological,
+        belowCount: secondHalfOverview.biologicalLow,
+        aboveCount: secondHalfOverview.biologicalHigh,
+        belowPercentage: calculateFactorPercentage(
+          secondHalfOverview,
+          "biologicalLow",
+          secondHalfUniqueClientCount
+        ),
+        abovePercentage: calculateFactorPercentage(
+          secondHalfOverview,
+          "biologicalHigh",
+          secondHalfUniqueClientCount
+        ),
+      };
+      result.analysis.secondHalf.biological = secondHalfBiologicalData;
 
-      result.analysis.secondHalf.social.belowCount =
-        secondHalfOverview.socialLow;
-      result.analysis.secondHalf.social.aboveCount =
-        secondHalfOverview.socialHigh;
+      const secondHalfSocialData = {
+        ...result.analysis.secondHalf.social,
+        belowCount: secondHalfOverview.socialLow,
+        aboveCount: secondHalfOverview.socialHigh,
+        belowPercentage: calculateFactorPercentage(
+          secondHalfOverview,
+          "socialLow",
+          secondHalfUniqueClientCount
+        ),
+        abovePercentage: calculateFactorPercentage(
+          secondHalfOverview,
+          "socialHigh",
+          secondHalfUniqueClientCount
+        ),
+      };
+      result.analysis.secondHalf.social = secondHalfSocialData;
     }
 
     return result;
