@@ -27,6 +27,7 @@
   "provider_uuid": "Խորհրդատուի ID",
   "provider_email": "Խորհրդատուի էլ. փոստ",
   "total_slots": "Ընդհանուր ժամանակահատվածներ",
+  "total_slots_campaign_organization": "Ընդհանուր ժամանակահատվածներ (Արշավ / Կազմակերպություն)",
   "slot_type": "Ժամանակահատվածի տեսակ",
   "organization_campaign": "Կազմակերպություն / Արշավ",
   "period": "Ժամանակահատված",

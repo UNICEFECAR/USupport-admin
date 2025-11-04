@@ -29,6 +29,7 @@
   "provider_uuid": "Provider ID",
   "provider_email": "Provider Email",
   "total_slots": "Total Slots",
+  "total_slots_campaign_organization": "Total Slots (Campaign / Organization)",
   "slot_type": "Slot Type",
   "organization_campaign": "Organization / Campaign",
   "period": "Period",
