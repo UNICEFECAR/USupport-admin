@@ -27,6 +27,7 @@
   "total_providers": "Total furnizori",
   "provider_name": "Numele furnizorului",
   "provider_email": "Email furnizor",
+  "provider_uuid": "ID furnizor",
   "total_slots": "Total sloturi",
   "slot_type": "Tip slot",
   "organization_campaign": "Organizație / Campanie",

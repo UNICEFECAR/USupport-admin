@@ -26,6 +26,7 @@
   "date_range": "Date Range",
   "total_providers": "Total Providers",
   "provider_name": "Provider Name",
+  "provider_uuid": "Provider ID",
   "provider_email": "Provider Email",
   "total_slots": "Total Slots",
   "slot_type": "Slot Type",
