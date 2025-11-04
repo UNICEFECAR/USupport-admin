@@ -45,6 +45,7 @@ export const generateAvailabilityCSV = ({
   // Create CSV header matching the sample format
   const headerColumns = [
     t("provider_name", language),
+    t("provider_uuid", language),
     t("provider_email", language),
     t("total_slots", language),
     t("slot_type", language),
@@ -65,6 +66,7 @@ export const generateAvailabilityCSV = ({
   // Initialize all providers
   providers.forEach((provider) => {
     providerDataMap.set(provider.provider_detail_id, {
+      uuid: provider.provider_detail_id,
       name: `${provider.name} ${provider.surname || ""}`.trim(),
       email: provider.email,
       normalSlots: [],
@@ -291,6 +293,7 @@ export const generateAvailabilityCSV = ({
 
       rows.push([
         providerData.name,
+        providerData.uuid,
         providerData.email,
         totalProviderSlots,
         t("slot_type_normal", language),
@@ -317,6 +320,7 @@ export const generateAvailabilityCSV = ({
 
       rows.push([
         providerData.name,
+        providerData.uuid,
         providerData.email,
         totalProviderSlots,
         t("slot_type_campaign", language),
@@ -343,6 +347,7 @@ export const generateAvailabilityCSV = ({
 
       rows.push([
         providerData.name,
+        providerData.uuid,
         providerData.email,
         totalProviderSlots,
         t("slot_type_organization", language),
