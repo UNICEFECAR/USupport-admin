@@ -354,11 +354,13 @@ export const getPlatformMetrics = async ({
       return res.rows[0].country_id;
     }
   );
-  const countryEvents = await getCountryEventsQuery({ countryId }).then(
-    (res) => {
-      return res.rows || [];
-    }
-  );
+  const countryEvents = await getCountryEventsQuery({
+    countryId,
+    startDate,
+    endDate,
+  }).then((res) => {
+    return res.rows || [];
+  });
 
   const consultations =
     await getScheduledConsultationsWithClientIdForCountryQuery({
