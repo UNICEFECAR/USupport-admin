@@ -50,7 +50,7 @@ export const generateAvailabilityCSV = ({
     t("total_slots", language),
     t("slot_type", language),
     t("organization_campaign", language),
-    t("total_slots", language),
+    t("total_slots_campaign_organization", language),
     t("from", language),
     t("to", language),
     t("booked", language),

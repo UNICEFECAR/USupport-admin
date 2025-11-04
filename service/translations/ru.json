@@ -29,6 +29,7 @@
   "provider_uuid": "ID консультанта",
   "provider_email": "Email консультанта",
   "total_slots": "Всего слотов",
+  "total_slots_campaign_organization": "Всего слотов (Кампания / Организация)",
   "slot_type": "Тип слота",
   "organization_campaign": "Организация / Кампания",
   "period": "Период",
