@@ -26,6 +26,7 @@
   "date_range": "Zakres dat",
   "total_providers": "Łączna liczba konsultantów",
   "provider_name": "Nazwa konsultanta",
+  "provider_uuid": "ID konsultanta",
   "provider_email": "Email konsultanta",
   "total_slots": "Łączna liczba slotów",
   "slot_type": "Typ slotu",

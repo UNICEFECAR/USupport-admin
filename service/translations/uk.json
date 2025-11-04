@@ -26,6 +26,7 @@
   "date_range": "Діапазон дат",
   "total_providers": "Всього консультантів",
   "provider_name": "Ім'я консультанта",
+  "provider_uuid": "ID консультанта",
   "provider_email": "Email консультанта",
   "total_slots": "Всього слотів",
   "slot_type": "Тип слота",

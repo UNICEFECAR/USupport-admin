@@ -26,6 +26,7 @@
   "date_range": "Күндер диапазоны",
   "total_providers": "Барлығы консультанттар",
   "provider_name": "Консультант аты",
+  "provider_uuid": "Консультант ID",
   "provider_email": "Консультант электрондық поштасы",
   "total_slots": "Барлығы слоттар",
   "slot_type": "Слот түрі",
