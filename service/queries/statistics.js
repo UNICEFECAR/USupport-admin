@@ -435,14 +435,22 @@ export const getBookedConsultationsInRangeQuery = async ({
     [startDate, endDate]
   );
 
-export const getCountryEventsQuery = async ({ countryId }) => {
+export const getCountryEventsQuery = async ({
+  countryId,
+  startDate,
+  endDate,
+}) => {
   return await getDBPool("masterDb").query(
     `
-        SELECT * 
-        FROM country_event 
-        WHERE country_id = $1 OR event_type = 'global_visit'
+SELECT * 
+FROM country_event 
+WHERE (country_id = $1 OR event_type = 'global_visit')
+  AND ($2::double precision IS NULL OR created_at >= to_timestamp($2::double precision))
+  AND ($3::double precision IS NULL OR created_at <= to_timestamp($3::double precision));
+
+
       `,
-    [countryId]
+    [countryId, startDate, endDate]
   );
 };
 
