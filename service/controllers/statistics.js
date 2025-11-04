@@ -586,7 +586,7 @@ export const getProviderAvailabilityReport = async ({
       const provider = providersMap.get(providerId);
 
       //Filter slots by time
-      const filteredSlotsByTime = availability.slots.filter((x) => {
+      const filteredSlotsByTime = availability.slots?.filter((x) => {
         const slotTime = parseTime(x).getHours();
         return slotTime >= startHour && slotTime <= endHour;
       });
@@ -602,14 +602,14 @@ export const getProviderAvailabilityReport = async ({
         : [];
 
       const filteredCampaignSlotsByTime = campaignSlotsArray
-        .filter((x) => x && Object.keys(x).length > 0 && x.time)
-        .filter((x) => {
+        ?.filter((x) => x && Object.keys(x).length > 0 && x.time)
+        ?.filter((x) => {
           const slotTime = parseTime(x.time).getHours();
           return slotTime >= startHour && slotTime <= endHour;
         });
       const filteredOrganizationSlotsByTime = organizationSlotsArray
-        .filter((x) => x && Object.keys(x).length > 0 && x.time)
-        .filter((x) => {
+        ?.filter((x) => x && Object.keys(x).length > 0 && x.time)
+        ?.filter((x) => {
           const slotTime = parseTime(x.time).getHours();
           return slotTime >= startHour && slotTime <= endHour;
         });
