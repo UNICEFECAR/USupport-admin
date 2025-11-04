@@ -31,6 +31,7 @@
   "total_slots": "Łączna liczba slotów",
   "slot_type": "Typ slotu",
   "organization_campaign": "Organizacja / Kampania",
+  "total_slots_campaign_organization": "Łączna liczba slotów (Kampania / Organizacja)",
   "period": "Okres",
   "booked": "Zarezerwowane",
   "booked_period": "Okres rezerwacji",

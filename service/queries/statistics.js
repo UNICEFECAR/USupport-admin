@@ -429,7 +429,7 @@ export const getBookedConsultationsInRangeQuery = async ({
       FROM consultation c
       WHERE c.time >= $1::timestamptz 
         AND c.time <= $2::timestamptz
-        AND c.status IN ('scheduled', 'finished', 'active', 'late-canceled', 'canceled', 'suggested')
+        AND c.status IN ('scheduled', 'finished', 'active', 'late-canceled')
       ORDER BY c.provider_detail_id ASC, c.time ASC
     `,
     [startDate, endDate]
