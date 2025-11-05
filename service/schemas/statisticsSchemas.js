@@ -45,4 +45,5 @@ export const getProviderAvailabilityReportSchema = yup.object().shape({
   endDate: yup.string().optional(),
   startHour: yup.number().min(0).max(23).required(),
   endHour: yup.number().min(0).max(23).required(),
+  timezone: yup.string().required(),
 });
