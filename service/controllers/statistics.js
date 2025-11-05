@@ -38,7 +38,10 @@ import { getClientInitials } from "#utils/helperFunctions";
 import {
   generateAvailabilityCSV,
   normalizeDate,
-  parseTime,
+  getHourInTimezone,
+  formatDateTimeInTimezone,
+  isValidTimeZone,
+  buildUtcRangeForLocalHours,
 } from "#utils/provider-reports";
 
 export const getCountryStatistics = async ({ language, countryId }) => {
@@ -526,14 +529,23 @@ export const getProviderAvailabilityReport = async ({
   startHour,
   endHour,
   language = "en",
+  timezone,
 }) => {
   const now = new Date();
 
-  const normalizedStartDate = normalizeDate(providedStartDate || now, "start");
-  const normalizedEndDate = normalizeDate(
-    providedEndDate || new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
-    "end"
-  );
+  if (!isValidTimeZone(timezone)) {
+    throw new Error("Invalid timezone");
+  }
+
+  // Build precise UTC range based on local dates and selected hours
+  const { startUtcISO: normalizedStartDate, endUtcISO: normalizedEndDate } =
+    buildUtcRangeForLocalHours(
+      providedStartDate || now,
+      providedEndDate || new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+      startHour,
+      endHour,
+      timezone
+    );
 
   const startDate = new Date(normalizedStartDate);
   const endDate = new Date(normalizedEndDate);
@@ -585,10 +597,10 @@ export const getProviderAvailabilityReport = async ({
       const providerId = availability.provider_detail_id;
       const provider = providersMap.get(providerId);
 
-      //Filter slots by time
+      //Filter slots by time in the provided timezone
       const filteredSlotsByTime = availability.slots?.filter((x) => {
-        const slotTime = parseTime(x).getHours();
-        return slotTime >= startHour && slotTime <= endHour;
+        const hr = getHourInTimezone(x, timezone);
+        return hr >= startHour && hr <= endHour;
       });
 
       // Ensure campaign_slots and organization_slots are arrays before filtering
@@ -604,14 +616,14 @@ export const getProviderAvailabilityReport = async ({
       const filteredCampaignSlotsByTime = campaignSlotsArray
         ?.filter((x) => x && Object.keys(x).length > 0 && x.time)
         ?.filter((x) => {
-          const slotTime = parseTime(x.time).getHours();
-          return slotTime >= startHour && slotTime <= endHour;
+          const hr = getHourInTimezone(x.time, timezone);
+          return hr >= startHour && hr <= endHour;
         });
       const filteredOrganizationSlotsByTime = organizationSlotsArray
         ?.filter((x) => x && Object.keys(x).length > 0 && x.time)
         ?.filter((x) => {
-          const slotTime = parseTime(x.time).getHours();
-          return slotTime >= startHour && slotTime <= endHour;
+          const hr = getHourInTimezone(x.time, timezone);
+          return hr >= startHour && hr <= endHour;
         });
 
       const normalSlotsCount = filteredSlotsByTime?.length || 0;
@@ -656,8 +668,8 @@ export const getProviderAvailabilityReport = async ({
 
     //Filter consultations by time range
     const filteredConsultations = allConsultations.filter((x) => {
-      const consultationTime = parseTime(x.time).getHours();
-      return consultationTime >= startHour && consultationTime <= endHour;
+      const hr = getHourInTimezone(x.time, timezone);
+      return hr >= startHour && hr <= endHour;
     });
 
     // Process consultations data
@@ -667,16 +679,10 @@ export const getProviderAvailabilityReport = async ({
 
       if (provider && consultation.time) {
         const consultationDateTime = new Date(consultation.time);
-        const dateTimeString = consultationDateTime
-          .toLocaleString("en-GB", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-          })
-          .replace(",", " -");
+        const dateTimeString = formatDateTimeInTimezone(
+          consultationDateTime,
+          timezone
+        );
 
         // Categorize consultation: campaign, organization, or normal
         if (consultation.campaign_id) {
@@ -695,7 +701,10 @@ export const getProviderAvailabilityReport = async ({
           });
         } else {
           provider.normal_consultations_booked++;
-          provider.normal_consultations_details.push(dateTimeString);
+          provider.normal_consultations_details.push({
+            dateTimeString,
+            time: consultationDateTime,
+          });
         }
       }
     });
