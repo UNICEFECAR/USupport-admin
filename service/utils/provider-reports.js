@@ -200,13 +200,18 @@ export const generateAvailabilityCSV = ({
       return null;
     };
 
-    // Process normal consultations
+    // Process normal consultations - accept strings (legacy) or objects with time
     if (
       provider.normal_consultations_details &&
       provider.normal_consultations_details.length > 0
     ) {
-      provider.normal_consultations_details.forEach((dateTimeString) => {
-        const date = parseConsultationDate(dateTimeString);
+      provider.normal_consultations_details.forEach((entry) => {
+        let date = null;
+        if (typeof entry === "string") {
+          date = parseConsultationDate(entry);
+        } else if (entry && entry.time) {
+          date = parseTime(entry.time);
+        }
         if (date && date >= startDate && date <= endDate) {
           providerData.normalConsultations.push(date);
         }
@@ -296,7 +301,9 @@ export const generateAvailabilityCSV = ({
         providerData.uuid,
         providerData.email,
         totalProviderSlots,
-        t("slot_type_normal", language),
+        providerData.normalSlots.length > 0
+          ? t("slot_type_normal", language)
+          : "-",
         "-",
         providerData.normalSlots.length,
         ...slotsPeriod,
@@ -422,4 +429,259 @@ export const parseTime = (value) => {
   }
 
   return new Date(timestamp);
+};
+
+/**
+ * Returns the hour (0-23) for a UTC instant when viewed in the given IANA timezone
+ * Works without external libraries using Intl.DateTimeFormat
+ */
+export const getHourInTimezone = (value, timezone) => {
+  const date = parseTime(value);
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: timezone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+  const hourPart = parts.find((p) => p.type === "hour");
+  return Number(hourPart?.value || 0);
+};
+
+/**
+ * Convert a given instant to an ISO string representing the UTC moment corresponding to
+ * the start/end of that local day in the provided timezone.
+ * This handles DST correctly by iteratively reconciling the local components.
+ */
+export const normalizeDateInTimezone = (value, type, timezone) => {
+  if (!value) return null;
+
+  let timestamp = typeof value === "string" ? Number(value) : value;
+  if (!isNaN(timestamp) && timestamp < 10000000000) {
+    timestamp = timestamp * 1000;
+  }
+
+  const inputDate = new Date(timestamp);
+
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+
+  const toParts = (d) => {
+    const partsArr = formatter.formatToParts(d);
+    const obj = {};
+    partsArr.forEach((p) => {
+      if (p.type !== "literal") obj[p.type] = p.value;
+    });
+    return {
+      year: Number(obj.year),
+      month: Number(obj.month),
+      day: Number(obj.day),
+      hour: Number(obj.hour),
+      minute: Number(obj.minute),
+      second: Number(obj.second),
+    };
+  };
+
+  const parts = toParts(inputDate);
+  const target = {
+    year: parts.year,
+    month: parts.month,
+    day: parts.day,
+    hour: type === "start" ? 0 : 23,
+    minute: type === "start" ? 0 : 59,
+    second: type === "start" ? 0 : 59,
+    ms: type === "start" ? 0 : 999,
+  };
+
+  // Initial UTC guess for the desired local time
+  let guess = Date.UTC(
+    target.year,
+    target.month - 1,
+    target.day,
+    target.hour,
+    target.minute,
+    target.second,
+    target.ms
+  );
+
+  // Iteratively adjust until the formatted local time matches the target components
+  for (let i = 0; i < 6; i++) {
+    const cur = toParts(new Date(guess));
+    const desiredLocal = Date.UTC(
+      target.year,
+      target.month - 1,
+      target.day,
+      target.hour,
+      target.minute,
+      target.second,
+      target.ms
+    );
+    const currentLocal = Date.UTC(
+      cur.year,
+      cur.month - 1,
+      cur.day,
+      cur.hour,
+      cur.minute,
+      cur.second,
+      target.ms
+    );
+    const delta = desiredLocal - currentLocal;
+    if (delta === 0) break;
+    guess += delta;
+  }
+
+  return new Date(guess).toISOString();
+};
+
+/**
+ * Formats a Date/epoch into 'DD/MM/YYYY - HH:MM' in a given timezone.
+ */
+export const formatDateTimeInTimezone = (value, timezone) => {
+  const date = parseTime(value);
+  const partsArr = new Intl.DateTimeFormat("en-GB", {
+    timeZone: timezone,
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+  const parts = {};
+  partsArr.forEach((p) => {
+    if (p.type !== "literal") parts[p.type] = p.value;
+  });
+  return `${parts.day}/${parts.month}/${parts.year} - ${parts.hour}:${parts.minute}`;
+};
+
+/**
+ * Validates an IANA timezone string
+ */
+export const isValidTimeZone = (timezone) => {
+  try {
+    new Intl.DateTimeFormat("en-GB", { timeZone: timezone }).format(new Date());
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
+/**
+ * Resolve a local wall-clock time (derived from a given date and explicit hh:mm:ss.ms)
+ * to its corresponding UTC ISO string, for a specific timezone. DST-safe.
+ */
+export const resolveLocalTimeToUtcISO = (
+  value,
+  { hour = 0, minute = 0, second = 0, ms = 0 },
+  timezone
+) => {
+  let timestamp = typeof value === "string" ? Number(value) : value;
+  if (!isNaN(timestamp) && timestamp < 10000000000) {
+    timestamp = timestamp * 1000;
+  }
+  const inputDate = new Date(timestamp);
+
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+
+  const toParts = (d) => {
+    const partsArr = formatter.formatToParts(d);
+    const obj = {};
+    partsArr.forEach((p) => {
+      if (p.type !== "literal") obj[p.type] = p.value;
+    });
+    return {
+      year: Number(obj.year),
+      month: Number(obj.month),
+      day: Number(obj.day),
+      hour: Number(obj.hour),
+      minute: Number(obj.minute),
+      second: Number(obj.second),
+    };
+  };
+
+  const base = toParts(inputDate);
+
+  // Initial UTC guess for the desired local time
+  let guess = Date.UTC(
+    base.year,
+    base.month - 1,
+    base.day,
+    hour,
+    minute,
+    second,
+    ms
+  );
+
+  // Iteratively adjust until the formatted local time matches the target components
+  for (let i = 0; i < 6; i++) {
+    const cur = toParts(new Date(guess));
+    const desiredLocal = Date.UTC(
+      base.year,
+      base.month - 1,
+      base.day,
+      hour,
+      minute,
+      second,
+      ms
+    );
+    const currentLocal = Date.UTC(
+      cur.year,
+      cur.month - 1,
+      cur.day,
+      cur.hour,
+      cur.minute,
+      cur.second,
+      ms
+    );
+    const delta = desiredLocal - currentLocal;
+    if (delta === 0) break;
+    guess += delta;
+  }
+
+  return new Date(guess).toISOString();
+};
+
+/**
+ * Build a UTC [start, end) range from local dates and hours in a timezone.
+ * End is exclusive: endHour+1 at 00 minutes.
+ */
+export const buildUtcRangeForLocalHours = (
+  startDateValue,
+  endDateValue,
+  startHour,
+  endHour,
+  timezone
+) => {
+  // Start at selected local day and hour
+  const startUtcISO = resolveLocalTimeToUtcISO(
+    startDateValue,
+    { hour: Number(startHour) || 0, minute: 0, second: 0, ms: 0 },
+    timezone
+  );
+
+  // End exclusive: endHour + 1 at 00:00; let Date.UTC roll into next day if 24
+  const endExclusiveHour = (Number(endHour) || 0) + 1;
+  const endUtcISO = resolveLocalTimeToUtcISO(
+    endDateValue,
+    { hour: endExclusiveHour, minute: 0, second: 0, ms: 0 },
+    timezone
+  );
+
+  return { startUtcISO, endUtcISO };
 };

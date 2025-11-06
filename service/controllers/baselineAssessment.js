@@ -371,6 +371,68 @@ export const getCompletedBaselineAssessmentsAnalysis = async ({
       return ((targetCount / total) * 100).toFixed(1);
     };
 
+    const calculatePercentileThreshold = (scores, percentile) => {
+      if (scores.length === 0) return 0;
+      const sortedScores = [...scores].sort((a, b) => a - b);
+      const n = sortedScores.length;
+
+      const position = (percentile / 100) * n;
+      const lowerIndex = Math.floor(position);
+      const upperIndex = Math.ceil(position);
+
+      if (lowerIndex === 0) return sortedScores[0] - 1;
+      if (upperIndex >= n) return sortedScores[n - 1] + 1;
+      if (lowerIndex === upperIndex) return sortedScores[lowerIndex - 1];
+
+      const lowerValue = sortedScores[lowerIndex - 1];
+      const upperValue = sortedScores[lowerIndex];
+      const fraction = position - lowerIndex;
+
+      // Round to nearest integer
+      return Math.round(lowerValue + fraction * (upperValue - lowerValue));
+    };
+
+    const latestAssessmentPerClient = new Map();
+    nonAnonimizedWithScore.forEach((assessment) => {
+      const existing = latestAssessmentPerClient.get(assessment.clientDetailId);
+      if (
+        !existing ||
+        assessment.baselineAssessmentId > existing.baselineAssessmentId
+      ) {
+        latestAssessmentPerClient.set(assessment.clientDetailId, assessment);
+      }
+    });
+
+    const uniqueClientAssessments = Array.from(
+      latestAssessmentPerClient.values()
+    );
+
+    // Calculate scores for threshold recommendations
+    const allPsychologicalScores = uniqueClientAssessments.map(
+      (item) => item.psychologicalScore
+    );
+    const allBiologicalScores = uniqueClientAssessments.map(
+      (item) => item.biologicalScore
+    );
+    const allSocialScores = uniqueClientAssessments.map(
+      (item) => item.socialScore
+    );
+
+    const recommendedThresholds = {
+      psychological: {
+        below: calculatePercentileThreshold(allPsychologicalScores, 25),
+        above: calculatePercentileThreshold(allPsychologicalScores, 75),
+      },
+      biological: {
+        below: calculatePercentileThreshold(allBiologicalScores, 25),
+        above: calculatePercentileThreshold(allBiologicalScores, 75),
+      },
+      social: {
+        below: calculatePercentileThreshold(allSocialScores, 25),
+        above: calculatePercentileThreshold(allSocialScores, 75),
+      },
+    };
+
     // Attach below/above counts for overall or per half
     if (!result.isSplit) {
       result.analysis.psychological.belowPercentage = calculateFactorPercentage(
@@ -574,6 +636,9 @@ export const getCompletedBaselineAssessmentsAnalysis = async ({
       };
       result.analysis.secondHalf.social = secondHalfSocialData;
     }
+
+    // Add recommended thresholds to result
+    result.recommendedThresholds = recommendedThresholds;
 
     return result;
   } catch (err) {

@@ -239,7 +239,7 @@ router.get(
 
     const country = req.header("x-country-alpha-2");
     const language = req.header("x-language-alpha-2");
-    const { startDate, endDate, startTime, endTime } = req.query;
+    const { startDate, endDate, startTime, endTime, timezone } = req.query;
 
     const startTimeNumber = parseInt(startTime);
     const endTimeNumber = parseInt(endTime);
@@ -254,6 +254,7 @@ router.get(
         endDate,
         startHour: startTimeNumber,
         endHour: endTimeNumber,
+        timezone,
       })
       .then(getProviderAvailabilityReport)
       .then((result) => {
