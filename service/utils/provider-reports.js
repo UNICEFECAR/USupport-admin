@@ -301,7 +301,6 @@ export const generateAvailabilityCSV = ({
         providerData.uuid,
         providerData.email,
         totalProviderSlots,
-        // If there are no slots at all, show '-' for Slot Type
         providerData.normalSlots.length > 0
           ? t("slot_type_normal", language)
           : "-",
