@@ -301,7 +301,9 @@ export const generateAvailabilityCSV = ({
         providerData.uuid,
         providerData.email,
         totalProviderSlots,
-        t("slot_type_normal", language),
+        providerData.normalSlots.length > 0
+          ? t("slot_type_normal", language)
+          : "-",
         "-",
         providerData.normalSlots.length,
         ...slotsPeriod,
