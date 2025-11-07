@@ -836,7 +836,7 @@ export const getPlatformMetrics = async ({
       consultationsData.web.finished,
     demographics: consultationsData.web.demographics,
   };
-  console.log(consultationsData);
+
   return {
     globalWebsiteVisits: {
       count: globalVisitCounter.count,
