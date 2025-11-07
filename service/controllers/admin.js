@@ -644,6 +644,30 @@ export const getPlatformMetrics = async ({
       urban_rural: {},
       sex: {},
     },
+    mobile: {
+      scheduled: 0,
+      finished: 0,
+      active: 0,
+      canceled: 0,
+      "late-canceled": 0,
+      demographics: {
+        year_of_birth: {},
+        urban_rural: {},
+        sex: {},
+      },
+    },
+    web: {
+      scheduled: 0,
+      finished: 0,
+      active: 0,
+      canceled: 0,
+      "late-canceled": 0,
+      demographics: {
+        year_of_birth: {},
+        urban_rural: {},
+        sex: {},
+      },
+    },
   };
 
   const uniqueConsultationsData = createDemographicsObject();
@@ -664,14 +688,34 @@ export const getPlatformMetrics = async ({
     const c = consultations[i];
     const d = demographicsById.get(c.client_detail_id);
 
-    if (!d) continue;
+    consultationsData.count++;
+
+    if (!consultationsData[c.booked_from]) {
+      consultationsData[c.booked_from] = {
+        count: 0,
+        demographics: {
+          year_of_birth: {},
+          urban_rural: {},
+          sex: {},
+        },
+      };
+    }
+    consultationsData[c.booked_from][c.status] =
+      (consultationsData[c.booked_from][c.status] || 0) + 1;
+    consultationsData[c.booked_from].count++;
+
+    if (!d) {
+      console.log(
+        "❌ No demographics found for client detail id: ",
+        c.client_detail_id
+      );
+      continue;
+    }
 
     const { year_of_birth, urban_rural, sex } = d;
     const yob = year_of_birth || "missing";
     const ur = urban_rural || "missing";
     const s = sex || "missing";
-
-    consultationsData.count++;
 
     const hasClientJoined = c.client_join_time || c.client_leave_time;
 
@@ -687,6 +731,13 @@ export const getPlatformMetrics = async ({
     }
 
     if (!uniqueConsultationsData.clientDetailIds.has(c.client_detail_id)) {
+      // In the web/mobile consultations demographichs we only count the consultations that are scheduled, finished or active
+      if (["scheduled", "finished", "active"].includes(c.status)) {
+        inc(consultationsData[c.booked_from].demographics.year_of_birth, yob);
+        inc(consultationsData[c.booked_from].demographics.urban_rural, ur);
+        inc(consultationsData[c.booked_from].demographics.sex, s);
+      }
+
       inc(consultationsData.demographics.year_of_birth, yob);
       inc(consultationsData.demographics.urban_rural, ur);
       inc(consultationsData.demographics.sex, s);
@@ -765,10 +816,27 @@ export const getPlatformMetrics = async ({
     inc(positiveClientRatingsDemographics.demographics.sex, s);
   });
 
-  const cancelledConsultations = consultations.filter(
-    (c) => c.status === "canceled" || c.status === "late-canceled"
-  );
+  const cancelledConsultations =
+    consultationsData.mobile.canceled + consultationsData.web.canceled;
+  const lateCancelledConsultations =
+    consultationsData.mobile["late-canceled"] +
+    consultationsData.web["late-canceled"];
 
+  const mobileScheduledConsultations = {
+    count:
+      consultationsData.mobile.scheduled +
+      consultationsData.mobile.finished +
+      consultationsData.mobile.active,
+    demographics: consultationsData.mobile.demographics,
+  };
+  const webScheduledConsultations = {
+    count:
+      consultationsData.web.scheduled +
+      consultationsData.web.active +
+      consultationsData.web.finished,
+    demographics: consultationsData.web.demographics,
+  };
+  console.log(consultationsData);
   return {
     globalWebsiteVisits: {
       count: globalVisitCounter.count,
@@ -779,10 +847,13 @@ export const getPlatformMetrics = async ({
       ...consultationsData,
       // uniqueCount: consultationsData.uniqueClientDetailIds.size,
     },
-    cancelledConsultations: cancelledConsultations.length,
+    cancelledConsultations: cancelledConsultations,
+    lateCancelledConsultations: lateCancelledConsultations,
     // uniqueClientsConsultations: uniqueConsultationsData,
-    scheduledConsultations: scheduledConsultationsDemographics,
-    mobileScheduledConsultations: mobileScheduledConsultationsDemographics,
+    scheduledConsultations: webScheduledConsultations,
+    mobileScheduledConsultations: mobileScheduledConsultations,
+    // scheduledConsultations: scheduledConsultationsDemographics,
+    // mobileScheduledConsultations: mobileScheduledConsultationsDemographics,
 
     scheduleButtonClick: scheduleButtonClickDemographics,
     mobileScheduleButtonClick: mobileScheduleButtonClickDemographics,
@@ -825,7 +896,6 @@ export const getPlatformMetrics = async ({
     positiveProviderRatings,
   };
 };
-
 export const getAllProviderNames = async ({ country }) => {
   return await getAllProviderNamesQuery({
     poolCountry: country,
