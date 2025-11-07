@@ -49,11 +49,11 @@ export const getScheduledConsultationsWithClientIdForCountryQuery = async ({
 }) => {
   return await getDBPool("clinicalDb", poolCountry).query(
     `
-      SELECT client_detail_id, campaign_id, status, client_join_time, client_leave_time
+      SELECT client_detail_id, campaign_id, status, client_join_time, client_leave_time, booked_from
       FROM consultation
-      WHERE (status = 'scheduled' OR status = 'finished' OR status = 'late-canceled' OR status = 'canceled')
-            AND ($1::double precision IS NULL OR created_at >= to_timestamp($1))
-            AND ($2::double precision IS NULL OR created_at <= to_timestamp($2));
+      WHERE (status = 'scheduled' OR status = 'finished' OR status = 'late-canceled' OR status = 'canceled' OR status = 'active')
+            AND ($1::double precision IS NULL OR time >= to_timestamp($1))
+            AND ($2::double precision IS NULL OR time <= to_timestamp($2));
     `,
     [startDate, endDate]
   );
