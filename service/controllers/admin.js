@@ -345,6 +345,9 @@ export const getPlatformMetrics = async ({
   language,
   startDate,
   endDate,
+  sex,
+  urbanRural,
+  yearOfBirth,
 }) => {
   const countryId = await getCountryIdByAlpha2CodeQuery({ country }).then(
     (res) => {
@@ -354,27 +357,6 @@ export const getPlatformMetrics = async ({
       return res.rows[0].country_id;
     }
   );
-  const countryEvents = await getCountryEventsQuery({
-    countryId,
-    startDate,
-    endDate,
-  }).then((res) => {
-    return res.rows || [];
-  });
-
-  const consultations =
-    await getScheduledConsultationsWithClientIdForCountryQuery({
-      poolCountry: country,
-      startDate,
-      endDate,
-    })
-      .then((res) => {
-        return res.rows;
-      })
-      .catch((err) => {
-        console.log("❌ Error getting consultations in", err);
-        return [];
-      });
 
   const {
     totalProviders,
@@ -385,6 +367,9 @@ export const getPlatformMetrics = async ({
     poolCountry: country,
     startDate,
     endDate,
+    sex,
+    urbanRural,
+    yearOfBirth,
   })
     .then((res) => {
       if (res.rowCount === 0) {
@@ -415,7 +400,36 @@ export const getPlatformMetrics = async ({
       };
     });
 
-  const accessLogs = await getPlatformAccessLogsQuery({
+  const clientDetailIds =
+    sex || urbanRural || yearOfBirth
+      ? clientDemographics.map((d) => d.client_detail_id)
+      : null;
+
+  const countryEvents = await getCountryEventsQuery({
+    countryId,
+    startDate,
+    endDate,
+    clientDetailIds,
+  }).then((res) => {
+    return res.rows || [];
+  });
+
+  const consultations =
+    await getScheduledConsultationsWithClientIdForCountryQuery({
+      poolCountry: country,
+      startDate,
+      endDate,
+      clientDetailIds,
+    })
+      .then((res) => {
+        return res.rows;
+      })
+      .catch((err) => {
+        console.log("❌ Error getting consultations in", err);
+        return [];
+      });
+
+  let accessLogs = await getPlatformAccessLogsQuery({
     poolCountry: country,
     startDate,
     endDate,
@@ -449,11 +463,20 @@ export const getPlatformMetrics = async ({
     });
   }
 
+  if (clientDetailIds) {
+    accessLogs = accessLogs.filter((log) => {
+      const clientId = accessLogsClientDetailMap.get(log.user_id);
+
+      return clientId ? clientDetailIds.includes(clientId) : true;
+    });
+  }
+
   const positiveClientRatings =
     await getPositivePlatformRatingsFromClientsQuery({
       poolCountry: country,
       startDate,
       endDate,
+      clientDetailIds,
     }).then((res) => {
       if (!res.rowCount) return [];
       return res.rows;

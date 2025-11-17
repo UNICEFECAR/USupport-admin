@@ -46,6 +46,7 @@ export const getScheduledConsultationsWithClientIdForCountryQuery = async ({
   poolCountry,
   startDate,
   endDate,
+  clientDetailIds,
 }) => {
   return await getDBPool("clinicalDb", poolCountry).query(
     `
@@ -53,9 +54,10 @@ export const getScheduledConsultationsWithClientIdForCountryQuery = async ({
       FROM consultation
       WHERE (status = 'scheduled' OR status = 'finished' OR status = 'late-canceled' OR status = 'canceled' OR status = 'active')
             AND ($1::double precision IS NULL OR time >= to_timestamp($1))
-            AND ($2::double precision IS NULL OR time <= to_timestamp($2));
+            AND ($2::double precision IS NULL OR time <= to_timestamp($2))
+            AND ($3::uuid[] IS NULL OR client_detail_id = ANY($3));
     `,
-    [startDate, endDate]
+    [startDate, endDate, clientDetailIds]
   );
 };
 
@@ -117,6 +119,9 @@ export const getClientsAndProvidersLoggedIn15DaysQuery = async ({
   poolCountry,
   startDate,
   endDate,
+  sex,
+  urbanRural,
+  yearOfBirth,
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
@@ -128,6 +133,7 @@ export const getClientsAndProvidersLoggedIn15DaysQuery = async ({
             AND "user".last_login > now() - interval '15 days'
             AND ($1::double precision IS NULL OR last_login >= to_timestamp($1))
             AND ($2::double precision IS NULL OR last_login <= to_timestamp($2))
+            AND ($3::sex_type IS NULL OR provider_detail.sex = $3)
         ) AS providers_no,
 
         -- ✅ Count of all registered (non-deleted) providers
@@ -145,6 +151,9 @@ export const getClientsAndProvidersLoggedIn15DaysQuery = async ({
               AND "user".last_login > now() - interval '15 days'
               AND ($1::double precision IS NULL OR last_login >= to_timestamp($1))
               AND ($2::double precision IS NULL OR last_login <= to_timestamp($2))
+              AND ($3::sex_type IS NULL OR client_detail.sex = $3)
+              AND ($4::urban_rural_type IS NULL OR client_detail.urban_rural = $4)
+              AND ($5::character varying IS NULL OR client_detail.year_of_birth = $5)
           ),
           '{}'
         ) AS active_client_detail_ids,
@@ -161,16 +170,21 @@ export const getClientsAndProvidersLoggedIn15DaysQuery = async ({
           ) FILTER (
             WHERE "user".deleted_at IS NULL
               AND "user".client_detail_id IS NOT NULL
+              AND ($3::sex_type IS NULL OR client_detail.sex = $3)
+              AND ($4::urban_rural_type IS NULL OR client_detail.urban_rural = $4)
+              AND ($5::character varying IS NULL OR client_detail.year_of_birth = $5)
           ),
           '[]'
         ) AS client_demographics
 
       FROM "user"
       LEFT JOIN client_detail 
-        ON client_detail.client_detail_id = "user".client_detail_id;
+        ON client_detail.client_detail_id = "user".client_detail_id
+      LEFT JOIN provider_detail
+        ON provider_detail.provider_detail_id = "user".provider_detail_id;
 
       `,
-    [startDate, endDate]
+    [startDate, endDate, sex, urbanRural, yearOfBirth]
   );
 };
 
@@ -225,6 +239,7 @@ export const getPositivePlatformRatingsFromClientsQuery = async ({
   poolCountry,
   startDate,
   endDate,
+  clientDetailIds,
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
@@ -233,9 +248,9 @@ export const getPositivePlatformRatingsFromClientsQuery = async ({
     WHERE rating > 3
       AND ($1::double precision IS NULL OR created_at >= to_timestamp($1))
       AND ($2::double precision IS NULL OR created_at <= to_timestamp($2))
-    
+      AND ($3::uuid[] IS NULL OR client_detail_id = ANY($3));
     `,
-    [startDate, endDate]
+    [startDate, endDate, clientDetailIds]
   );
 };
 
@@ -439,18 +454,24 @@ export const getCountryEventsQuery = async ({
   countryId,
   startDate,
   endDate,
+  clientDetailIds,
 }) => {
+  console.log("countryId", countryId);
+  // console.log(clientDetailIds);
   return await getDBPool("masterDb").query(
     `
 SELECT * 
 FROM country_event 
 WHERE (country_id = $1 OR event_type = 'global_visit')
   AND ($2::double precision IS NULL OR created_at >= to_timestamp($2::double precision))
-  AND ($3::double precision IS NULL OR created_at <= to_timestamp($3::double precision));
-
-
+  AND ($3::double precision IS NULL OR created_at <= to_timestamp($3::double precision))
+  AND ($4::uuid[] IS NULL OR (
+  client_detail_id = ANY($4)
+  OR
+  event_type IN ('web_email_register_click', 'web_anonymous_register_click', 'web_guest_register_click', 'mobile_email_register_click', 'mobile_anonymous_register_click', 'mobile_guest_register_click', 'global_visit')
+  ));
       `,
-    [countryId, startDate, endDate]
+    [countryId, startDate, endDate, clientDetailIds]
   );
 };
 
