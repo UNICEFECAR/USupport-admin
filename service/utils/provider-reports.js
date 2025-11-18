@@ -387,32 +387,6 @@ export const checkIfStartTimeIsBetweenStartAndEndTime = (
   return currentTimeDate >= startTimeDate && currentTimeDate <= endTimeDate;
 };
 
-export const normalizeDate = (value, type) => {
-  if (!value) return null;
-
-  // Convert to number if it's a string or number (Unix timestamp in seconds or milliseconds)
-  let timestamp = typeof value === "string" ? Number(value) : value;
-
-  // If the value is a Unix timestamp in seconds (less than a reasonable millisecond timestamp)
-  // Convert to milliseconds. Timestamps less than 10000000000 are likely in seconds
-  if (!isNaN(timestamp) && timestamp < 10000000000) {
-    timestamp = timestamp * 1000;
-  }
-
-  const date = new Date(timestamp);
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  if (type === "start") {
-    date.setUTCHours(0, 0, 0, 0);
-  } else {
-    date.setUTCHours(23, 59, 59, 999);
-  }
-
-  return date.toISOString();
-};
-
 export const parseTime = (value) => {
   if (!value) return new Date();
 

@@ -34,10 +34,9 @@ import { getCampaignNamesByIds } from "#queries/sponsors";
 import { getOrganizationsByIdsQuery } from "#queries/organizations";
 
 import { countryNotFound } from "#utils/errors";
-import { getClientInitials } from "#utils/helperFunctions";
+import { normalizeDate, getClientInitials } from "#utils/helperFunctions";
 import {
   generateAvailabilityCSV,
-  normalizeDate,
   getHourInTimezone,
   formatDateTimeInTimezone,
   isValidTimeZone,
