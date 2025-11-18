@@ -161,3 +161,49 @@ export const calculateBaselineAssessmentScore = async (scores, country) => {
 
   return { psychological, biological, social };
 };
+
+export const normalizeDate = (value, type) => {
+  if (!value) return null;
+
+  let date;
+
+  // If we already have a Date, clone it
+  if (value instanceof Date) {
+    date = new Date(value.getTime());
+  } else if (typeof value === "string") {
+    // Try to interpret numeric strings as Unix timestamps (seconds or ms)
+    const numeric = Number(value);
+
+    if (!Number.isNaN(numeric)) {
+      let timestamp = numeric;
+      // Timestamps less than 10000000000 are likely in seconds
+      if (timestamp < 10000000000) {
+        timestamp = timestamp * 1000;
+      }
+      date = new Date(timestamp);
+    } else {
+      // Fallback for ISO / YYYY-MM-DD / other date strings
+      date = new Date(value);
+    }
+  } else if (typeof value === "number") {
+    let timestamp = value;
+    if (timestamp < 10000000000) {
+      timestamp = timestamp * 1000;
+    }
+    date = new Date(timestamp);
+  } else {
+    return null;
+  }
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  if (type === "start") {
+    date.setUTCHours(0, 0, 0, 0);
+  } else {
+    date.setUTCHours(23, 59, 59, 999);
+  }
+
+  return date.toISOString();
+};
