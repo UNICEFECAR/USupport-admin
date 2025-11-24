@@ -248,6 +248,7 @@ export const getOrganizationById = async (data) => {
       endTime: data.endTime,
       weekdays: data.weekdays,
       weekends: data.weekends,
+      timeZone: data.timeZone,
       search: data.search,
     }).then((res) => {
       return res.rows;
