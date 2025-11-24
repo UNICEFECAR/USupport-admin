@@ -882,6 +882,23 @@ export const getProvidersForOrganizationQuery = async ({
   );
 };
 
+export const getAllProviderOrganizationLinksQuery = async ({
+  country: poolCountry,
+}) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+      SELECT 
+        opl.provider_detail_id,
+        opl.organization_id,
+        o.name as organization_name
+      FROM organization_provider_links opl
+      INNER JOIN organization o ON o.organization_id = opl.organization_id
+      WHERE (opl.is_deleted = false OR opl.is_deleted IS NULL)
+        AND o.is_deleted = false;
+    `
+  );
+};
+
 export const checkOrganizationNameExistsQuery = async ({
   name,
   country: poolCountry,
