@@ -606,10 +606,10 @@ export const getPlatformMetrics = async ({
 
     if (log.platform === "client") {
       clientAccessVisitorIds.add(visitorId);
+      totalClientAccessDemographics.count++;
 
       if (demographics) {
         const { year_of_birth, urban_rural, sex } = demographics;
-        totalClientAccessDemographics.count++;
 
         const yob = year_of_birth || "missing";
         const ur = urban_rural || "missing";
