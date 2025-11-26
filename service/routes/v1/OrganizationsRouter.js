@@ -78,6 +78,7 @@ router
       weekdays,
       weekends,
       search,
+      timeZone,
     } = req.query;
 
     return await getOrganizationByIdSchema
@@ -94,6 +95,7 @@ router
         weekdays: !!Number(weekdays),
         weekends: !!Number(weekends),
         search: search || "",
+        timeZone: timeZone || null,
       })
       .then(getOrganizationById)
       .then((result) => res.status(200).send(result))

@@ -31,13 +31,15 @@ import {
 import { getProviderDataById } from "#queries/providers";
 import { getCampaignNamesByIds } from "#queries/sponsors";
 
-import { getOrganizationsByIdsQuery } from "#queries/organizations";
+import {
+  getOrganizationsByIdsQuery,
+  getAllProviderOrganizationLinksQuery,
+} from "#queries/organizations";
 
 import { countryNotFound } from "#utils/errors";
-import { getClientInitials } from "#utils/helperFunctions";
+import { normalizeDate, getClientInitials } from "#utils/helperFunctions";
 import {
   generateAvailabilityCSV,
-  normalizeDate,
   getHourInTimezone,
   formatDateTimeInTimezone,
   isValidTimeZone,
@@ -551,26 +553,32 @@ export const getProviderAvailabilityReport = async ({
   const endDate = new Date(normalizedEndDate);
 
   try {
-    const [providersResult, availabilityResult, consultationsResult] =
-      await Promise.all([
-        getAllActiveProvidersQuery({ poolCountry: country }),
-        getAvailabilitySlotsInRangeQuery({
-          poolCountry: country,
-          startDate: startDate,
-          endDate: endDate,
-        }),
-        getBookedConsultationsInRangeQuery({
-          poolCountry: country,
-          startDate: startDate,
-          endDate: endDate,
-        }),
-      ]);
+    const [
+      providersResult,
+      availabilityResult,
+      consultationsResult,
+      providerOrgLinksResult,
+    ] = await Promise.all([
+      getAllActiveProvidersQuery({ poolCountry: country }),
+      getAvailabilitySlotsInRangeQuery({
+        poolCountry: country,
+        startDate: startDate,
+        endDate: endDate,
+      }),
+      getBookedConsultationsInRangeQuery({
+        poolCountry: country,
+        startDate: startDate,
+        endDate: endDate,
+      }),
+      getAllProviderOrganizationLinksQuery({ country }),
+    ]);
 
     const providersMap = new Map();
     const availabilityRecords = [];
     const allProviders = providersResult.rows;
     const allAvailability = availabilityResult.rows;
     const allConsultations = consultationsResult.rows;
+    const providerOrganizationLinks = providerOrgLinksResult.rows || [];
 
     allProviders.forEach((provider) => {
       providersMap.set(provider.provider_detail_id, {
@@ -711,9 +719,26 @@ export const getProviderAvailabilityReport = async ({
 
     const providers = Array.from(providersMap.values());
 
+    // Build map of provider -> Map<organizationId, organizationName>
+    const providerOrganizationsMap = new Map();
+    providerOrganizationLinks.forEach((link) => {
+      const providerId = link.provider_detail_id;
+      const organizationId = link.organization_id;
+      const organizationName = link.organization_name;
+      if (!providerId || !organizationId) return;
+
+      if (!providerOrganizationsMap.has(providerId)) {
+        providerOrganizationsMap.set(providerId, new Map());
+      }
+      providerOrganizationsMap
+        .get(providerId)
+        .set(organizationId, organizationName);
+    });
+
     const csvData = generateAvailabilityCSV({
       availability: availabilityRecords,
       providers,
+      providerOrganizations: providerOrganizationsMap,
       startDate,
       endDate,
       language,

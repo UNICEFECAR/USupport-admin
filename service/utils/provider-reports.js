@@ -36,6 +36,7 @@ const formatDateToDDMMYYYY = (date) => {
 export const generateAvailabilityCSV = ({
   availability,
   providers,
+  providerOrganizations = new Map(),
   startDate,
   endDate,
   language = "en",
@@ -111,21 +112,22 @@ export const generateAvailabilityCSV = ({
 
       campaignSlotsList.forEach((slot) => {
         const slotTime = slot.time ? new Date(slot.time) : new Date(slot);
-        if (slotTime >= startDate && slotTime <= endDate) {
-          const campaignId = slot.campaign_id;
-          const rawCampaignName = slot.campaign_name;
-          const campaignName =
-            rawCampaignName && rawCampaignName !== "Unknown Campaign"
-              ? rawCampaignName
-              : t("unknown_campaign", language);
+        const campaignId = slot.campaign_id;
+        const rawCampaignName = slot.campaign_name;
+        const campaignName =
+          rawCampaignName && rawCampaignName !== "Unknown Campaign"
+            ? rawCampaignName
+            : t("unknown_campaign", language);
 
-          if (campaignId) {
-            if (!providerData.campaignSlotsById.has(campaignId)) {
-              providerData.campaignSlotsById.set(campaignId, {
-                name: campaignName,
-                slots: [],
-              });
-            }
+        if (campaignId) {
+          if (!providerData.campaignSlotsById.has(campaignId)) {
+            providerData.campaignSlotsById.set(campaignId, {
+              name: campaignName,
+              slots: [],
+            });
+          }
+
+          if (slotTime >= startDate && slotTime <= endDate) {
             providerData.campaignSlotsById.get(campaignId).slots.push(slotTime);
           }
         }
@@ -151,22 +153,22 @@ export const generateAvailabilityCSV = ({
 
       organizationSlotsList.forEach((slot) => {
         const slotTime = slot.time ? new Date(slot.time) : new Date(slot);
-        if (slotTime >= startDate && slotTime <= endDate) {
-          const organizationId = slot.organization_id;
-          const rawOrganizationName = slot.organization_name;
-          const organizationName =
-            rawOrganizationName &&
-            rawOrganizationName !== "Unknown Organization"
-              ? rawOrganizationName
-              : t("unknown_organization", language);
+        const organizationId = slot.organization_id;
+        const rawOrganizationName = slot.organization_name;
+        const organizationName =
+          rawOrganizationName && rawOrganizationName !== "Unknown Organization"
+            ? rawOrganizationName
+            : t("unknown_organization", language);
 
-          if (organizationId) {
-            if (!providerData.organizationSlotsById.has(organizationId)) {
-              providerData.organizationSlotsById.set(organizationId, {
-                name: organizationName,
-                slots: [],
-              });
-            }
+        if (organizationId) {
+          if (!providerData.organizationSlotsById.has(organizationId)) {
+            providerData.organizationSlotsById.set(organizationId, {
+              name: organizationName,
+              slots: [],
+            });
+          }
+
+          if (slotTime >= startDate && slotTime <= endDate) {
             providerData.organizationSlotsById
               .get(organizationId)
               .slots.push(slotTime);
@@ -257,6 +259,44 @@ export const generateAvailabilityCSV = ({
     }
   });
 
+  // Build global maps of all campaigns (from availability) and organizations
+  // (from availability + provider-organization links) so we can output a row
+  // for each relevant one per provider, even if that provider or the whole system
+  // has zero slots for that campaign/organization in the selected period.
+  const allCampaignsMap = new Map();
+  const allOrganizationsMap = new Map();
+
+  providerDataMap.forEach((providerData) => {
+    providerData.campaignSlotsById.forEach((data, campaignId) => {
+      if (!allCampaignsMap.has(campaignId)) {
+        allCampaignsMap.set(campaignId, data.name);
+      }
+    });
+
+    providerData.organizationSlotsById.forEach((data, organizationId) => {
+      if (!allOrganizationsMap.has(organizationId)) {
+        allOrganizationsMap.set(organizationId, data.name);
+      }
+    });
+  });
+
+  // Also include organizations coming only from enrollment links (may have no availability at all)
+  providerOrganizations.forEach((orgMap) => {
+    orgMap.forEach((orgName, orgId) => {
+      if (orgId && !allOrganizationsMap.has(orgId)) {
+        allOrganizationsMap.set(orgId, orgName);
+      }
+    });
+  });
+
+  const allCampaignEntries = Array.from(allCampaignsMap.entries()).sort(
+    (a, b) => a[1].localeCompare(b[1])
+  );
+
+  const allOrganizationEntries = Array.from(allOrganizationsMap.entries()).sort(
+    (a, b) => a[1].localeCompare(b[1])
+  );
+
   // Helper function to format period - returns [from, to] dates
   const formatPeriod = (dates) => {
     if (!dates || dates.length === 0) return ["-", "-"];
@@ -281,12 +321,8 @@ export const generateAvailabilityCSV = ({
 
     const rows = [];
 
-    // Add normal slots row (always show if there are normal slots OR if provider has no other slot types)
-    if (
-      providerData.normalSlots.length > 0 ||
-      (providerData.campaignSlotsById.size === 0 &&
-        providerData.organizationSlotsById.size === 0)
-    ) {
+    // Add normal slots row only if there are normal slots
+    if (providerData.normalSlots.length > 0) {
       const slotsPeriod =
         providerData.normalSlots.length > 0
           ? formatPeriod(providerData.normalSlots)
@@ -313,15 +349,23 @@ export const generateAvailabilityCSV = ({
     }
 
     // Add campaign slots rows (sorted by campaign name)
-    const campaignEntries = Array.from(
-      providerData.campaignSlotsById.entries()
-    ).sort((a, b) => a[1].name.localeCompare(b[1].name));
+    const campaignEntries = Array.from(allCampaignEntries);
 
-    campaignEntries.forEach(([campaignId, campaignData]) => {
+    campaignEntries.forEach(([campaignId, globalCampaignName]) => {
+      const campaignDataForProvider =
+        providerData.campaignSlotsById.get(campaignId);
       const consultations =
         providerData.campaignConsultationsById.get(campaignId) || [];
 
-      const slotsPeriod = formatPeriod(campaignData.slots);
+      const slots = campaignDataForProvider
+        ? campaignDataForProvider.slots
+        : [];
+      const campaignName =
+        (campaignDataForProvider && campaignDataForProvider.name) ||
+        globalCampaignName ||
+        t("unknown_campaign", language);
+
+      const slotsPeriod = slots.length > 0 ? formatPeriod(slots) : ["-", "-"];
       const consultationsPeriod =
         consultations.length > 0 ? formatPeriod(consultations) : ["-", "-"];
 
@@ -331,24 +375,40 @@ export const generateAvailabilityCSV = ({
         providerData.email,
         totalProviderSlots,
         t("slot_type_campaign", language),
-        campaignData.name,
-        campaignData.slots.length,
+        campaignName,
+        slots.length,
         ...slotsPeriod,
         consultations.length,
         ...consultationsPeriod,
       ]);
     });
 
-    // Add organization slots rows (sorted by organization name)
-    const organizationEntries = Array.from(
-      providerData.organizationSlotsById.entries()
-    ).sort((a, b) => a[1].name.localeCompare(b[1].name));
+    // Add organization slots rows (only for organizations the provider is enrolled in,
+    // but always including ones with zero slots/consultations in the selected period)
+    const enrolledOrgMap =
+      providerOrganizations.get(provider.provider_detail_id) || new Map();
 
-    organizationEntries.forEach(([organizationId, organizationData]) => {
+    const organizationEntries = Array.from(allOrganizationEntries).filter(
+      ([organizationId]) =>
+        enrolledOrgMap.has(organizationId) ||
+        providerData.organizationSlotsById.has(organizationId)
+    );
+
+    organizationEntries.forEach(([organizationId, globalOrganizationName]) => {
+      const organizationDataForProvider =
+        providerData.organizationSlotsById.get(organizationId);
       const consultations =
         providerData.organizationConsultationsById.get(organizationId) || [];
 
-      const slotsPeriod = formatPeriod(organizationData.slots);
+      const slots = organizationDataForProvider
+        ? organizationDataForProvider.slots
+        : [];
+      const organizationName =
+        (organizationDataForProvider && organizationDataForProvider.name) ||
+        globalOrganizationName ||
+        t("unknown_organization", language);
+
+      const slotsPeriod = slots.length > 0 ? formatPeriod(slots) : ["-", "-"];
       const consultationsPeriod =
         consultations.length > 0 ? formatPeriod(consultations) : ["-", "-"];
 
@@ -358,8 +418,8 @@ export const generateAvailabilityCSV = ({
         providerData.email,
         totalProviderSlots,
         t("slot_type_organization", language),
-        organizationData.name,
-        organizationData.slots.length,
+        organizationName,
+        slots.length,
         ...slotsPeriod,
         consultations.length,
         ...consultationsPeriod,
@@ -385,32 +445,6 @@ export const checkIfStartTimeIsBetweenStartAndEndTime = (
   const currentTimeDate = new Date(currentTime);
 
   return currentTimeDate >= startTimeDate && currentTimeDate <= endTimeDate;
-};
-
-export const normalizeDate = (value, type) => {
-  if (!value) return null;
-
-  // Convert to number if it's a string or number (Unix timestamp in seconds or milliseconds)
-  let timestamp = typeof value === "string" ? Number(value) : value;
-
-  // If the value is a Unix timestamp in seconds (less than a reasonable millisecond timestamp)
-  // Convert to milliseconds. Timestamps less than 10000000000 are likely in seconds
-  if (!isNaN(timestamp) && timestamp < 10000000000) {
-    timestamp = timestamp * 1000;
-  }
-
-  const date = new Date(timestamp);
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  if (type === "start") {
-    date.setUTCHours(0, 0, 0, 0);
-  } else {
-    date.setUTCHours(23, 59, 59, 999);
-  }
-
-  return date.toISOString();
 };
 
 export const parseTime = (value) => {

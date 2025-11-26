@@ -66,6 +66,7 @@ export const getOrganizationByIdSchema = yup.object().shape({
   weekdays: yup.boolean().notRequired(),
   weekends: yup.boolean().notRequired(),
   search: yup.string().notRequired(),
+  timeZone: yup.string().nullable().notRequired(),
 });
 
 export const removeProviderFromOrganizationSchema =

@@ -345,6 +345,9 @@ export const getPlatformMetrics = async ({
   language,
   startDate,
   endDate,
+  sex,
+  urbanRural,
+  yearOfBirth,
 }) => {
   const countryId = await getCountryIdByAlpha2CodeQuery({ country }).then(
     (res) => {
@@ -354,27 +357,6 @@ export const getPlatformMetrics = async ({
       return res.rows[0].country_id;
     }
   );
-  const countryEvents = await getCountryEventsQuery({
-    countryId,
-    startDate,
-    endDate,
-  }).then((res) => {
-    return res.rows || [];
-  });
-
-  const consultations =
-    await getScheduledConsultationsWithClientIdForCountryQuery({
-      poolCountry: country,
-      startDate,
-      endDate,
-    })
-      .then((res) => {
-        return res.rows;
-      })
-      .catch((err) => {
-        console.log("❌ Error getting consultations in", err);
-        return [];
-      });
 
   const {
     totalProviders,
@@ -385,6 +367,9 @@ export const getPlatformMetrics = async ({
     poolCountry: country,
     startDate,
     endDate,
+    sex,
+    urbanRural,
+    yearOfBirth,
   })
     .then((res) => {
       if (res.rowCount === 0) {
@@ -415,7 +400,36 @@ export const getPlatformMetrics = async ({
       };
     });
 
-  const accessLogs = await getPlatformAccessLogsQuery({
+  const clientDetailIds =
+    sex || urbanRural || yearOfBirth
+      ? clientDemographics.map((d) => d.client_detail_id)
+      : null;
+
+  const countryEvents = await getCountryEventsQuery({
+    countryId,
+    startDate,
+    endDate,
+    clientDetailIds,
+  }).then((res) => {
+    return res.rows || [];
+  });
+
+  const consultations =
+    await getScheduledConsultationsWithClientIdForCountryQuery({
+      poolCountry: country,
+      startDate,
+      endDate,
+      clientDetailIds,
+    })
+      .then((res) => {
+        return res.rows;
+      })
+      .catch((err) => {
+        console.log("❌ Error getting consultations in", err);
+        return [];
+      });
+
+  let accessLogs = await getPlatformAccessLogsQuery({
     poolCountry: country,
     startDate,
     endDate,
@@ -449,11 +463,20 @@ export const getPlatformMetrics = async ({
     });
   }
 
+  if (clientDetailIds) {
+    accessLogs = accessLogs.filter((log) => {
+      const clientId = accessLogsClientDetailMap.get(log.user_id);
+
+      return clientId ? clientDetailIds.includes(clientId) : true;
+    });
+  }
+
   const positiveClientRatings =
     await getPositivePlatformRatingsFromClientsQuery({
       poolCountry: country,
       startDate,
       endDate,
+      clientDetailIds,
     }).then((res) => {
       if (!res.rowCount) return [];
       return res.rows;
@@ -583,10 +606,10 @@ export const getPlatformMetrics = async ({
 
     if (log.platform === "client") {
       clientAccessVisitorIds.add(visitorId);
+      totalClientAccessDemographics.count++;
 
       if (demographics) {
         const { year_of_birth, urban_rural, sex } = demographics;
-        totalClientAccessDemographics.count++;
 
         const yob = year_of_birth || "missing";
         const ur = urban_rural || "missing";
@@ -644,7 +667,33 @@ export const getPlatformMetrics = async ({
       urban_rural: {},
       sex: {},
     },
+    mobile: {
+      scheduled: 0,
+      finished: 0,
+      active: 0,
+      canceled: 0,
+      "late-canceled": 0,
+      demographics: {
+        year_of_birth: {},
+        urban_rural: {},
+        sex: {},
+      },
+    },
+    web: {
+      scheduled: 0,
+      finished: 0,
+      active: 0,
+      canceled: 0,
+      "late-canceled": 0,
+      demographics: {
+        year_of_birth: {},
+        urban_rural: {},
+        sex: {},
+      },
+    },
   };
+
+  let consultationsJoinedByClientAndProvider = 0;
 
   const uniqueConsultationsData = createDemographicsObject();
 
@@ -664,16 +713,41 @@ export const getPlatformMetrics = async ({
     const c = consultations[i];
     const d = demographicsById.get(c.client_detail_id);
 
-    if (!d) continue;
+    consultationsData.count++;
+
+    if (!consultationsData[c.booked_from]) {
+      consultationsData[c.booked_from] = {
+        count: 0,
+        demographics: {
+          year_of_birth: {},
+          urban_rural: {},
+          sex: {},
+        },
+      };
+    }
+    consultationsData[c.booked_from][c.status] =
+      (consultationsData[c.booked_from][c.status] || 0) + 1;
+    consultationsData[c.booked_from].count++;
+
+    if (!d) {
+      console.log(
+        "❌ No demographics found for client detail id: ",
+        c.client_detail_id
+      );
+      continue;
+    }
 
     const { year_of_birth, urban_rural, sex } = d;
     const yob = year_of_birth || "missing";
     const ur = urban_rural || "missing";
     const s = sex || "missing";
 
-    consultationsData.count++;
-
     const hasClientJoined = c.client_join_time || c.client_leave_time;
+    const hasProviderJoined = c.provider_join_time || c.provider_leave_time;
+
+    if (hasClientJoined && hasProviderJoined) {
+      consultationsJoinedByClientAndProvider++;
+    }
 
     if (
       hasClientJoined &&
@@ -687,6 +761,13 @@ export const getPlatformMetrics = async ({
     }
 
     if (!uniqueConsultationsData.clientDetailIds.has(c.client_detail_id)) {
+      // In the web/mobile consultations demographichs we only count the consultations that are scheduled, finished or active
+      if (["scheduled", "finished", "active"].includes(c.status)) {
+        inc(consultationsData[c.booked_from].demographics.year_of_birth, yob);
+        inc(consultationsData[c.booked_from].demographics.urban_rural, ur);
+        inc(consultationsData[c.booked_from].demographics.sex, s);
+      }
+
       inc(consultationsData.demographics.year_of_birth, yob);
       inc(consultationsData.demographics.urban_rural, ur);
       inc(consultationsData.demographics.sex, s);
@@ -765,9 +846,26 @@ export const getPlatformMetrics = async ({
     inc(positiveClientRatingsDemographics.demographics.sex, s);
   });
 
-  const cancelledConsultations = consultations.filter(
-    (c) => c.status === "canceled" || c.status === "late-canceled"
-  );
+  const cancelledConsultations =
+    consultationsData.mobile.canceled + consultationsData.web.canceled;
+  const lateCancelledConsultations =
+    consultationsData.mobile["late-canceled"] +
+    consultationsData.web["late-canceled"];
+
+  const mobileScheduledConsultations = {
+    count:
+      consultationsData.mobile.scheduled +
+      consultationsData.mobile.finished +
+      consultationsData.mobile.active,
+    demographics: consultationsData.mobile.demographics,
+  };
+  const webScheduledConsultations = {
+    count:
+      consultationsData.web.scheduled +
+      consultationsData.web.active +
+      consultationsData.web.finished,
+    demographics: consultationsData.web.demographics,
+  };
 
   return {
     globalWebsiteVisits: {
@@ -779,13 +877,17 @@ export const getPlatformMetrics = async ({
       ...consultationsData,
       // uniqueCount: consultationsData.uniqueClientDetailIds.size,
     },
-    cancelledConsultations: cancelledConsultations.length,
+    cancelledConsultations: cancelledConsultations,
+    lateCancelledConsultations: lateCancelledConsultations,
     // uniqueClientsConsultations: uniqueConsultationsData,
-    scheduledConsultations: scheduledConsultationsDemographics,
-    mobileScheduledConsultations: mobileScheduledConsultationsDemographics,
+    scheduledConsultations: webScheduledConsultations,
+    mobileScheduledConsultations: mobileScheduledConsultations,
+    // scheduledConsultations: scheduledConsultationsDemographics,
+    // mobileScheduledConsultations: mobileScheduledConsultationsDemographics,
 
     scheduleButtonClick: scheduleButtonClickDemographics,
     mobileScheduleButtonClick: mobileScheduleButtonClickDemographics,
+    consultationsJoinedByClientAndProvider,
     clientsAttendedConsultations: attendedConsultationsData,
 
     totalCouponConsultations: {
@@ -825,7 +927,6 @@ export const getPlatformMetrics = async ({
     positiveProviderRatings,
   };
 };
-
 export const getAllProviderNames = async ({ country }) => {
   return await getAllProviderNamesQuery({
     poolCountry: country,
