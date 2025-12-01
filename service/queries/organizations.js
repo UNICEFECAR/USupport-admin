@@ -125,10 +125,14 @@ export const reassignProviderToOrganizationQuery = async ({
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
-      INSERT INTO organization_provider_links (organization_id, provider_detail_id, created_at)
-      SELECT $1, unnest($2::uuid[]), NOW()
-      ON CONFLICT (organization_id, provider_detail_id) DO UPDATE SET
-        created_at = NOW()
+      UPDATE organization_provider_links
+      SET 
+        created_at = NOW(),
+        is_deleted = false,
+        deleted_at = NULL
+      WHERE organization_id = $1 
+        AND provider_detail_id = ANY($2::uuid[])
+      RETURNING *;
     `,
     [organizationId, providerDetailIds]
   );
