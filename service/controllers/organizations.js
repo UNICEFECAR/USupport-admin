@@ -3,6 +3,7 @@ import { getMultipleClientsDataByIDs } from "#queries/clients";
 import {
   assignProviderToOrganizationQuery,
   checkProvidersFutureConsultationsForOrgQuery,
+  checkProviderFutureOrganizationSlotsQuery,
   createOrganizationQuery,
   editOrganizationQuery,
   getAllOrganizationsQuery,
@@ -24,6 +25,7 @@ import { getMultipleProvidersDataByIDs } from "#queries/providers";
 import {
   organizationExists,
   organizationNotFound,
+  providerHasFutureConsultations,
   providerAlreadyAssignedToOrg,
   organizationHasProviders,
 } from "#utils/errors";
@@ -36,66 +38,58 @@ import {
 } from "#utils/organization";
 
 export const createOrganization = async (data) => {
-  try {
-    // Check for duplicate names only for non-RO countries
-    if (data.country !== "RO") {
-      const existingOrg = await checkOrganizationNameExistsQuery({
-        name: data.name,
-        country: data.country,
-      });
+  // Check for duplicate names only for non-RO countries
+  if (data.country !== "RO") {
+    const existingOrg = await checkOrganizationNameExistsQuery({
+      name: data.name,
+      country: data.country,
+    });
 
-      if (existingOrg.rows[0].count > 0) {
-        throw organizationExists(data.language);
-      }
+    if (existingOrg.rows[0].count > 0) {
+      throw organizationExists(data.language);
     }
-
-    return await createOrganizationQuery({
-      ...data,
-      districtId: data.district,
-    })
-      .then(async (res) => {
-        const organizationId = res.rows[0].organization_id;
-        await handleOrganizationLinksCreation(data, organizationId);
-        return res.rows[0];
-      })
-      .catch((err) => {
-        throw err;
-      });
-  } catch (error) {
-    throw error;
   }
+
+  return await createOrganizationQuery({
+    ...data,
+    districtId: data.district,
+  })
+    .then(async (res) => {
+      const organizationId = res.rows[0].organization_id;
+      await handleOrganizationLinksCreation(data, organizationId);
+      return res.rows[0];
+    })
+    .catch((err) => {
+      throw err;
+    });
 };
 
 export const editOrganization = async (data) => {
-  try {
-    // Check for duplicate names only for non-RO countries
-    if (data.country !== "RO") {
-      const existingOrg = await checkOrganizationNameExistsQuery({
-        name: data.name,
-        country: data.country,
-        excludeId: data.organizationId, // Exclude current organization from check
-      });
+  // Check for duplicate names only for non-RO countries
+  if (data.country !== "RO") {
+    const existingOrg = await checkOrganizationNameExistsQuery({
+      name: data.name,
+      country: data.country,
+      excludeId: data.organizationId, // Exclude current organization from check
+    });
 
-      if (existingOrg.rows[0].count > 0) {
-        throw organizationExists(data.language);
-      }
+    if (existingOrg.rows[0].count > 0) {
+      throw organizationExists(data.language);
     }
-
-    return await editOrganizationQuery({
-      ...data,
-      districtId: data.district,
-    })
-      .then(async (res) => {
-        const organizationId = res.rows[0].organization_id;
-        await handleOrganizationLinksUpdate(data, organizationId);
-        return res.rows[0];
-      })
-      .catch((err) => {
-        throw err;
-      });
-  } catch (error) {
-    throw error;
   }
+
+  return await editOrganizationQuery({
+    ...data,
+    districtId: data.district,
+  })
+    .then(async (res) => {
+      const organizationId = res.rows[0].organization_id;
+      await handleOrganizationLinksUpdate(data, organizationId);
+      return res.rows[0];
+    })
+    .catch((err) => {
+      throw err;
+    });
 };
 
 export const assignProviderToOrganization = async (data) => {
@@ -346,12 +340,49 @@ export const getOrganizationById = async (data) => {
 };
 
 export const removeProviderFromOrganization = async (data) => {
+  const { organizationId, providerDetailId, country, language } = data;
+
+  const futureConsultationsForProvider =
+    await checkProvidersFutureConsultationsForOrgQuery({
+      providerDetailIds: [providerDetailId],
+      organizationId,
+      country,
+    })
+      .then((res) => {
+        const row = res.rows[0];
+        return row ? Number(row.count || 0) : 0;
+      })
+      .catch((err) => {
+        throw err;
+      });
+
+  const futureOrganizationSlotsForProvider =
+    await checkProviderFutureOrganizationSlotsQuery({
+      providerDetailId,
+      organizationId,
+      country,
+    })
+      .then((res) => {
+        const row = res.rows[0];
+        return row ? Number(row.count || 0) : 0;
+      })
+      .catch((err) => {
+        throw err;
+      });
+
+  if (
+    futureConsultationsForProvider > 0 ||
+    futureOrganizationSlotsForProvider > 0
+  ) {
+    throw providerHasFutureConsultations(language);
+  }
+
   return await removeProviderFromOrganizationQuery(data)
     .then(async (res) => {
       await removeProvidersCacheRequest({
-        providerIds: [data.providerDetailId],
-        country: data.country,
-        language: data.language,
+        providerIds: [providerDetailId],
+        country,
+        language,
       });
 
       return res.rows[0];
@@ -381,7 +412,7 @@ export const getOrganizationMetadata = async (data) => {
 };
 
 export const deleteOrganization = async (data) => {
-  const assignedProviders = await getProvidersForOrganizationQuery({
+  await getProvidersForOrganizationQuery({
     country: data.country,
     organizationId: data.organizationId,
   })

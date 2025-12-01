@@ -41,5 +41,6 @@
   "slot_type_campaign": "Kampania",
   "slot_type_organization": "Organizacja",
   "unknown_campaign": "Nieznana kampania",
-  "unknown_organization": "Nieznana organizacja"
+  "unknown_organization": "Nieznana organizacja",
+  "provider_has_future_consultations_error": "Konsultant ma przyszłe konsultacje lub sloty dla tej organizacji"
 }

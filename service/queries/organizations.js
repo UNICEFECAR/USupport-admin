@@ -523,6 +523,30 @@ export const checkProvidersFutureConsultationsForOrgQuery = async ({
   );
 };
 
+export const checkProviderFutureOrganizationSlotsQuery = async ({
+  providerDetailId,
+  organizationId,
+  country: poolCountry,
+}) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+      SELECT COUNT(*) AS count
+      FROM availability a
+      CROSS JOIN LATERAL jsonb_array_elements(
+        CASE
+          WHEN jsonb_typeof(a.organization_slots) = 'array'
+          THEN a.organization_slots
+          ELSE '[]'::jsonb
+        END
+      ) e
+      WHERE a.provider_detail_id = $1
+        AND (e->>'organization_id')::uuid = $2
+        AND (e->>'time')::timestamptz > NOW();
+    `,
+    [providerDetailId, organizationId]
+  );
+};
+
 export const getOrganizationsByIdsQuery = async ({
   organizationIds,
   country: poolCountry,
