@@ -606,10 +606,10 @@ export const getPlatformMetrics = async ({
 
     if (log.platform === "client") {
       clientAccessVisitorIds.add(visitorId);
+      totalClientAccessDemographics.count++;
 
       if (demographics) {
         const { year_of_birth, urban_rural, sex } = demographics;
-        totalClientAccessDemographics.count++;
 
         const yob = year_of_birth || "missing";
         const ur = urban_rural || "missing";
@@ -693,6 +693,8 @@ export const getPlatformMetrics = async ({
     },
   };
 
+  let consultationsJoinedByClientAndProvider = 0;
+
   const uniqueConsultationsData = createDemographicsObject();
 
   const totalCouponConsultationsData = {
@@ -741,6 +743,11 @@ export const getPlatformMetrics = async ({
     const s = sex || "missing";
 
     const hasClientJoined = c.client_join_time || c.client_leave_time;
+    const hasProviderJoined = c.provider_join_time || c.provider_leave_time;
+
+    if (hasClientJoined && hasProviderJoined) {
+      consultationsJoinedByClientAndProvider++;
+    }
 
     if (
       hasClientJoined &&
@@ -880,6 +887,7 @@ export const getPlatformMetrics = async ({
 
     scheduleButtonClick: scheduleButtonClickDemographics,
     mobileScheduleButtonClick: mobileScheduleButtonClickDemographics,
+    consultationsJoinedByClientAndProvider,
     clientsAttendedConsultations: attendedConsultationsData,
 
     totalCouponConsultations: {
