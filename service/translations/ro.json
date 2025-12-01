@@ -41,5 +41,6 @@
   "slot_type_campaign": "Campanie",
   "slot_type_organization": "Organizație",
   "unknown_campaign": "Campanie necunoscută",
-  "unknown_organization": "Organizație necunoscută"
+  "unknown_organization": "Organizație necunoscută",
+  "provider_has_future_consultations_error": "Furnizorul are consultații viitoare sau sloturi pentru această organizație"
 }

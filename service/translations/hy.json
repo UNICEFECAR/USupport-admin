@@ -39,5 +39,6 @@
   "slot_type_campaign": "Արշավ",
   "slot_type_organization": "Կազմակերպություն",
   "unknown_campaign": "Անհայտ արշավ",
-  "unknown_organization": "Անհայտ կազմակերպություն"
+  "unknown_organization": "Անհայտ կազմակերպություն",
+  "provider_has_future_consultations_error": "Խորհրդատուն այս կազմակերպության համար ունի ապագա խորհրդատվություններ կամ ժամանակահատվածներ"
 }

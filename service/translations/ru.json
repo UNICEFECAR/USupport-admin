@@ -41,5 +41,6 @@
   "slot_type_campaign": "Кампания",
   "slot_type_organization": "Организация",
   "unknown_campaign": "Неизвестная кампания",
-  "unknown_organization": "Неизвестная организация"
+  "unknown_organization": "Неизвестная организация",
+  "provider_has_future_consultations_error": "У консультанта есть будущие консультации или слоты для этой организации"
 }
