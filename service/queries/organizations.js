@@ -236,6 +236,7 @@ export const getAllOrganizationsQuery = async ({ country: poolCountry }) => {
       )
       GROUP BY organization_id
     ) property_types_agg ON organization.organization_id = property_types_agg.organization_id
+    WHERE organization.is_deleted = false
     `
   );
 };
