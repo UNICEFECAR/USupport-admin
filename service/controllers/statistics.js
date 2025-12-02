@@ -172,13 +172,13 @@ export const getSecurityCheck = async ({ country }) => {
     ) {
       counter++;
     }
-    if (answers.addressed_needs < 6) {
+    if (answers.provider_attend === true && answers.addressed_needs < 6) {
       counter++;
     }
-    if (answers.improve_wellbeing < 6) {
+    if (answers.provider_attend === true && answers.improve_wellbeing < 6) {
       counter++;
     }
-    if (answers.feelings_now < 6) {
+    if (answers.provider_attend === true && answers.feelings_now < 6) {
       counter++;
     }
 
