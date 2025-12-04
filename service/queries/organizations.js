@@ -957,3 +957,13 @@ export const checkOrganizationNameExistsQuery = async ({
     [name, false, excludeId]
   );
 };
+
+export const getOrganizationsNoQuery = async ({ poolCountry }) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+      SELECT COUNT(DISTINCT organization_id) AS organizations_no
+      FROM organization
+      WHERE is_deleted = false;
+    `
+  );
+};
