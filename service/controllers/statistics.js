@@ -34,6 +34,7 @@ import { getCampaignNamesByIds } from "#queries/sponsors";
 import {
   getOrganizationsByIdsQuery,
   getAllProviderOrganizationLinksQuery,
+  getOrganizationsNoQuery,
 } from "#queries/organizations";
 
 import { countryNotFound } from "#utils/errors";
@@ -89,11 +90,20 @@ export const getCountryStatistics = async ({ language, countryId }) => {
         throw error;
       });
 
+  const organizationsNo = await getOrganizationsNoQuery({
+    poolCountry: country,
+  })
+    .then((result) => result.rows[0].organizations_no)
+    .catch((error) => {
+      throw error;
+    });
+
   return {
     clientsNo,
     providersNo,
     publishedArticlesNo,
     scheduledConsultationsNo,
+    organizationsNo,
   };
 };
 
