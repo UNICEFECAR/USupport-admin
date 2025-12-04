@@ -41,5 +41,6 @@
   "slot_type_campaign": "Campaign",
   "slot_type_organization": "Organization",
   "unknown_campaign": "Unknown Campaign",
-  "unknown_organization": "Unknown Organization"
+  "unknown_organization": "Unknown Organization",
+  "provider_has_future_consultations_error": "Provider has future consultations or slots for this organization"
 }

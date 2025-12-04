@@ -125,10 +125,14 @@ export const reassignProviderToOrganizationQuery = async ({
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
-      INSERT INTO organization_provider_links (organization_id, provider_detail_id, created_at)
-      SELECT $1, unnest($2::uuid[]), NOW()
-      ON CONFLICT (organization_id, provider_detail_id) DO UPDATE SET
-        created_at = NOW()
+      UPDATE organization_provider_links
+      SET 
+        created_at = NOW(),
+        is_deleted = false,
+        deleted_at = NULL
+      WHERE organization_id = $1 
+        AND provider_detail_id = ANY($2::uuid[])
+      RETURNING *;
     `,
     [organizationId, providerDetailIds]
   );
@@ -232,6 +236,7 @@ export const getAllOrganizationsQuery = async ({ country: poolCountry }) => {
       )
       GROUP BY organization_id
     ) property_types_agg ON organization.organization_id = property_types_agg.organization_id
+    WHERE organization.is_deleted = false
     `
   );
 };
@@ -520,6 +525,30 @@ export const checkProvidersFutureConsultationsForOrgQuery = async ({
           provider_detail_id;
     `,
     [organizationId, providerDetailIds]
+  );
+};
+
+export const checkProviderFutureOrganizationSlotsQuery = async ({
+  providerDetailId,
+  organizationId,
+  country: poolCountry,
+}) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+      SELECT COUNT(*) AS count
+      FROM availability a
+      CROSS JOIN LATERAL jsonb_array_elements(
+        CASE
+          WHEN jsonb_typeof(a.organization_slots) = 'array'
+          THEN a.organization_slots
+          ELSE '[]'::jsonb
+        END
+      ) e
+      WHERE a.provider_detail_id = $1
+        AND (e->>'organization_id')::uuid = $2
+        AND (e->>'time')::timestamptz > NOW();
+    `,
+    [providerDetailId, organizationId]
   );
 };
 
@@ -926,5 +955,15 @@ export const checkOrganizationNameExistsQuery = async ({
         END
     `,
     [name, false, excludeId]
+  );
+};
+
+export const getOrganizationsNoQuery = async ({ poolCountry }) => {
+  return await getDBPool("piiDb", poolCountry).query(
+    `
+      SELECT COUNT(DISTINCT organization_id) AS organizations_no
+      FROM organization
+      WHERE is_deleted = false;
+    `
   );
 };

@@ -160,6 +160,15 @@ export const providerAlreadyAssignedToOrg = (language) => {
   return error;
 };
 
+export const providerHasFutureConsultations = (language) => {
+  const error = new Error();
+  error.message = t("provider_has_future_consultations_error", language);
+  error.name =
+    "PROVIDER HAS FUTURE CONSULTATIONS OR SLOTS FOR THIS ORGANIZATION";
+  error.status = 400;
+  return error;
+};
+
 export const organizationNotFound = (language) => {
   const error = new Error();
   error.message = t("organization_not_found_error", language);

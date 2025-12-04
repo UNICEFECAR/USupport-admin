@@ -34,6 +34,7 @@ import { getCampaignNamesByIds } from "#queries/sponsors";
 import {
   getOrganizationsByIdsQuery,
   getAllProviderOrganizationLinksQuery,
+  getOrganizationsNoQuery,
 } from "#queries/organizations";
 
 import { countryNotFound } from "#utils/errors";
@@ -89,11 +90,20 @@ export const getCountryStatistics = async ({ language, countryId }) => {
         throw error;
       });
 
+  const organizationsNo = await getOrganizationsNoQuery({
+    poolCountry: country,
+  })
+    .then((result) => result.rows[0].organizations_no)
+    .catch((error) => {
+      throw error;
+    });
+
   return {
     clientsNo,
     providersNo,
     publishedArticlesNo,
     scheduledConsultationsNo,
+    organizationsNo,
   };
 };
 
@@ -172,13 +182,13 @@ export const getSecurityCheck = async ({ country }) => {
     ) {
       counter++;
     }
-    if (answers.addressed_needs < 6) {
+    if (answers.provider_attend === true && answers.addressed_needs < 6) {
       counter++;
     }
-    if (answers.improve_wellbeing < 6) {
+    if (answers.provider_attend === true && answers.improve_wellbeing < 6) {
       counter++;
     }
-    if (answers.feelings_now < 6) {
+    if (answers.provider_attend === true && answers.feelings_now < 6) {
       counter++;
     }
 
