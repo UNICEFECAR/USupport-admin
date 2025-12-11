@@ -171,6 +171,9 @@ export const getAllOrganizationsWithDetails = async (data) => {
   const consultations = await getConsultationsForOrganizationsQuery({
     country: data.country,
     organizationIds: ids,
+    startDate: data.startDate || null,
+    endDate: data.endDate || null,
+    timeZone: data.timeZone || null,
   })
     .then((res) => {
       return res.rows || [];
