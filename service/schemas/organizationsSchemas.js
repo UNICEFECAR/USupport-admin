@@ -36,6 +36,9 @@ export const getAllOrganizationsSchema = yup.object().shape({
 export const getOrganizationsWithDetailsSchema = yup.object().shape({
   country: yup.string().required(),
   search: yup.string().nullable().notRequired(),
+  startDate: yup.string().nullable().notRequired(),
+  endDate: yup.string().nullable().notRequired(),
+  timeZone: yup.string().nullable().notRequired(),
 });
 
 export const editOrganizationSchema = createOrganizationSchema
