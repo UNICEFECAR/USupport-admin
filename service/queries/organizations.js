@@ -436,6 +436,9 @@ export const getOrganizationByIdQuery = async ({
 export const getConsultationsForOrganizationsQuery = async ({
   organizationIds,
   country: poolCountry,
+  startDate,
+  endDate,
+  timeZone,
 }) => {
   return await getDBPool("clinicalDb", poolCountry).query(
     `
@@ -447,12 +450,19 @@ export const getConsultationsForOrganizationsQuery = async ({
           consultation
       WHERE 
           organization_id = ANY($1)
-          AND
-          (consultation.status = 'scheduled' OR consultation.status = 'finished')
+          AND (consultation.status = 'scheduled' OR consultation.status = 'finished')
+          AND (
+            $2::text IS NULL 
+            OR (consultation.time AT TIME ZONE COALESCE($4, 'UTC'))::date >= $2::date
+          )
+          AND (
+            $3::text IS NULL 
+            OR (consultation.time AT TIME ZONE COALESCE($4, 'UTC'))::date <= $3::date
+          )
       GROUP BY 
           organization_id;
     `,
-    [organizationIds]
+    [organizationIds, startDate || null, endDate || null, timeZone || null]
   );
 };
 
