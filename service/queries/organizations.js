@@ -11,14 +11,16 @@ export const createOrganizationQuery = async ({
   location,
   description,
   districtId,
+  descriptionRO,
+  descriptionUK,
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
       INSERT INTO organization (
         name, created_by, website_url, address, phone, email,
-        geolocation, description, district_id
+        geolocation, description, district_id, description_ro, description_uk
       )
-      VALUES ($1, $2, $3, $4, $5, $6, ST_Point($7, $8), $9, $10)
+      VALUES ($1, $2, $3, $4, $5, $6, ST_Point($7, $8), $9, $10, $11, $12)
       RETURNING *, ST_X(geolocation) as longitude, ST_Y(geolocation) as latitude
     `,
     [
@@ -32,6 +34,8 @@ export const createOrganizationQuery = async ({
       location?.latitude,
       description,
       districtId,
+      descriptionRO,
+      descriptionUK,
     ]
   );
 };
@@ -46,6 +50,8 @@ export const editOrganizationQuery = async ({
   email,
   location,
   description,
+  descriptionRO,
+  descriptionUK,
   districtId,
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
@@ -59,6 +65,8 @@ export const editOrganizationQuery = async ({
         email = $5,
         geolocation = ST_Point($6, $7),
         description = $8,
+        description_ro = $11,
+        description_uk = $12,
         district_id = CASE WHEN $9::uuid IS NULL THEN district_id ELSE $9::uuid END
       WHERE organization_id = $10
       RETURNING *, ST_X(geolocation) as longitude, ST_Y(geolocation) as latitude;
@@ -74,6 +82,8 @@ export const editOrganizationQuery = async ({
       description,
       districtId || null,
       organizationId,
+      descriptionRO,
+      descriptionUK,
     ]
   );
 };
@@ -178,6 +188,8 @@ export const getAllOrganizationsQuery = async ({ country: poolCountry }) => {
       ST_X(organization.geolocation) as longitude, 
       ST_Y(organization.geolocation) as latitude,
       district.name as district,
+      organization.description_ro,
+      organization.description_uk,
       COALESCE(specialisations_agg.specialisations, '[]'::json) as specialisations,
       COALESCE(payment_methods_agg.payment_methods, '[]'::json) as payment_methods,
       COALESCE(user_interactions_agg.user_interactions, '[]'::json) as user_interactions,
@@ -255,6 +267,8 @@ export const getAllOrganizationsWithDetailsQuery = async ({
         organization.phone,
         organization.email,
         organization.description,
+        organization.description_ro,
+        organization.description_uk,
         organization.created_by,
         organization.created_at,
         organization.district_id,
@@ -348,6 +362,8 @@ export const getOrganizationByIdQuery = async ({
         organization.phone,
         organization.email,
         organization.description,
+        organization.description_ro,
+        organization.description_uk,
         organization.created_at, 
         organization.district_id,
         ST_X(organization.geolocation) as longitude, 

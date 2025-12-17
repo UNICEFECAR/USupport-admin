@@ -42,5 +42,6 @@
   "slot_type_organization": "Организация",
   "unknown_campaign": "Неизвестная кампания",
   "unknown_organization": "Неизвестная организация",
-  "provider_has_future_consultations_error": "У консультанта есть будущие консультации или слоты для этой организации"
+  "provider_has_future_consultations_error": "У консультанта есть будущие консультации или слоты для этой организации",
+  "translation_failed_error": "Перевод не удался. Пожалуйста, попробуйте позже."
 }

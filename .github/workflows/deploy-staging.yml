@@ -68,6 +68,7 @@ jobs:
             echo "  PSKZ_ACCESS_KEY_ID: '${{ secrets.PSKZ_ACCESS_KEY_ID }}'"
             echo "  PSKZ_SECRET_ACCESS_KEY: '${{ secrets.PSKZ_SECRET_ACCESS_KEY }}'"
             echo "  PSKZ_ROLE: '${{ secrets.PSKZ_ROLE }}'"
+            echo "  GOOGLE_API_KEY: '${{ secrets.GOOGLE_API_KEY }}'"
           } > kube-config/staging/secrets.yaml
 
       - name: Deploy to Kubernetes

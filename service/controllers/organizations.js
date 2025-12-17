@@ -28,7 +28,10 @@ import {
   providerHasFutureConsultations,
   providerAlreadyAssignedToOrg,
   organizationHasProviders,
+  translationFailed,
 } from "#utils/errors";
+
+import { translateText } from "#utils/googleTranslate";
 
 import { removeProvidersCacheRequest } from "#utils/helperFunctions";
 
@@ -65,6 +68,7 @@ export const createOrganization = async (data) => {
 };
 
 export const editOrganization = async (data) => {
+  console.log(data);
   // Check for duplicate names only for non-RO countries
   if (data.country !== "RO") {
     const existingOrg = await checkOrganizationNameExistsQuery({
@@ -442,5 +446,27 @@ export const deleteOrganization = async (data) => {
     })
     .catch((err) => {
       throw err;
+    });
+};
+
+export const translateTextController = async (data) => {
+  const { text, sourceLanguage, targetLanguage, language } = data;
+
+  console.log("Translation request:", { text, sourceLanguage, targetLanguage });
+
+  return await translateText({
+    text,
+    sourceLanguage,
+    targetLanguage,
+  })
+    .then((translatedText) => {
+      console.log("Translation success:", translatedText);
+      return { translatedText };
+    })
+    .catch((err) => {
+      console.error("Translation error:", err);
+      console.error("Translation error message:", err.message);
+      console.error("Translation error status:", err.status);
+      throw translationFailed(language, err.message);
     });
 };

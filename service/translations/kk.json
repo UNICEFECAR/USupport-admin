@@ -42,5 +42,6 @@
   "slot_type_organization": "Ұйым",
   "unknown_campaign": "Белгісіз науқан",
   "unknown_organization": "Белгісіз ұйым",
-  "provider_has_future_consultations_error": "Консультантта бұл ұйым үшін болашақ консультациялар немесе слоттар бар"
+  "provider_has_future_consultations_error": "Консультантта бұл ұйым үшін болашақ консультациялар немесе слоттар бар",
+  "translation_failed_error": "Аударма сәтсіз аяқталды. Кейінірек қайталап көріңіз."
 }
