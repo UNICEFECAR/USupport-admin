@@ -42,5 +42,6 @@
   "slot_type_organization": "Organization",
   "unknown_campaign": "Unknown Campaign",
   "unknown_organization": "Unknown Organization",
-  "provider_has_future_consultations_error": "Provider has future consultations or slots for this organization"
+  "provider_has_future_consultations_error": "Provider has future consultations or slots for this organization",
+  "translation_failed_error": "Translation failed. Please try again later."
 }

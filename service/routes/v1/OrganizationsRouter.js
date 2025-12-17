@@ -10,6 +10,7 @@ import {
   removeProviderFromOrganization,
   getOrganizationMetadata,
   deleteOrganization,
+  translateTextController,
 } from "#controllers/organizations";
 import {
   assignProviderToOrganizationSchema,
@@ -21,6 +22,7 @@ import {
   organizationCountrySchema,
   deleteOrganizationSchema,
   getOrganizationsWithDetailsSchema,
+  translateTextSchema,
 } from "#schemas/organizationsSchemas";
 
 const router = express.Router();
@@ -179,6 +181,21 @@ router.put("/remove-provider", async (req, res, next) => {
     .strict(true)
     .validate({ ...req.body, country, language })
     .then(removeProviderFromOrganization)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.post("/translate", async (req, res, next) => {
+  const language = req.header("x-language-alpha-2");
+
+  return await translateTextSchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({
+      ...req.body,
+      language,
+    })
+    .then(translateTextController)
     .then((result) => res.status(200).send(result))
     .catch(next);
 });
