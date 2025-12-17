@@ -16,6 +16,8 @@ export const createOrganizationSchema = yup.object().shape({
   email: yup.string().nullable().notRequired(),
   district: yup.string().uuid().nullable().notRequired(),
   description: yup.string().nullable().notRequired(),
+  descriptionRO: yup.string().nullable().notRequired(),
+  descriptionUK: yup.string().nullable().notRequired(),
   paymentMethods: yup.array().of(yup.string().uuid()).notRequired(),
   userInteractions: yup.array().of(yup.string().uuid()).notRequired(),
   propertyType: yup.array().of(yup.string().uuid()).notRequired(),
@@ -90,4 +92,11 @@ export const organizationMetadataSchema = yup.object().shape({
       "all",
     ])
     .required(),
+});
+
+export const translateTextSchema = yup.object().shape({
+  text: yup.string().required(),
+  sourceLanguage: yup.string().length(2).required(),
+  targetLanguage: yup.string().length(2).required(),
+  language: yup.string().required(), // For error messages
 });

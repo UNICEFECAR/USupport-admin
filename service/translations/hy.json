@@ -40,5 +40,6 @@
   "slot_type_organization": "Կազմակերպություն",
   "unknown_campaign": "Անհայտ արշավ",
   "unknown_organization": "Անհայտ կազմակերպություն",
-  "provider_has_future_consultations_error": "Խորհրդատուն այս կազմակերպության համար ունի ապագա խորհրդատվություններ կամ ժամանակահատվածներ"
+  "provider_has_future_consultations_error": "Խորհրդատուն այս կազմակերպության համար ունի ապագա խորհրդատվություններ կամ ժամանակահատվածներ",
+  "translation_failed_error": "Թարգմանությունը ձախողվեց։ Խնդրում ենք փորձել ավելի ուշ։"
 }

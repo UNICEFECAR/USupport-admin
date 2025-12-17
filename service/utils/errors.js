@@ -204,3 +204,14 @@ export const baselineAssessmentThresholdNotFound = (language) => {
   error.status = 404;
   return error;
 };
+
+export const translationFailed = (language, details = "") => {
+  const error = new Error();
+  error.message = t("translation_failed_error", language);
+  error.name = "TRANSLATION FAILED";
+  error.status = 500;
+  if (details) {
+    error.details = details;
+  }
+  return error;
+};

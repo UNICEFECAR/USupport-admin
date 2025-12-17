@@ -42,5 +42,6 @@
   "slot_type_organization": "Organization",
   "unknown_campaign": "Unknown Campaign",
   "unknown_organization": "Unknown Organization",
-  "provider_has_future_consultations_error": "Provider has future consultations or slots for this organization"
+  "provider_has_future_consultations_error": "Ο πάροχος έχει μελλοντικές συνεδρίες ή διαθέσιμες θέσεις για αυτόν τον οργανισμό",
+  "translation_failed_error": "Η μετάφραση απέτυχε. Παρακαλώ δοκιμάστε ξανά αργότερα."
 }
