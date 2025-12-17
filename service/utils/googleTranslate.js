@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
 
-const GOOGLE_TRANSLATE_API_KEY = process.env.GOOGLE_TRANSLATE_API_KEY;
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 const GOOGLE_TRANSLATE_API_URL =
   "https://translation.googleapis.com/language/translate/v2";
 
@@ -18,8 +18,8 @@ export const translateText = async ({
   sourceLanguage,
   targetLanguage,
 }) => {
-  if (!GOOGLE_TRANSLATE_API_KEY) {
-    throw new Error("GOOGLE_TRANSLATE_API_KEY is not configured");
+  if (!GOOGLE_API_KEY) {
+    throw new Error("GOOGLE_API_KEY is not configured");
   }
 
   if (!text || text.trim() === "") {
@@ -32,7 +32,7 @@ export const translateText = async ({
   }
 
   const url = new URL(GOOGLE_TRANSLATE_API_URL);
-  url.searchParams.append("key", GOOGLE_TRANSLATE_API_KEY);
+  url.searchParams.append("key", GOOGLE_API_KEY);
 
   const response = await fetch(url.toString(), {
     method: "POST",
@@ -80,8 +80,8 @@ export const translateTextBatch = async ({
   sourceLanguage,
   targetLanguage,
 }) => {
-  if (!GOOGLE_TRANSLATE_API_KEY) {
-    throw new Error("GOOGLE_TRANSLATE_API_KEY is not configured");
+  if (!GOOGLE_API_KEY) {
+    throw new Error("GOOGLE_API_KEY is not configured");
   }
 
   if (!texts || texts.length === 0) {
@@ -94,7 +94,7 @@ export const translateTextBatch = async ({
   }
 
   const url = new URL(GOOGLE_TRANSLATE_API_URL);
-  url.searchParams.append("key", GOOGLE_TRANSLATE_API_KEY);
+  url.searchParams.append("key", GOOGLE_API_KEY);
 
   const response = await fetch(url.toString(), {
     method: "POST",
