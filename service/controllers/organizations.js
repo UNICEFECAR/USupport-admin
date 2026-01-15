@@ -33,7 +33,10 @@ import {
 
 import { translateText } from "#utils/googleTranslate";
 
-import { removeProvidersCacheRequest } from "#utils/helperFunctions";
+import {
+  removeProvidersCacheRequest,
+  getClientInitials,
+} from "#utils/helperFunctions";
 
 import {
   handleOrganizationLinksCreation,
@@ -327,9 +330,7 @@ export const getOrganizationById = async (data) => {
         );
         return {
           ...x,
-          clientName: `${consultationClient.name || ""} ${
-            consultationClient.surname || ""
-          }`,
+          clientName: getClientInitials(consultationClient || {}),
         };
       });
 
