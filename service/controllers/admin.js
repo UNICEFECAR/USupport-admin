@@ -225,10 +225,19 @@ export const changeAdminUserPassword = async ({
 
 export const getAllProviders = async (props) => {
   const newOffset = props.offset === 1 ? 0 : (props.offset - 1) * props.limit;
+  
+  // If search contains spaces, split it into terms; otherwise use the whole string
+  const searchTerms = props.search && props.search.includes(" ")
+    ? props.search.trim().split(/\s+/).filter(term => term.length > 0)
+    : props.search
+      ? [props.search]
+      : null;
+  
   return await getAllProvidersQuery({
     ...props,
     poolCountry: props.country,
     offset: newOffset,
+    search: searchTerms,
   })
     .then(async (res) => {
       const providers = res.rows;
