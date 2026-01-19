@@ -226,7 +226,6 @@ export const changeAdminUserPassword = async ({
 export const getAllProviders = async (props) => {
   const newOffset = props.offset === 1 ? 0 : (props.offset - 1) * props.limit;
   
-  // If search contains spaces, split it into terms; otherwise use the whole string
   const searchTerms = props.search && props.search.includes(" ")
     ? props.search.trim().split(/\s+/).filter(term => term.length > 0)
     : props.search
@@ -356,8 +355,12 @@ export const getPlatformMetrics = async ({
   endDate,
   sex,
   urbanRural,
-  yearOfBirth,
+  yearOfBirthFrom,
+  yearOfBirthTo,
 }) => {
+  // Ensure empty strings are converted to null
+  const yearFrom = yearOfBirthFrom && yearOfBirthFrom !== "" ? yearOfBirthFrom : null;
+  const yearTo = yearOfBirthTo && yearOfBirthTo !== "" ? yearOfBirthTo : null;
   const countryId = await getCountryIdByAlpha2CodeQuery({ country }).then(
     (res) => {
       if (res.rowCount === 0) {
@@ -378,7 +381,8 @@ export const getPlatformMetrics = async ({
     endDate,
     sex,
     urbanRural,
-    yearOfBirth,
+    yearOfBirthFrom: yearFrom,
+    yearOfBirthTo: yearTo,
   })
     .then((res) => {
       if (res.rowCount === 0) {
@@ -410,7 +414,7 @@ export const getPlatformMetrics = async ({
     });
 
   const clientDetailIds =
-    sex || urbanRural || yearOfBirth
+    sex || urbanRural || yearOfBirthFrom || yearOfBirthTo
       ? clientDemographics.map((d) => d.client_detail_id)
       : null;
 
