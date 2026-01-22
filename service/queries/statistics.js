@@ -121,7 +121,8 @@ export const getClientsAndProvidersLoggedIn15DaysQuery = async ({
   endDate,
   sex,
   urbanRural,
-  yearOfBirth,
+  yearOfBirthFrom,
+  yearOfBirthTo,
 }) => {
   return await getDBPool("piiDb", poolCountry).query(
     `
@@ -153,7 +154,13 @@ export const getClientsAndProvidersLoggedIn15DaysQuery = async ({
               AND ($2::double precision IS NULL OR last_login <= to_timestamp($2))
               AND ($3::sex_type IS NULL OR client_detail.sex = $3)
               AND ($4::urban_rural_type IS NULL OR client_detail.urban_rural = $4)
-              AND ($5::character varying IS NULL OR client_detail.year_of_birth = $5)
+              AND (
+                ($5::integer IS NULL AND $6::integer IS NULL)
+                OR (client_detail.year_of_birth ~ '^[0-9]+$'
+                    AND ($5::integer IS NULL OR CAST(client_detail.year_of_birth AS INTEGER) >= $5)
+                    AND ($6::integer IS NULL OR CAST(client_detail.year_of_birth AS INTEGER) <= $6)
+                )
+              )
           ),
           '{}'
         ) AS active_client_detail_ids,
@@ -172,7 +179,13 @@ export const getClientsAndProvidersLoggedIn15DaysQuery = async ({
               AND "user".client_detail_id IS NOT NULL
               AND ($3::sex_type IS NULL OR client_detail.sex = $3)
               AND ($4::urban_rural_type IS NULL OR client_detail.urban_rural = $4)
-              AND ($5::character varying IS NULL OR client_detail.year_of_birth = $5)
+              AND (
+                ($5::integer IS NULL AND $6::integer IS NULL)
+                OR (client_detail.year_of_birth ~ '^[0-9]+$'
+                    AND ($5::integer IS NULL OR CAST(client_detail.year_of_birth AS INTEGER) >= $5)
+                    AND ($6::integer IS NULL OR CAST(client_detail.year_of_birth AS INTEGER) <= $6)
+                )
+              )
           ),
           '[]'
         ) AS client_demographics
@@ -184,7 +197,7 @@ export const getClientsAndProvidersLoggedIn15DaysQuery = async ({
         ON provider_detail.provider_detail_id = "user".provider_detail_id;
 
       `,
-    [startDate, endDate, sex, urbanRural, yearOfBirth]
+    [startDate, endDate, sex, urbanRural, yearOfBirthFrom, yearOfBirthTo]
   );
 };
 
