@@ -37,7 +37,6 @@ export const getAllProvidersQuery = async ({
   sort_status,
   search,
 }) => {
-  const searchPattern = search ? `%${search}%` : null;
   return await getDBPool("piiDb", poolCountry).query(
     `
         SELECT provider_detail."provider_detail_id", provider_detail."name", patronym, surname, nickname,
@@ -59,11 +58,14 @@ export const getAllProvidersQuery = async ({
           AND CASE WHEN $5 = 'any' THEN specializations IS NOT NULL ELSE specializations::text[] @> ARRAY[$5] END
           AND CASE WHEN $6 = true THEN consultation_price = 0 ELSE consultation_price >= 0 END
           AND (
-            $11::text IS NULL OR
-            (provider_detail.name::text ILIKE $11::text OR
-             provider_detail.surname ILIKE $11::text OR
-             provider_detail.patronym ILIKE $11::text OR
-             provider_detail.email ILIKE $11::text)
+            $11::text[] IS NULL OR
+            EXISTS (
+              SELECT 1 FROM unnest($11::text[]) AS search_term
+              WHERE provider_detail.name::text ILIKE '%' || search_term || '%'
+                 OR provider_detail.surname ILIKE '%' || search_term || '%'
+                 OR provider_detail.patronym ILIKE '%' || search_term || '%'
+                 OR provider_detail.email ILIKE '%' || search_term || '%'
+            )
           )
         )
         GROUP BY provider_detail.provider_detail_id
@@ -90,7 +92,7 @@ export const getAllProvidersQuery = async ({
       sort_email,
       sort_consultationPrice,
       sort_status,
-      searchPattern,
+      search,
     ]
   );
 };
