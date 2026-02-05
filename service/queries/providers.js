@@ -59,13 +59,14 @@ export const getAllProvidersQuery = async ({
           AND CASE WHEN $6 = true THEN consultation_price = 0 ELSE consultation_price >= 0 END
           AND (
             $11::text[] IS NULL OR
-            EXISTS (
-              SELECT 1 FROM unnest($11::text[]) AS search_term
+            (
+              SELECT COUNT(DISTINCT search_term) 
+              FROM unnest($11::text[]) AS search_term
               WHERE provider_detail.name::text ILIKE '%' || search_term || '%'
                  OR provider_detail.surname ILIKE '%' || search_term || '%'
                  OR provider_detail.patronym ILIKE '%' || search_term || '%'
                  OR provider_detail.email ILIKE '%' || search_term || '%'
-            )
+            ) = array_length($11::text[], 1)
           )
         )
         GROUP BY provider_detail.provider_detail_id
