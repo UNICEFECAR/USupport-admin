@@ -60,7 +60,7 @@ export const getAllProvidersQuery = async ({
           AND (
             $11::text[] IS NULL OR
             (
-              SELECT COUNT(DISTINCT search_term) 
+              SELECT COUNT(*) 
               FROM unnest($11::text[]) AS search_term
               WHERE provider_detail.name::text ILIKE '%' || search_term || '%'
                  OR provider_detail.surname ILIKE '%' || search_term || '%'
