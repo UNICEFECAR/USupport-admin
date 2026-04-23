@@ -5,11 +5,17 @@ import {
   getQuestionReportsQuery,
 } from "#queries/myQA";
 
-import { getMultipleProvidersDataByIDs } from "#queries/providers";
+import { getMultipleProvidersDataByIDs, getLanguageIdByAlpha2Query } from "#queries/providers";
 
 import { questionCantBeDeleted, questionCantBeActivated } from "#utils/errors";
 
-export const getQuestionReports = async ({ country }) => {
+export const getQuestionReports = async ({ country, language }) => {
+  const languageId = language
+    ? await getLanguageIdByAlpha2Query(language).then(
+        (res) => res.rows[0]?.language_id ?? null
+      )
+    : null;
+
   return await getQuestionReportsQuery({ poolCountry: country })
     .then(async (res) => {
       if (res.rowCount === 0) {
@@ -24,6 +30,7 @@ export const getQuestionReports = async ({ country }) => {
         const providersDetails = await getMultipleProvidersDataByIDs({
           poolCountry: country,
           providerDetailIds: providerIds,
+          languageId,
         })
           .then((res) => {
             if (res.rowCount === 0) {
@@ -114,7 +121,13 @@ export const activateQuestion = async ({
     });
 };
 
-export const getAllQuestions = async ({ country, type, languageId }) => {
+export const getAllQuestions = async ({ country, type, languageId, headerLanguage }) => {
+  const providerLanguageId = headerLanguage
+    ? await getLanguageIdByAlpha2Query(headerLanguage).then(
+        (res) => res.rows[0]?.language_id ?? null
+      )
+    : null;
+
   const questions = await getAllQuestionsQuery({
     poolCountry: country,
     type,
@@ -139,6 +152,7 @@ export const getAllQuestions = async ({ country, type, languageId }) => {
     const providersDetails = await getMultipleProvidersDataByIDs({
       poolCountry: country,
       providerDetailIds: providerIds,
+      languageId: providerLanguageId,
     }).then((res) => {
       if (res.rowCount === 0) {
         return [];

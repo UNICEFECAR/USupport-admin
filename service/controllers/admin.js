@@ -28,6 +28,7 @@ import {
 import {
   getAllProviderNamesQuery,
   getAllProvidersQuery,
+  getLanguageIdByAlpha2Query,
 } from "#queries/providers";
 
 import { formatSpecializations, updatePassword } from "#utils/helperFunctions";
@@ -225,18 +226,25 @@ export const changeAdminUserPassword = async ({
 
 export const getAllProviders = async (props) => {
   const newOffset = props.offset === 1 ? 0 : (props.offset - 1) * props.limit;
-  
+
   const searchTerms = props.search && props.search.includes(" ")
     ? props.search.trim().split(/\s+/).filter(term => term.length > 0)
     : props.search
       ? [props.search]
       : null;
-  
+
+  const languageId = props.language
+    ? await getLanguageIdByAlpha2Query(props.language).then(
+        (res) => res.rows[0]?.language_id ?? null
+      )
+    : null;
+
   return await getAllProvidersQuery({
     ...props,
     poolCountry: props.country,
     offset: newOffset,
     search: searchTerms,
+    languageId,
   })
     .then(async (res) => {
       const providers = res.rows;
@@ -940,9 +948,16 @@ export const getPlatformMetrics = async ({
     positiveProviderRatings,
   };
 };
-export const getAllProviderNames = async ({ country }) => {
+export const getAllProviderNames = async ({ country, language }) => {
+  const languageId = language
+    ? await getLanguageIdByAlpha2Query(language).then(
+        (res) => res.rows[0]?.language_id ?? null
+      )
+    : null;
+
   return await getAllProviderNamesQuery({
     poolCountry: country,
+    languageId,
   })
     .then((res) => {
       return res.rows || [];
