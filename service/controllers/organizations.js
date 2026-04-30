@@ -20,7 +20,7 @@ import {
   checkOrganizationNameExistsQuery,
 } from "#queries/organizations";
 
-import { getMultipleProvidersDataByIDs } from "#queries/providers";
+import { getMultipleProvidersDataByIDs, getLanguageIdByAlpha2Query } from "#queries/providers";
 
 import {
   organizationExists,
@@ -225,9 +225,16 @@ export const getOrganizationById = async (data) => {
     (x) => x.provider_detail_id
   );
 
+  const languageId = data.language
+    ? await getLanguageIdByAlpha2Query(data.language).then(
+        (res) => res.rows[0]?.language_id ?? null
+      )
+    : null;
+
   let providersData = await getMultipleProvidersDataByIDs({
     providerDetailIds,
     poolCountry: data.country,
+    languageId,
   }).then((res) => {
     return res.rows;
   });

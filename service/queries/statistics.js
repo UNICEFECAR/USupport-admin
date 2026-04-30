@@ -320,23 +320,27 @@ export const getSOSCenterClicksQuery = async ({ poolCountry }) =>
     `
   );
 
-export const getAllActiveProvidersQuery = async ({ poolCountry }) =>
+export const getAllActiveProvidersQuery = async ({ poolCountry, languageId }) =>
   await getDBPool("piiDb", poolCountry).query(
     `
-      SELECT 
+      SELECT
         pd.provider_detail_id,
-        pd.name,
-        pd.surname,
+        COALESCE(pdt.name, pd.name) AS name,
+        COALESCE(pdt.surname, pd.surname) AS surname,
         pd.email,
         pd.specializations,
         pd.consultation_price,
         pd.status
       FROM provider_detail pd
-      INNER JOIN "user" u ON u.provider_detail_id = pd.provider_detail_id 
-        AND u.deleted_at IS NULL 
+      INNER JOIN "user" u ON u.provider_detail_id = pd.provider_detail_id
+        AND u.deleted_at IS NULL
         AND pd.status = 'active'
-      ORDER BY pd.name ASC
-    `
+      LEFT JOIN provider_detail_translations pdt
+        ON pdt.provider_detail_id = pd.provider_detail_id
+        AND pdt.language_id = $1::UUID
+      ORDER BY COALESCE(pdt.name, pd.name) ASC
+    `,
+    [languageId]
   );
 
 export const getAvailabilitySlotsInRangeQuery = async ({
