@@ -122,13 +122,14 @@ router.route("/update-campaign").put(async (req, res, next) => {
 
 router.route("/coupons-data").get(async (req, res, next) => {
   const country = req.header("x-country-alpha-2");
+  const language = req.header("x-language-alpha-2") || null;
 
   const campaign_id = req.query.campaignId;
 
   return await getCouponsDataForCampaignSchema
     .noUnknown(true)
     .strict(true)
-    .validate({ country, campaign_id })
+    .validate({ country, campaign_id, language })
     .then(getCouponsDataForCampaign)
     .then((result) => res.status(200).send(result))
     .catch(next);

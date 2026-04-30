@@ -10,6 +10,7 @@ export const getSponsorDataByIdSchema = countrySchema.shape({
 
 export const getCouponsDataForCampaignSchema = countrySchema.shape({
   campaign_id: yup.string().uuid().required(),
+  language: yup.string().nullable(),
 });
 
 export const sponsorSchema = countrySchema.shape({

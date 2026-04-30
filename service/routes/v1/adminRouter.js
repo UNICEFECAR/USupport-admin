@@ -188,6 +188,7 @@ router.get("/all-providers", securedRoute, async (req, res, next) => {
    * #desc    Get all providers
    */
   const country = req.header("x-country-alpha-2");
+  const language = req.header("x-language-alpha-2") || null;
   const {
     limit,
     offset,
@@ -209,6 +210,7 @@ router.get("/all-providers", securedRoute, async (req, res, next) => {
       limit: Number(limit),
       offset: Number(offset),
       country,
+      language,
       price: price ? Number(price) : 0,
       status: status ? status : "any",
       free: free === "true" ? true : false,

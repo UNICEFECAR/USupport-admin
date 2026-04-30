@@ -14,4 +14,5 @@ export const getAllQuestionsSchema = yup.object().shape({
   country: yup.string().required(),
   type: yup.string().oneOf(["answered", "unanswered"]).required(),
   languageId: yup.string().required(),
+  headerLanguage: yup.string().nullable(),
 });

@@ -28,7 +28,7 @@ import {
   getMultipleClientsDataByIDs,
 } from "#queries/clients";
 
-import { getProviderDataById } from "#queries/providers";
+import { getProviderDataById, getLanguageIdByAlpha2Query } from "#queries/providers";
 import { getCampaignNamesByIds } from "#queries/sponsors";
 
 import {
@@ -208,6 +208,7 @@ export const getSecurityCheck = async ({ country }) => {
       const providerData = await getProviderDataById({
         providerId,
         poolCountry: country,
+        languageId: null,
       })
         .then((res) => {
           if (res.rowCount === 0) {
@@ -562,6 +563,12 @@ export const getProviderAvailabilityReport = async ({
   const startDate = new Date(normalizedStartDate);
   const endDate = new Date(normalizedEndDate);
 
+  const languageId = language
+    ? await getLanguageIdByAlpha2Query(language).then(
+        (res) => res.rows[0]?.language_id ?? null
+      )
+    : null;
+
   try {
     const [
       providersResult,
@@ -569,7 +576,7 @@ export const getProviderAvailabilityReport = async ({
       consultationsResult,
       providerOrgLinksResult,
     ] = await Promise.all([
-      getAllActiveProvidersQuery({ poolCountry: country }),
+      getAllActiveProvidersQuery({ poolCountry: country, languageId }),
       getAvailabilitySlotsInRangeQuery({
         poolCountry: country,
         startDate: startDate,
