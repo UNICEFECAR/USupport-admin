@@ -88,13 +88,14 @@ router.get("/questions", async (req, res, next) => {
    * #desc    Get  questions
    */
   const country = req.header("x-country-alpha-2");
+  const headerLanguage = req.header("x-language-alpha-2") || null;
 
   const { type, languageId } = req.query;
 
   return await getAllQuestionsSchema
     .noUnknown(true)
     .strict(true)
-    .validate({ country, type, languageId })
+    .validate({ country, type, languageId, headerLanguage })
     .then(getAllQuestions)
     .then((result) => res.status(200).send(result))
     .catch(next);

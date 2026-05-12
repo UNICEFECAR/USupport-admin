@@ -73,6 +73,7 @@ export const getAllProvidersSchema = countrySchema.shape({
     .nullable(true),
   sort_status: yup.string().oneOf([null, "asc", "desc"]).nullable(true),
   search: yup.string().nullable(true),
+  language: yup.string().nullable(true),
 });
 
 export const updateCountryContentActiveStatusSchema = yup.object().shape({

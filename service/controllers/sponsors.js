@@ -18,7 +18,7 @@ import {
   campaignNotFound,
 } from "#utils/errors";
 
-import { getMultipleProvidersDataByIDs } from "#queries/providers";
+import { getMultipleProvidersDataByIDs, getLanguageIdByAlpha2Query } from "#queries/providers";
 import { getMultipleClientsDataByIDs } from "#queries/clients";
 import { getClientInitials } from "#utils/helperFunctions";
 
@@ -277,7 +277,7 @@ export const getSponsorDataById = async ({ country, sponsor_id }) => {
   return sponsorData;
 };
 
-export const getCouponsDataForCampaign = async ({ country, campaign_id }) => {
+export const getCouponsDataForCampaign = async ({ country, campaign_id, language }) => {
   const couponData = await getCouponsDataForCampaignQuery({
     poolCountry: country,
     campaignId: campaign_id,
@@ -297,9 +297,16 @@ export const getCouponsDataForCampaign = async ({ country, campaign_id }) => {
     new Set(couponData.map((x) => x.client_detail_id))
   );
 
+  const languageId = language
+    ? await getLanguageIdByAlpha2Query(language).then(
+        (res) => res.rows[0]?.language_id ?? null
+      )
+    : null;
+
   const providersData = await getMultipleProvidersDataByIDs({
     poolCountry: country,
     providerDetailIds: providerIds,
+    languageId,
   })
     .then((res) => {
       if (res.rowCount === 0) {
