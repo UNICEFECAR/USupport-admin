@@ -7,6 +7,7 @@ import {
   getInformationPortalSuggestionsQuery,
   getClientRatingsQuery,
   getContactFormsQuery,
+  getOrganizationReportsQuery,
   getProviderStatisticsQuery,
   getProviderPlatformRatingsQuery,
   getPlatformSuggestionsForTypeQuery,
@@ -299,6 +300,21 @@ export const getContactForms = async ({ country }) => {
       } else {
         return res.rows;
       }
+    })
+    .catch((err) => {
+      throw err;
+    });
+};
+
+export const getOrganizationReports = async ({ country }) => {
+  return await getOrganizationReportsQuery({
+    poolCountry: country,
+  })
+    .then((res) => {
+      if (res.rowCount === 0) {
+        return [];
+      }
+      return res.rows;
     })
     .catch((err) => {
       throw err;
