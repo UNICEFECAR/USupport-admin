@@ -14,6 +14,9 @@ import {
   getCountryArticlesQuery,
   addCountryArticlesQuery,
   deleteCountryArticlesQuery,
+  getCountryPinnedArticlesQuery,
+  addCountryPinnedArticlesQuery,
+  deleteCountryPinnedArticlesQuery,
   updateCountryMinMaxClientAgeQuery,
   getCountryVideosQuery,
   addCountryVideosQuery,
@@ -163,6 +166,36 @@ export const deleteCountryArticles = async ({ country, id }) => {
   return await deleteCountryArticlesQuery({ country, id })
     .then((res) => {
       return res.rows[0][`article_ids`];
+    })
+    .catch((err) => {
+      throw err;
+    });
+};
+
+export const getCountryPinnedArticles = async ({ country }) => {
+  return await getCountryPinnedArticlesQuery({ country })
+    .then((res) => {
+      return res.rows[0][`pinned_articles`];
+    })
+    .catch((err) => {
+      throw err;
+    });
+};
+
+export const addCountryPinnedArticles = async ({ country, id }) => {
+  return await addCountryPinnedArticlesQuery({ country, id })
+    .then((res) => {
+      return res.rows[0][`pinned_articles`];
+    })
+    .catch((err) => {
+      throw err;
+    });
+};
+
+export const deleteCountryPinnedArticles = async ({ country, id }) => {
+  return await deleteCountryPinnedArticlesQuery({ country, id })
+    .then((res) => {
+      return res.rows[0][`pinned_articles`];
     })
     .catch((err) => {
       throw err;
