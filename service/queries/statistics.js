@@ -105,6 +105,21 @@ export const getContactFormsQuery = async ({ poolCountry }) =>
     `
   );
 
+export const getOrganizationReportsQuery = async ({ poolCountry }) =>
+  await getDBPool("piiDb", poolCountry).query(
+    `
+      SELECT
+        r.organization_report_id,
+        r.organization_id,
+        o.name AS organization_name,
+        r.reason,
+        r.created_at
+      FROM organization_report r
+      LEFT JOIN organization o ON o.organization_id = r.organization_id
+      ORDER BY r.created_at DESC
+    `
+  );
+
 export const getProviderStatisticsQuery = async ({ poolCountry, providerId }) =>
   await getDBPool("clinicalDb", poolCountry).query(
     `  

@@ -194,11 +194,20 @@ export const getCountryArticlesQuery = async ({ country }) => {
   );
 };
 
+/**
+ * Append id to `article_ids` only if missing, preserving existing order (curator /
+ * chronological). Avoids array_agg(DISTINCT), which sorts and loses intent.
+ */
 export const addCountryArticlesQuery = async ({ id, country }) => {
   return await getDBPool("masterDb").query(
     `
       UPDATE country
-      SET article_ids = (SELECT array_agg(distinct e) FROM UNNEST(article_ids || $1::VARCHAR) e)
+      SET article_ids =
+        CASE
+          WHEN ($1)::varchar = ANY(COALESCE(article_ids, ARRAY[]::varchar[]))
+          THEN COALESCE(article_ids, ARRAY[]::varchar[])
+          ELSE COALESCE(article_ids, ARRAY[]::varchar[]) || ARRAY[($1)::varchar]::varchar[]
+        END
       WHERE alpha2 = $2
       RETURNING *
     `,
@@ -211,6 +220,51 @@ export const deleteCountryArticlesQuery = async ({ id, country }) => {
     `
       UPDATE country
       SET article_ids = array_remove(article_ids, $1::VARCHAR)
+      WHERE alpha2 = $2
+      RETURNING *
+    `,
+    [id, country]
+  );
+};
+
+export const getCountryPinnedArticlesQuery = async ({ country }) => {
+  return await getDBPool("masterDb").query(
+    `
+      SELECT "pinned_articles"
+      FROM "country"
+      WHERE "alpha2" = $1
+      ORDER BY "created_at" DESC
+      LIMIT 1
+    `,
+    [country]
+  );
+};
+
+/**
+ * Same semantics as assign: preserve pin order — first slot is first carousel card.
+ */
+export const addCountryPinnedArticlesQuery = async ({ id, country }) => {
+  return await getDBPool("masterDb").query(
+    `
+      UPDATE country
+      SET pinned_articles =
+        CASE
+          WHEN ($1)::varchar = ANY(COALESCE(pinned_articles, ARRAY[]::varchar[]))
+          THEN COALESCE(pinned_articles, ARRAY[]::varchar[])
+          ELSE COALESCE(pinned_articles, ARRAY[]::varchar[]) || ARRAY[($1)::varchar]::varchar[]
+        END
+      WHERE alpha2 = $2
+      RETURNING *
+    `,
+    [id, country]
+  );
+};
+
+export const deleteCountryPinnedArticlesQuery = async ({ id, country }) => {
+  return await getDBPool("masterDb").query(
+    `
+      UPDATE country
+      SET pinned_articles = array_remove(COALESCE(pinned_articles, ARRAY[]::varchar[]), $1::VARCHAR)
       WHERE alpha2 = $2
       RETURNING *
     `,

@@ -7,6 +7,7 @@ import {
   getInformationPortalSuggestions,
   getClientRatings,
   getContactForms,
+  getOrganizationReports,
   getProviderStatistics,
   getProviderPlatformRatings,
   getPlatformSuggestionsForType,
@@ -149,6 +150,24 @@ router.route("/contact-forms").get(async (req, res, next) => {
     .strict(true)
     .validate({ country, language })
     .then(getContactForms)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.route("/organization-reports").get(async (req, res, next) => {
+  /**
+   * #route   GET /admin/v1/statistics/organization-reports
+   * #desc    Get organization reports submitted by clients
+   */
+
+  const country = req.header("x-country-alpha-2");
+  const language = req.header("x-language-alpha-2");
+
+  return await getStatsSchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({ country, language })
+    .then(getOrganizationReports)
     .then((result) => res.status(200).send(result))
     .catch(next);
 });

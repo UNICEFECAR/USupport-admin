@@ -10,6 +10,9 @@ import {
   getCountryArticles,
   addCountryArticles,
   deleteCountryArticles,
+  getCountryPinnedArticles,
+  addCountryPinnedArticles,
+  deleteCountryPinnedArticles,
   getCountryVideos,
   addCountryVideos,
   deleteCountryVideos,
@@ -180,6 +183,56 @@ router
       .strict(true)
       .validate({ ...payload, country })
       .then(deleteCountryArticles)
+      .then((result) => res.status(200).send(result))
+      .catch(next);
+  });
+
+router
+  .route("/pinned-articles")
+  .get(async (req, res, next) => {
+    /**
+     * #route   GET /admin/v1/country/pinned-articles
+     * #desc    Get pinned article ids for a country
+     */
+    const country = req.header("x-country-alpha-2");
+
+    return await countrySchema
+      .noUnknown(true)
+      .strict(true)
+      .validate({ country })
+      .then(getCountryPinnedArticles)
+      .then((result) => res.status(200).send(result))
+      .catch(next);
+  })
+  .put(async (req, res, next) => {
+    /**
+     * #route   PUT /admin/v1/country/pinned-articles
+     * #desc    Pin an article id for a country
+     */
+    const country = req.header("x-country-alpha-2");
+    const payload = req.body;
+
+    return await countryArticlesByIDSchema
+      .noUnknown(true)
+      .strict(true)
+      .validate({ ...payload, country })
+      .then(addCountryPinnedArticles)
+      .then((result) => res.status(200).send(result))
+      .catch(next);
+  })
+  .delete(async (req, res, next) => {
+    /**
+     * #route   DELETE /admin/v1/country/pinned-articles
+     * #desc    Unpin an article id for a country
+     */
+    const country = req.header("x-country-alpha-2");
+    const payload = req.body;
+
+    return await countryArticlesByIDSchema
+      .noUnknown(true)
+      .strict(true)
+      .validate({ ...payload, country })
+      .then(deleteCountryPinnedArticles)
       .then((result) => res.status(200).send(result))
       .catch(next);
   });
