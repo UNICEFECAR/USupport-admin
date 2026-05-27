@@ -96,6 +96,38 @@ export const tooManyOTPRequests = (language) => {
   return error;
 };
 
+export const invalidMfaSession = (language) => {
+  const error = new Error();
+  error.message = t("invalid_mfa_session_error", language);
+  error.name = "INVALID MFA SESSION";
+  error.status = 401;
+  return error;
+};
+
+export const mfaNotEnabled = (language) => {
+  const error = new Error();
+  error.message = t("mfa_not_enabled_error", language);
+  error.name = "MFA NOT ENABLED";
+  error.status = 403;
+  return error;
+};
+
+export const passkeyNotFound = (language) => {
+  const error = new Error();
+  error.message = t("passkey_not_found_error", language);
+  error.name = "PASSKEY NOT FOUND";
+  error.status = 404;
+  return error;
+};
+
+export const passkeyVerificationFailed = (language) => {
+  const error = new Error();
+  error.message = t("passkey_verification_failed_error", language);
+  error.name = "PASSKEY VERIFICATION FAILED";
+  error.status = 401;
+  return error;
+};
+
 export const sponsorEmailAlreadyExists = (language) => {
   const error = new Error();
   error.message = t("sponsor_email_already_exists_error", language);
