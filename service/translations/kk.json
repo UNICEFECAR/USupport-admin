@@ -47,5 +47,6 @@
   "unknown_campaign": "Белгісіз науқан",
   "unknown_organization": "Белгісіз ұйым",
   "provider_has_future_consultations_error": "Консультантта бұл ұйым үшін болашақ консультациялар немесе слоттар бар",
-  "translation_failed_error": "Аударма сәтсіз аяқталды. Кейінірек қайталап көріңіз."
+  "translation_failed_error": "Аударма сәтсіз аяқталды. Кейінірек қайталап көріңіз.",
+  "max_pinned_articles_reached_error": "4 бекітілген мақала шегіне жеттіңіз. Алдымен біреуін бекітуден алыңыз."
 }
