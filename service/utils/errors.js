@@ -215,3 +215,11 @@ export const translationFailed = (language, details = "") => {
   }
   return error;
 };
+
+export const maxPinnedArticlesReached = (language) => {
+  const error = new Error();
+  error.message = t("max_pinned_articles_reached_error", language);
+  error.name = "MAX PINNED ARTICLES REACHED";
+  error.status = 400;
+  return error;
+};

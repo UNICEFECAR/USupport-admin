@@ -27,7 +27,13 @@ import {
   updateCountryContentActiveStatusQuery,
 } from "#queries/countries";
 
-import { platformNotFound, countryNotFound } from "#utils/errors";
+import {
+  platformNotFound,
+  countryNotFound,
+  maxPinnedArticlesReached,
+} from "#utils/errors";
+
+const MAX_PINNED_ARTICLES = 4;
 
 export const getCountryFaqs = async ({ country, language, platform }) => {
   let platformSpecificQuery = "";
@@ -182,7 +188,15 @@ export const getCountryPinnedArticles = async ({ country }) => {
     });
 };
 
-export const addCountryPinnedArticles = async ({ country, id }) => {
+export const addCountryPinnedArticles = async ({ country, id, language }) => {
+  const currentPinned = await getCountryPinnedArticlesQuery({ country })
+    .then((res) => res.rows[0]?.pinned_articles || [])
+    .catch(() => []);
+
+  if (currentPinned.length >= MAX_PINNED_ARTICLES) {
+    throw maxPinnedArticlesReached(language);
+  }
+
   return await addCountryPinnedArticlesQuery({ country, id })
     .then((res) => {
       return res.rows[0][`pinned_articles`];
