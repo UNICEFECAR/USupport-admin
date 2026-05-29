@@ -69,6 +69,9 @@ jobs:
             echo "  PSKZ_SECRET_ACCESS_KEY: '${{ secrets.PSKZ_SECRET_ACCESS_KEY }}'"
             echo "  PSKZ_ROLE: '${{ secrets.PSKZ_ROLE }}'"
             echo "  GOOGLE_API_KEY: '${{ secrets.GOOGLE_API_KEY }}'"
+            echo "  WEBAUTHN_ORIGINS: '${{ secrets.WEBAUTHN_ORIGINS }}'"
+            echo "  WEBAUTHN_RP_ID: '${{ secrets.WEBAUTHN_RP_ID }}'"
+            echo "  WEBAUTHN_RP_NAME: '${{ secrets.WEBAUTHN_RP_NAME }}'"
           } > kube-config/staging/secrets.yaml
 
       - name: Deploy to Kubernetes
