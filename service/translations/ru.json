@@ -12,6 +12,10 @@
   "account_deactivated_error": "Ваш аккаунт был деактивирован",
   "invalid_admin_otp_error": "Недействительный одноразовый пароль (OTP)",
   "too_many_otp_requests_error": "Сделано слишком много запросов на одноразовый пароль (OTP), повторите попытку позже.",
+  "invalid_mfa_session_error": "Срок действия сессии верификации истёк. Войдите снова.",
+  "mfa_not_enabled_error": "Для управления ключами доступа необходимо включить двухфакторную аутентификацию.",
+  "passkey_not_found_error": "Ключ доступа не найден.",
+  "passkey_verification_failed_error": "Не удалось подтвердить ключ доступа. Попробуйте снова или используйте код из электронной почты.",
   "sponsor_email_already_exists_error": "Спонсор с таким адресом электронной почты уже существует.",
   "campaign_code_already_exists_error": "Кампания с этим кодом купона уже существует",
   "campaign_not_found_error": "Кампания не найдена",
@@ -43,5 +47,6 @@
   "unknown_campaign": "Неизвестная кампания",
   "unknown_organization": "Неизвестная организация",
   "provider_has_future_consultations_error": "У консультанта есть будущие консультации или слоты для этой организации",
-  "translation_failed_error": "Перевод не удался. Пожалуйста, попробуйте позже."
+  "translation_failed_error": "Перевод не удался. Пожалуйста, попробуйте позже.",
+  "max_pinned_articles_reached_error": "Достигнут лимит в 4 закрепленных статьи. Сначала открепите одну статью."
 }

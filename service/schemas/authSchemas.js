@@ -21,6 +21,37 @@ export const adminLoginSchema = admin2FARequestSchema.shape({
   otp: yup.string().length(4).required(),
 });
 
+export const adminCredentialsSchema = yup.object().shape({
+  password: yup.string().required(),
+  email: yup.string().email().required(),
+  role: yup.string().oneOf(ADMIN_ROLES).required(),
+});
+
+export const mfaSessionSchema = yup.object().shape({
+  mfaSessionId: yup.string().uuid().required(),
+});
+
+export const mfaEmailVerifySchema = mfaSessionSchema.shape({
+  otp: yup.string().length(4).required(),
+});
+
+export const mfaSettingsSchema = yup.object().shape({
+  enabled: yup.boolean().required(),
+  password: yup.string().required(),
+});
+
+export const passkeyRegisterOptionsSchema = yup.object().shape({
+  name: yup.string().max(100),
+});
+
+export const passkeyRegisterVerifySchema = yup.object().shape({
+  name: yup.string().max(100),
+  id: yup.string().required(),
+  rawId: yup.string().required(),
+  type: yup.string().required(),
+  response: yup.object().required(),
+});
+
 export const createAdminSchema = (language) =>
   yup.object().shape(
     {
