@@ -40,10 +40,7 @@ import {
 } from "#utils/errors";
 import { generate4DigitCode } from "#utils/helperFunctions";
 import { produceRaiseNotification } from "#utils/kafkaProducers";
-import {
-  completeMfaSession,
-  getValidMfaSession,
-} from "#utils/mfaSession";
+import { completeMfaSession, getValidMfaSession } from "#utils/mfaSession";
 
 const MFA_METHODS = ["passkey", "email"];
 const CHALLENGE_TYPES = {
@@ -52,32 +49,24 @@ const CHALLENGE_TYPES = {
 };
 const CHALLENGE_TTL_MINUTES = 5;
 
-const parseWebAuthnOrigins = () => {
-  const raw = process.env.WEBAUTHN_ORIGINS;
-  if (!raw) {
-    return [
-      "https://usupport.online",
-      "https://staging.usupport.online",
-      "http://localhost:5174",
-      "http://localhost:5175",
-    ];
-  }
-
-  try {
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      return parsed;
-    }
-  } catch {
-    return raw.split(",").map((origin) => origin.trim());
-  }
-
-  return ["https://usupport.online"];
-};
+const WEBAUTHN_ORIGINS = [
+  "https://usupport.online",
+  "https://staging.usupport.online",
+  "https://poland.usupport.online",
+  "https://poland.staging.usupport.online",
+  "https://kazakhstan.usupport.online",
+  "https://kazakhstan.staging.usupport.online",
+  "https://romania.usupport.online",
+  "https://romania.staging.usupport.online",
+  "https://armenia.usupport.online",
+  "https://armenia.staging.usupport.online",
+  "https://playandheal.usupport.online",
+  "https://playandheal.staging.usupport.online",
+  "http://localhost:5175",
+];
 
 const WEBAUTHN_RP_ID = process.env.WEBAUTHN_RP_ID || "usupport.online";
 const WEBAUTHN_RP_NAME = process.env.WEBAUTHN_RP_NAME || "uSupport Admin";
-const WEBAUTHN_ORIGINS = parseWebAuthnOrigins();
 
 const toUint8Array = (value) => {
   if (value instanceof Uint8Array) {
@@ -88,7 +77,7 @@ const toUint8Array = (value) => {
 
 const decodeClientDataChallenge = (clientDataJSON) => {
   const clientData = JSON.parse(
-    Buffer.from(clientDataJSON, "base64url").toString("utf8")
+    Buffer.from(clientDataJSON, "base64url").toString("utf8"),
   );
   return clientData.challenge;
 };
@@ -112,7 +101,7 @@ const completeLogin = async (adminUser) => {
 
 export const getAvailableMethods = async (adminId) => {
   const passkeys = await listPasskeysByAdminIdQuery(adminId).then(
-    (res) => res.rows
+    (res) => res.rows,
   );
 
   const methods = [MFA_METHODS[1]];
@@ -131,7 +120,7 @@ export const getMfaSettings = async ({ adminId, adminRole, language }) => {
 
   const adminUser = await getAdminUserByID(adminId).then((res) => res.rows[0]);
   const passkeyCount = await countPasskeysByAdminIdQuery(adminId).then(
-    (res) => res.rows[0].count
+    (res) => res.rows[0].count,
   );
 
   return {
@@ -164,17 +153,14 @@ export const updateMfaSettings = async ({
   return { mfaEnabled: enabled };
 };
 
-export const requestEmailOtpForSession = async ({
-  mfaSessionId,
-  language,
-}) => {
+export const requestEmailOtpForSession = async ({ mfaSessionId, language }) => {
   const session = await getValidMfaSession({ mfaSessionId, language });
   const adminUser = await getAdminUserByID(session.admin_id).then(
-    (res) => res.rows[0]
+    (res) => res.rows[0],
   );
 
   const adminLastOTP = await getAdminLastAuthOTP(adminUser.admin_id).then(
-    (data) => data.rows[0]
+    (data) => data.rows[0],
   );
 
   if (adminLastOTP !== undefined) {
@@ -211,11 +197,11 @@ export const verifyEmailOtpForSession = async ({
 }) => {
   const session = await getValidMfaSession({ mfaSessionId, language });
   const adminUser = await getAdminUserByID(session.admin_id).then(
-    (res) => res.rows[0]
+    (res) => res.rows[0],
   );
 
   const adminOTP = await getAuthOTP(otp, adminUser.admin_id).then(
-    (data) => data.rows[0]
+    (data) => data.rows[0],
   );
 
   if (adminOTP === undefined) {
@@ -243,7 +229,7 @@ export const generatePasskeyRegistrationOptions = async ({ adminId }) => {
   }
 
   const existingPasskeys = await listPasskeysByAdminIdQuery(adminId).then(
-    (res) => res.rows
+    (res) => res.rows,
   );
 
   const options = await generateRegistrationOptions({
@@ -293,6 +279,7 @@ export const verifyPasskeyRegistration = async ({
   }).then((res) => res.rows[0]);
 
   if (!challengeRow) {
+    console.log("Passkey registration challenge not found", challenge);
     throw passkeyVerificationFailed(language);
   }
 
@@ -311,6 +298,7 @@ export const verifyPasskeyRegistration = async ({
   }
 
   if (!verification.verified || !verification.registrationInfo) {
+    console.log("Passkey registration verification failed", verification);
     throw passkeyVerificationFailed(language);
   }
 
@@ -335,7 +323,7 @@ export const generatePasskeyAuthenticationOptions = async ({
 }) => {
   const session = await getValidMfaSession({ mfaSessionId, language });
   const passkeys = await listPasskeysByAdminIdQuery(session.admin_id).then(
-    (res) => res.rows
+    (res) => res.rows,
   );
 
   if (passkeys.length === 0) {
@@ -369,7 +357,7 @@ export const verifyPasskeyAuthentication = async ({
 }) => {
   const session = await getValidMfaSession({ mfaSessionId, language });
   const storedPasskey = await getPasskeyByCredentialIdQuery(response.id).then(
-    (res) => res.rows[0]
+    (res) => res.rows[0],
   );
 
   if (!storedPasskey || storedPasskey.admin_id !== session.admin_id) {
@@ -425,7 +413,7 @@ export const verifyPasskeyAuthentication = async ({
   await completeMfaSession({ mfaSessionId, language });
 
   const adminUser = await getAdminUserByID(session.admin_id).then(
-    (res) => res.rows[0]
+    (res) => res.rows[0],
   );
 
   return completeLogin(adminUser);
@@ -433,7 +421,7 @@ export const verifyPasskeyAuthentication = async ({
 
 export const listPasskeys = async (adminId) => {
   const passkeys = await listPasskeysByAdminIdQuery(adminId).then(
-    (res) => res.rows
+    (res) => res.rows,
   );
 
   return passkeys.map(({ passkey_id, name, created_at, last_used_at }) => ({
@@ -446,7 +434,7 @@ export const listPasskeys = async (adminId) => {
 
 export const deletePasskey = async ({ adminId, passkeyId, language }) => {
   const passkey = await getPasskeyByIdQuery({ passkeyId, adminId }).then(
-    (res) => res.rows[0]
+    (res) => res.rows[0],
   );
 
   if (!passkey) {
