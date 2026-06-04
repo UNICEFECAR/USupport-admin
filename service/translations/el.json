@@ -12,6 +12,10 @@
   "account_deactivated_error": "Ο λογαριασμός σας έχει απενεργοποιηθεί",
   "invalid_admin_otp_error": "Μη έγκυρος κωδικός μίας χρήσης",
   "too_many_otp_requests_error": "Υπερβολικός αριθμός αιτημάτων για κωδικό μίας χρήσης. Παρακαλώ δοκιμάστε ξανά σύντομα.",
+  "invalid_mfa_session_error": "Η συνεδρία επαλήθευσης έληξε. Συνδεθείτε ξανά.",
+  "mfa_not_enabled_error": "Ο έλεγχος ταυτότητας δύο παραγόντων πρέπει να είναι ενεργοποιημένος για τη διαχείριση passkeys.",
+  "passkey_not_found_error": "Το passkey δεν βρέθηκε.",
+  "passkey_verification_failed_error": "Η επαλήθευση με passkey απέτυχε. Δοκιμάστε ξανά ή χρησιμοποιήστε κωδικό email.",
   "sponsor_email_already_exists_error": "Υπάρχει ήδη ένας χορηγός με αυτό το email.",
   "campaign_code_already_exists_error": "Υπάρχει ήδη μια εκστρατεία με αυτόν τον κωδικό κουπονιού",
   "campaign_not_found_error": "Δεν βρέθηκε εκστρατεία",
@@ -43,5 +47,6 @@
   "unknown_organization": "Αγνωστος οργανισμός",
   "provider_uuid": "Αναγνωριστικό παρόχου",
   "total_slots_campaign_organization": "Συνολικός αριθμός διαθέσιμων ραντεβού (Εκστρατεία / Οργανισμός)",
-  "provider_has_future_consultations_error": "Ο πάροχος έχει μελλοντικές συνεδρίες ή διαθέσιμα ραντεβού για αυτόν τον οργανισμό"
+  "provider_has_future_consultations_error": "Ο πάροχος έχει μελλοντικές συνεδρίες ή διαθέσιμα ραντεβού για αυτόν τον οργανισμό",
+  "max_pinned_articles_reached_error": "Συμπληρώθηκε το όριο των 4 καρφιτσωμένων άρθρων. Ξεκαρφιτσώστε πρώτα ένα άρθρο."
 }

@@ -12,6 +12,10 @@
   "account_deactivated_error": "Twoje konto zostało dezaktywowane",
   "invalid_admin_otp_error": "Nieprawidłowy OTP",
   "too_many_otp_requests_error": "Wykonano zbyt wiele żądań OTP, spróbuj ponownie wkrótce.",
+  "invalid_mfa_session_error": "Sesja weryfikacji wygasła. Zaloguj się ponownie.",
+  "mfa_not_enabled_error": "Uwierzytelnianie dwuskładnikowe musi być włączone, aby zarządzać kluczami dostępu.",
+  "passkey_not_found_error": "Nie znaleziono klucza dostępu.",
+  "passkey_verification_failed_error": "Weryfikacja kluczem dostępu nie powiodła się. Spróbuj ponownie lub użyj kodu z e-maila.",
   "sponsor_email_already_exists_error": "Sponsor z tym adresem email już istnieje.",
   "campaign_code_already_exists_error": "Kampania z tym kodem kuponu już istnieje",
   "campaign_not_found_error": "Nie znaleziono kampanii",
@@ -43,5 +47,6 @@
   "unknown_campaign": "Nieznana kampania",
   "unknown_organization": "Nieznana organizacja",
   "provider_has_future_consultations_error": "Konsultant ma przyszłe konsultacje lub sloty dla tej organizacji",
-  "translation_failed_error": "Tłumaczenie nie powiodło się. Spróbuj ponownie później."
+  "translation_failed_error": "Tłumaczenie nie powiodło się. Spróbuj ponownie później.",
+  "max_pinned_articles_reached_error": "Osiągnięto limit 4 przypiętych artykułów. Najpierw odepnij jeden artykuł."
 }
