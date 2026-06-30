@@ -227,9 +227,13 @@ export const changeAdminUserPassword = async ({
 export const getAllProviders = async (props) => {
   const newOffset = props.offset === 1 ? 0 : (props.offset - 1) * props.limit;
 
-  const searchTerms = props.search && props.search.includes(" ")
-    ? props.search.trim().split(/\s+/).filter(term => term.length > 0)
-    : props.search
+  const searchTerms =
+    props.search && props.search.includes(" ")
+      ? props.search
+          .trim()
+          .split(/\s+/)
+          .filter((term) => term.length > 0)
+      : props.search
       ? [props.search]
       : null;
 
@@ -367,7 +371,8 @@ export const getPlatformMetrics = async ({
   yearOfBirthTo,
 }) => {
   // Ensure empty strings are converted to null
-  const yearFrom = yearOfBirthFrom && yearOfBirthFrom !== "" ? yearOfBirthFrom : null;
+  const yearFrom =
+    yearOfBirthFrom && yearOfBirthFrom !== "" ? yearOfBirthFrom : null;
   const yearTo = yearOfBirthTo && yearOfBirthTo !== "" ? yearOfBirthTo : null;
   const countryId = await getCountryIdByAlpha2CodeQuery({ country }).then(
     (res) => {
@@ -750,6 +755,13 @@ export const getPlatformMetrics = async ({
       (consultationsData[c.booked_from][c.status] || 0) + 1;
     consultationsData[c.booked_from].count++;
 
+    const hasClientJoined = c.client_join_time || c.client_leave_time;
+    const hasProviderJoined = c.provider_join_time || c.provider_leave_time;
+
+    if (hasClientJoined && hasProviderJoined) {
+      consultationsJoinedByClientAndProvider++;
+    }
+
     if (!d) {
       console.log(
         "❌ No demographics found for client detail id: ",
@@ -762,13 +774,6 @@ export const getPlatformMetrics = async ({
     const yob = year_of_birth || "missing";
     const ur = urban_rural || "missing";
     const s = sex || "missing";
-
-    const hasClientJoined = c.client_join_time || c.client_leave_time;
-    const hasProviderJoined = c.provider_join_time || c.provider_leave_time;
-
-    if (hasClientJoined && hasProviderJoined) {
-      consultationsJoinedByClientAndProvider++;
-    }
 
     if (
       hasClientJoined &&

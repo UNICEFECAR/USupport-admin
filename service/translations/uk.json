@@ -12,6 +12,10 @@
   "account_deactivated_error": "Твій обліковий запис деактивовано",
   "invalid_admin_otp_error": "Недійсний OTP",
   "too_many_otp_requests_error": "Занадто багато OTP запитів, повтори спробу найближчим часом.",
+  "invalid_mfa_session_error": "Термін сесії перевірки минув. Увійдіть знову.",
+  "mfa_not_enabled_error": "Щоб керувати ключами доступу, потрібно увімкнути двофакторну автентифікацію.",
+  "passkey_not_found_error": "Ключ доступу не знайдено.",
+  "passkey_verification_failed_error": "Не вдалося перевірити ключ доступу. Спробуйте ще раз або використайте код з електронної пошти.",
   "sponsor_email_already_exists_error": "Спонсор із такою електронною поштою вже існує.",
   "campaign_code_already_exists_error": "Кампанія з цим кодом купона вже існує",
   "campaign_not_found_error": "Кампанії не знайдено",
@@ -43,5 +47,6 @@
   "unknown_campaign": "Невідома кампанія",
   "unknown_organization": "Невідома організація",
   "provider_has_future_consultations_error": "Консультант/ка має майбутні консультації або слоти для цієї організації",
-  "translation_failed_error": "Переклад не вдався. Будь ласка, спробуйте пізніше."
+  "translation_failed_error": "Переклад не вдався. Будь ласка, спробуйте пізніше.",
+  "max_pinned_articles_reached_error": "Досягнуто ліміт у 4 закріплені статті. Спочатку відкріпіть одну статтю."
 }

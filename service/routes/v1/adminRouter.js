@@ -157,8 +157,8 @@ router.get("/platform-metrics", async (req, res, next) => {
     endDate: endDate ? Number(endDate) : null,
     sex: sex || null,
     urbanRural: urbanRural || null,
-    yearOfBirthFrom:yearOfBirthFrom? Number(yearOfBirthFrom) : null,
-    yearOfBirthTo:yearOfBirthTo? Number(yearOfBirthTo) : null,
+    yearOfBirthFrom: yearOfBirthFrom ? Number(yearOfBirthFrom) : null,
+    yearOfBirthTo: yearOfBirthTo ? Number(yearOfBirthTo) : null,
   })
     .then((result) => res.status(200).send(result))
     .catch(next);
@@ -266,7 +266,7 @@ router.post(
     return await PSKZUploadController({ payload })
       .then((result) => res.status(200).send(result))
       .catch(next);
-  }
+  },
 );
 
 router.put("/content-active-status", securedRoute, async (req, res, next) => {

@@ -3,7 +3,7 @@ import { getDBPool } from "#utils/dbConfig";
 export const getAdminUserByEmail = async (email, role, country) =>
   await getDBPool("masterDb").query(
     `
-        SELECT a.admin_id, a.name, a.surname, a.phone, a.email, a.role, a.password, a.is_active
+        SELECT a.admin_id, a.name, a.surname, a.phone, a.email, a.role, a.password, a.is_active, a.mfa_enabled
         FROM admin AS a
         LEFT JOIN admin_country_links AS acl ON a.admin_id = acl.admin_id
         LEFT JOIN country AS c ON acl.country_id = c.country_id
@@ -22,7 +22,7 @@ export const getAdminUserByEmail = async (email, role, country) =>
 export const getAdminUserByID = async (admin_id) =>
   await getDBPool("masterDb").query(
     `
-        SELECT admin_id, name, surname, phone, email, role, password, is_active
+        SELECT admin_id, name, surname, phone, email, role, password, is_active, mfa_enabled
         FROM admin
         WHERE admin_id = $1
         ORDER BY created_at DESC

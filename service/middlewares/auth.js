@@ -23,6 +23,7 @@ import {
 
 import {
   adminLoginSchema,
+  adminCredentialsSchema,
   createAdminSchema,
   admin2FARequestSchema,
 } from "#schemas/authSchemas";
@@ -238,6 +239,63 @@ passport.use(
         // delete adminUser.password;
 
         // return done(null, adminUser);
+      } catch (error) {
+        return done(error);
+      }
+    }
+  )
+);
+
+passport.use(
+  "login-credentials",
+  new localStrategy(
+    {
+      usernameField: "email",
+      passwordField: "password",
+      passReqToCallback: true,
+    },
+    async (req, emailIn, passwordIn, done) => {
+      try {
+        const language = req.header("x-language-alpha-2");
+        const country = req.header("x-country-alpha-2");
+        const role = req.body.role;
+
+        const { email, password } = await adminCredentialsSchema
+          .noUnknown(true)
+          .strict()
+          .validate({
+            password: passwordIn,
+            email: emailIn,
+            role,
+          })
+          .catch((err) => {
+            throw err;
+          });
+
+        const adminUser = await getAdminUserByEmail(email, role, country)
+          .then((res) => res.rows[0])
+          .catch((err) => {
+            throw err;
+          });
+
+        if (!adminUser) {
+          return done(incorrectCredentials(language));
+        }
+
+        const validatePassword = await bcrypt.compare(
+          password,
+          adminUser.password
+        );
+
+        if (!validatePassword) {
+          return done(incorrectCredentials(language));
+        }
+
+        if (!adminUser.is_active) {
+          return done(accountDeactivated(language));
+        }
+
+        return done(null, adminUser);
       } catch (error) {
         return done(error);
       }

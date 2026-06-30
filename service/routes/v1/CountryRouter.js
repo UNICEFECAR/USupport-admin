@@ -210,13 +210,14 @@ router
      * #desc    Pin an article id for a country
      */
     const country = req.header("x-country-alpha-2");
+    const language = req.header("x-language-alpha-2");
     const payload = req.body;
 
     return await countryArticlesByIDSchema
       .noUnknown(true)
       .strict(true)
       .validate({ ...payload, country })
-      .then(addCountryPinnedArticles)
+      .then((data) => addCountryPinnedArticles({ ...data, language }))
       .then((result) => res.status(200).send(result))
       .catch(next);
   })
