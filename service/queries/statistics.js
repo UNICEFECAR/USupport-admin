@@ -123,7 +123,22 @@ export const getOrganizationReportsQuery = async ({ poolCountry }) =>
 export const getProviderStatisticsQuery = async ({ poolCountry, providerId }) =>
   await getDBPool("clinicalDb", poolCountry).query(
     `  
-      SELECT client_detail_id, provider_detail_id, time, status, price, campaign_id, created_at, organization_id
+      SELECT
+        client_detail_id,
+        provider_detail_id,
+        time,
+        CASE
+          WHEN (client_join_time   IS NOT NULL OR client_leave_time   IS NOT NULL)
+           AND (provider_join_time IS NOT NULL OR provider_leave_time IS NOT NULL)
+          THEN 'finished'
+          ELSE status
+        END AS status,
+        (client_join_time   IS NOT NULL OR client_leave_time   IS NOT NULL) AS client_joined,
+        (provider_join_time IS NOT NULL OR provider_leave_time IS NOT NULL) AS provider_joined,
+        price,
+        campaign_id,
+        created_at,
+        organization_id
       FROM consultation
       WHERE provider_detail_id = $1 AND (status = 'finished' OR status = 'late-canceled' OR (status = 'scheduled' AND now() > time + interval '1 hour'))
     `,
