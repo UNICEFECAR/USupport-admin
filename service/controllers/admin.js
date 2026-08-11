@@ -1,6 +1,10 @@
 import bcrypt from "bcryptjs";
 import fetch from "node-fetch";
-import AWS from "aws-sdk";
+import {
+  S3Client,
+  GetObjectCommand,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3";
 
 import {
   getAdminUserByID,
@@ -315,36 +319,41 @@ export const PSKZUploadController = async ({ payload }) => {
       payload.bucket === AWS_KZ_CLINICAL_DB_SNAPHOTS_BUCKET_NAME ||
       payload.bucket === AWS_KZ_PII_DB_SNAPHOTS_BUCKET_NAME
     ) {
-      const sourceS3 = new AWS.S3({
-        accessKeyId: AWS_ACCESS_KEY_ID,
-        secretAccessKey: AWS_SECRET_ACCESS_KEY,
+      const sourceS3 = new S3Client({
         region: AWS_REGION,
+        credentials: {
+          accessKeyId: AWS_ACCESS_KEY_ID,
+          secretAccessKey: AWS_SECRET_ACCESS_KEY,
+        },
       });
 
-      const destinationS3 = new AWS.S3({
-        accessKeyId: PSKZ_ACCESS_KEY_ID,
-        secretAccessKey: PSKZ_SECRET_ACCESS_KEY,
-        endpoint: "archive.pscloud.io",
+      const destinationS3 = new S3Client({
+        region: AWS_REGION,
+        endpoint: "https://archive.pscloud.io",
+        forcePathStyle: true,
+        credentials: {
+          accessKeyId: PSKZ_ACCESS_KEY_ID,
+          secretAccessKey: PSKZ_SECRET_ACCESS_KEY,
+        },
       });
-
-      const getObjectParams = {
-        Bucket: payload.bucket,
-        Key: payload.key,
-      };
 
       // Get the content of the object from the source bucket
-      const getObjectResult = await sourceS3
-        .getObject(getObjectParams)
-        .promise();
-      const fileContent = getObjectResult.Body.toString();
+      const getObjectResult = await sourceS3.send(
+        new GetObjectCommand({
+          Bucket: payload.bucket,
+          Key: payload.key,
+        }),
+      );
+      const fileContent = await getObjectResult.Body.transformToByteArray();
 
       // Store the file in the destination bucket
-      const putObjectParams = {
-        Bucket: payload.bucket,
-        Key: payload.key,
-        Body: fileContent,
-      };
-      await destinationS3.putObject(putObjectParams).promise();
+      await destinationS3.send(
+        new PutObjectCommand({
+          Bucket: payload.bucket,
+          Key: payload.key,
+          Body: fileContent,
+        }),
+      );
     } else {
       response = {
         status: "error",
