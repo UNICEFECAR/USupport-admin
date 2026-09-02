@@ -1,6 +1,7 @@
 import * as yup from "yup";
 
 import { PASSWORD_REGEX, ADMIN_ROLES } from "./authSchemas.js";
+import { getAdminSpecializationFilterOptions } from "#utils/specializations";
 
 export const countrySchema = yup.object().shape({
   country: yup.string().required(),
@@ -63,8 +64,16 @@ export const getAllProvidersSchema = countrySchema.shape({
   free: yup.boolean().nullable(true),
   specialization: yup
     .string()
-    .oneOf(["psychologist", "psychotherapist", "psychiatrist", "any"])
-    .nullable(true),
+    .nullable(true)
+    .test("valid-specialization-filter", "Invalid specialization", function (value) {
+      if (!value) {
+        return true;
+      }
+
+      return getAdminSpecializationFilterOptions(this.parent.country).includes(
+        value
+      );
+    }),
   sort_name: yup.string().oneOf([null, "asc", "desc"]).nullable(true),
   sort_email: yup.string().oneOf([null, "asc", "desc"]).nullable(true),
   sort_consultationPrice: yup
