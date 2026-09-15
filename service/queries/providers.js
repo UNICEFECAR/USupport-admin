@@ -82,11 +82,11 @@ export const getAllProvidersQuery = async ({
             AND pdt.language_id = $12::UUID
           LEFT JOIN organization_provider_links ON (organization_provider_links.provider_detail_id = provider_detail.provider_detail_id AND organization_provider_links.is_deleted = false)
           LEFT JOIN organization ON organization.organization_id = organization_provider_links.organization_id
-        WHERE consultation_price >= $3
+        WHERE COALESCE(provider_detail.consultation_price, 0) >= $3
         AND (
           CASE WHEN $4 = 'any' THEN status = ANY(ARRAY['active', 'inactive']) ELSE status = $4 END
-          AND CASE WHEN $5 = 'any' THEN specializations IS NOT NULL ELSE specializations::text[] @> ARRAY[$5] END
-          AND CASE WHEN $6 = true THEN consultation_price = 0 ELSE consultation_price >= 0 END
+          AND CASE WHEN $5 = 'any' THEN TRUE ELSE specializations::text[] @> ARRAY[$5] END
+          AND CASE WHEN $6 = true THEN COALESCE(provider_detail.consultation_price, 0) = 0 ELSE TRUE END
           AND (
             $11::text[] IS NULL OR
             (
@@ -119,7 +119,10 @@ export const getAllProvidersQuery = async ({
           CASE WHEN $9 = 'asc' THEN provider_detail.consultation_price ELSE NULL END ASC,
           CASE WHEN $9 = 'desc' THEN provider_detail.consultation_price ELSE NULL END DESC,
           CASE WHEN $10 = 'asc' THEN provider_detail.status ELSE NULL END ASC,
-          CASE WHEN $10 = 'desc' THEN provider_detail.status ELSE NULL END DESC
+          CASE WHEN $10 = 'desc' THEN provider_detail.status ELSE NULL END DESC,
+          COALESCE(pdt.name, provider_detail.name) ASC,
+          COALESCE(pdt.surname, provider_detail.surname) ASC,
+          provider_detail.provider_detail_id ASC
         LIMIT $1
         OFFSET $2;
       `,
