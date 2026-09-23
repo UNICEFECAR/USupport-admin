@@ -121,7 +121,7 @@ export const deleteCountryFaqs = async ({
 export const getCountrySosCenters = async ({ country }) => {
   return await getCountrySosCentersQuery({ country })
     .then((res) => {
-      return res.rows[0][`sos_center_ids`];
+      return res.rows[0]["sos_center_ids"];
     })
     .catch((err) => {
       throw err;
@@ -131,7 +131,7 @@ export const getCountrySosCenters = async ({ country }) => {
 export const addCountrySosCenters = async ({ country, id }) => {
   return await addCountrySosCentersQuery({ country, id })
     .then((res) => {
-      return res.rows[0][`sos_center_ids`];
+      return res.rows[0]["sos_center_ids"];
     })
     .catch((err) => {
       throw err;
@@ -141,7 +141,7 @@ export const addCountrySosCenters = async ({ country, id }) => {
 export const deleteCountrySosCenters = async ({ country, id }) => {
   return await deleteCountrySosCentersQuery({ country, id })
     .then((res) => {
-      return res.rows[0][`sos_center_ids`];
+      return res.rows[0]["sos_center_ids"];
     })
     .catch((err) => {
       throw err;
@@ -151,7 +151,7 @@ export const deleteCountrySosCenters = async ({ country, id }) => {
 export const getCountryArticles = async ({ country }) => {
   return await getCountryArticlesQuery({ country })
     .then((res) => {
-      return res.rows[0][`article_ids`];
+      return res.rows[0]["article_ids"];
     })
     .catch((err) => {
       throw err;
@@ -161,7 +161,7 @@ export const getCountryArticles = async ({ country }) => {
 export const addCountryArticles = async ({ country, id }) => {
   return await addCountryArticlesQuery({ country, id })
     .then((res) => {
-      return res.rows[0][`article_ids`];
+      return res.rows[0]["article_ids"];
     })
     .catch((err) => {
       throw err;
@@ -171,7 +171,7 @@ export const addCountryArticles = async ({ country, id }) => {
 export const deleteCountryArticles = async ({ country, id }) => {
   return await deleteCountryArticlesQuery({ country, id })
     .then((res) => {
-      return res.rows[0][`article_ids`];
+      return res.rows[0]["article_ids"];
     })
     .catch((err) => {
       throw err;
@@ -181,7 +181,7 @@ export const deleteCountryArticles = async ({ country, id }) => {
 export const getCountryPinnedArticles = async ({ country }) => {
   return await getCountryPinnedArticlesQuery({ country })
     .then((res) => {
-      return res.rows[0][`pinned_articles`];
+      return res.rows[0]["pinned_articles"];
     })
     .catch((err) => {
       throw err;
@@ -199,7 +199,7 @@ export const addCountryPinnedArticles = async ({ country, id, language }) => {
 
   return await addCountryPinnedArticlesQuery({ country, id })
     .then((res) => {
-      return res.rows[0][`pinned_articles`];
+      return res.rows[0]["pinned_articles"];
     })
     .catch((err) => {
       throw err;
@@ -209,7 +209,7 @@ export const addCountryPinnedArticles = async ({ country, id, language }) => {
 export const deleteCountryPinnedArticles = async ({ country, id }) => {
   return await deleteCountryPinnedArticlesQuery({ country, id })
     .then((res) => {
-      return res.rows[0][`pinned_articles`];
+      return res.rows[0]["pinned_articles"];
     })
     .catch((err) => {
       throw err;
@@ -244,7 +244,7 @@ export const getCountryVideos = async ({ country }) => {
   return await getCountryVideosQuery({ country })
     .then((res) => {
       if (res.rowCount > 0) {
-        return res.rows[0][`video_ids`];
+        return res.rows[0]["video_ids"];
       }
       return [];
     })
@@ -257,7 +257,7 @@ export const addCountryVideos = async ({ country, id }) => {
   return await addCountryVideosQuery({ country, id })
     .then((res) => {
       if (res.rowCount > 0) {
-        return res.rows[0][`video_ids`];
+        return res.rows[0]["video_ids"];
       }
       return { success: true };
     })
@@ -270,7 +270,7 @@ export const deleteCountryVideos = async ({ country, id }) => {
   return await deleteCountryVideosQuery({ country, id })
     .then((res) => {
       if (res.rowCount > 0) {
-        return res.rows[0][`video_ids`];
+        return res.rows[0]["video_ids"];
       }
       return { success: true };
     })
@@ -283,7 +283,7 @@ export const getCountryPodcasts = async (data) => {
   try {
     return await getCountryPodcastsQuery(data).then((res) => {
       if (res.rowCount > 0) {
-        return res.rows[0][`podcast_ids`];
+        return res.rows[0]["podcast_ids"];
       }
       return [];
     });
@@ -296,7 +296,7 @@ export const addCountryPodcasts = async (data) => {
   try {
     return await addCountryPodcastsQuery(data).then((res) => {
       if (res.rowCount > 0) {
-        return res.rows[0][`podcast_ids`];
+        return res.rows[0]["podcast_ids"];
       }
       return { success: true };
     });
@@ -309,7 +309,7 @@ export const deleteCountryPodcasts = async (data) => {
   try {
     return await deleteCountryPodcastsQuery(data).then((res) => {
       if (res.rowCount > 0) {
-        return res.rows[0][`podcast_ids`];
+        return res.rows[0]["podcast_ids"];
       }
       return { success: true };
     });
