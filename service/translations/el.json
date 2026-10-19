@@ -33,6 +33,7 @@
   "provider_name": "Όνομα παρόχου",
   "provider_email": "Email παρόχου",
   "total_slots": "Συνολικός αριθμός ραντεβού",
+  "total_slot_hours": "Συνολικός αριθμός ωρών",
   "slot_type": "Τύπος ραντεβού",
   "organization_campaign": "Οργανισμός / Εκστρατεία",
   "period": "Περίοδος",

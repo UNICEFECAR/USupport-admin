@@ -49,6 +49,7 @@ export const generateAvailabilityCSV = ({
     t("provider_uuid", language),
     t("provider_email", language),
     t("total_slots", language),
+    t("total_slot_hours", language),
     t("slot_type", language),
     t("organization_campaign", language),
     t("total_slots_campaign_organization", language),
@@ -76,6 +77,9 @@ export const generateAvailabilityCSV = ({
       normalConsultations: [],
       campaignConsultationsById: new Map(), // Map<campaign_id, consultations[]>
       organizationConsultationsById: new Map(), // Map<organization_id, consultations[]>
+      // Total open time. A slot count alone stopped meaning "hours" once 30- and
+      // 60-minute slots could be mixed.
+      totalSlotMinutes: 0,
     });
   });
 
@@ -86,12 +90,21 @@ export const generateAvailabilityCSV = ({
 
     const providerData = providerDataMap.get(providerId);
 
+    // A slot with no recorded duration predates per-slot lengths, so it is an hour.
+    const slotDurations = record.slot_durations || {};
+    const minutesForSlot = (slotTime) => {
+      const key = String(Math.floor(new Date(slotTime).getTime() / 1000));
+      const minutes = Number(slotDurations[key]);
+      return minutes === 30 || minutes === 60 ? minutes : 60;
+    };
+
     // Process normal slots
     if (record.slots && record.slots.length > 0) {
       record.slots.forEach((slot) => {
         const slotDate = new Date(slot);
         if (slotDate >= startDate && slotDate <= endDate) {
           providerData.normalSlots.push(slotDate);
+          providerData.totalSlotMinutes += minutesForSlot(slot);
         }
       });
     }
@@ -129,6 +142,7 @@ export const generateAvailabilityCSV = ({
 
           if (slotTime >= startDate && slotTime <= endDate) {
             providerData.campaignSlotsById.get(campaignId).slots.push(slotTime);
+            providerData.totalSlotMinutes += minutesForSlot(slotTime);
           }
         }
       });
@@ -172,6 +186,7 @@ export const generateAvailabilityCSV = ({
             providerData.organizationSlotsById
               .get(organizationId)
               .slots.push(slotTime);
+            providerData.totalSlotMinutes += minutesForSlot(slotTime);
           }
         }
       });
@@ -319,6 +334,10 @@ export const generateAvailabilityCSV = ({
       (data) => (totalProviderSlots += data.slots.length)
     );
 
+    // Slot count and total time are different questions once lengths are mixed,
+    // so the report answers both rather than overloading one column.
+    const totalProviderHours = (providerData.totalSlotMinutes / 60).toFixed(1);
+
     const rows = [];
 
     // Add normal slots row only if there are normal slots
@@ -337,6 +356,7 @@ export const generateAvailabilityCSV = ({
         providerData.uuid,
         providerData.email,
         totalProviderSlots,
+        totalProviderHours,
         providerData.normalSlots.length > 0
           ? t("slot_type_normal", language)
           : "-",
@@ -374,6 +394,7 @@ export const generateAvailabilityCSV = ({
         providerData.uuid,
         providerData.email,
         totalProviderSlots,
+        totalProviderHours,
         t("slot_type_campaign", language),
         campaignName,
         slots.length,
@@ -417,6 +438,7 @@ export const generateAvailabilityCSV = ({
         providerData.uuid,
         providerData.email,
         totalProviderSlots,
+        totalProviderHours,
         t("slot_type_organization", language),
         organizationName,
         slots.length,
