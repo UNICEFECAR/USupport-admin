@@ -16,6 +16,7 @@ import {
   getMoodTrackerReport,
   getPlayAndHealVisits,
   getHosnElHalVisits,
+  getHosnElHalEngagements,
 } from "#controllers/statistics";
 
 import {
@@ -323,6 +324,23 @@ router.get("/hosnelhal-visits", async (req, res, next) => {
     .strict(true)
     .validate({ country, language })
     .then(getHosnElHalVisits)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.get("/hosnelhal-engagements", async (req, res, next) => {
+  /**
+   * #route   GET /admin/v1/statistics/hosnelhal-engagements
+   * #desc    Get Hosn El Hal resource view events (hosn_asset / view)
+   */
+  const country = req.header("x-country-alpha-2");
+  const language = req.header("x-language-alpha-2");
+
+  return await getStatsSchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({ country, language })
+    .then(getHosnElHalEngagements)
     .then((result) => res.status(200).send(result))
     .catch(next);
 });

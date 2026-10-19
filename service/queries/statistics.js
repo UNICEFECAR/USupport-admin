@@ -541,3 +541,19 @@ export const getVisitEventsQuery = async ({ eventTypes }) => {
     [eventTypes]
   );
 };
+
+/**
+ * Hosn El Hal resource views (content_engagement_event).
+ * Format / pillar come from CMS when the admin UI aggregates.
+ */
+export const getHosnElHalEngagementsQuery = async () => {
+  return await getDBPool("masterDb").query(
+    `
+        SELECT content_id, visitor_id, created_at, action, content_type
+        FROM content_engagement_event
+        WHERE content_type = 'hosn_asset'
+          AND action = 'view'
+        ORDER BY created_at DESC
+      `
+  );
+};

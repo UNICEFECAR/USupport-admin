@@ -6,7 +6,7 @@ import passport from "passport";
 import v1 from "#routes/index";
 import middleware from "#middlewares/index";
 
-dotenv.config();
+dotenv.config({ path: ".env.local" });
 
 const app = express();
 const PORT = process.env.PORT || 3007;
