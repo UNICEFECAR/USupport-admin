@@ -33,6 +33,7 @@
   "provider_uuid": "ID konsultanta",
   "provider_email": "Email konsultanta",
   "total_slots": "Łączna liczba slotów",
+  "total_slot_hours": "Łączna liczba godzin",
   "slot_type": "Typ slotu",
   "organization_campaign": "Organizacja / Kampania",
   "total_slots_campaign_organization": "Łączna liczba slotów (Kampania / Organizacja)",

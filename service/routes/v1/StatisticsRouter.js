@@ -15,6 +15,7 @@ import {
   getProviderAvailabilityReport,
   getMoodTrackerReport,
   getPlayAndHealVisits,
+  getHosnElHalVisits,
 } from "#controllers/statistics";
 
 import {
@@ -305,6 +306,23 @@ router.get("/playandheal-visits", async (req, res, next) => {
     .strict(true)
     .validate({ country, language })
     .then(getPlayAndHealVisits)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.get("/hosnelhal-visits", async (req, res, next) => {
+  /**
+   * #route   GET /admin/v1/statistics/hosnelhal-visits
+   * #desc    Get country events for Hosn El Hal website visits
+   */
+  const country = req.header("x-country-alpha-2");
+  const language = req.header("x-language-alpha-2");
+
+  return await getStatsSchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({ country, language })
+    .then(getHosnElHalVisits)
     .then((result) => res.status(200).send(result))
     .catch(next);
 });

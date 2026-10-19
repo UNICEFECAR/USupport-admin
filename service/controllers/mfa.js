@@ -62,6 +62,8 @@ const WEBAUTHN_ORIGINS = [
   "https://armenia.staging.usupport.online",
   "https://playandheal.usupport.online",
   "https://playandheal.staging.usupport.online",
+  "https://teacher.wellbeing.usupport.online",
+  "https://teacher.wellbeing.staging.usupport.online",
   "http://localhost:5175",
 ];
 

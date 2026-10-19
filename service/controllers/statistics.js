@@ -16,7 +16,7 @@ import {
   getAvailabilitySlotsInRangeQuery,
   getBookedConsultationsInRangeQuery,
   getMoodTrackerReportQuery,
-  getPlayAndHealVisitsQuery,
+  getVisitEventsQuery,
 } from "#queries/statistics";
 
 import {
@@ -39,6 +39,7 @@ import {
 } from "#queries/organizations";
 
 import { countryNotFound } from "#utils/errors";
+import { PROGRAM_COUNTRIES } from "#utils/programCountries";
 import { normalizeDate, getClientInitials } from "#utils/helperFunctions";
 import {
   generateAvailabilityCSV,
@@ -109,10 +110,13 @@ export const getCountryStatistics = async ({ language, countryId }) => {
 };
 
 export const getGlobalStatistics = async ({ language }) => {
+  // Programme countries have no databases with clients or providers
   const activeCountries = await getAllActiveCountries().then((result) =>
-    result.rows.map((country) => {
-      return { alpha2: country.alpha2, countryId: country.country_id };
-    })
+    result.rows
+      .filter((country) => !PROGRAM_COUNTRIES.includes(country.alpha2))
+      .map((country) => {
+        return { alpha2: country.alpha2, countryId: country.country_id };
+      })
   );
 
   let globalStatistics = {
@@ -623,6 +627,9 @@ export const getProviderAvailabilityReport = async ({
         consultation_price: provider.consultation_price,
         status: provider.status,
         total_availability_slots: 0,
+        // A slot count stops meaning "hours" once 30- and 60-minute slots are
+        // mixed, so the report carries both.
+        total_availability_minutes: 0,
         earliest_availability: null,
         latest_availability: null,
         normal_consultations_booked: 0,
@@ -675,10 +682,30 @@ export const getProviderAvailabilityReport = async ({
       const totalFilteredSlots =
         normalSlotsCount + campaignSlotsCount + organizationSlotsCount;
 
+      // Sum the real lengths. An absent key means the slot predates per-slot
+      // durations, so it is an hour.
+      const slotDurations = availability.slot_durations || {};
+      const minutesFor = (slotTime) => {
+        const key = String(Math.floor(new Date(slotTime).getTime() / 1000));
+        const minutes = Number(slotDurations[key]);
+        return minutes === 30 || minutes === 60 ? minutes : 60;
+      };
+      const totalFilteredMinutes =
+        (filteredSlotsByTime || []).reduce((sum, x) => sum + minutesFor(x), 0) +
+        (filteredCampaignSlotsByTime || []).reduce(
+          (sum, x) => sum + minutesFor(x.time),
+          0,
+        ) +
+        (filteredOrganizationSlotsByTime || []).reduce(
+          (sum, x) => sum + minutesFor(x.time),
+          0,
+        );
+
       const hasSlots = totalFilteredSlots > 0;
 
       if (provider && hasSlots && availability.start_date) {
         provider.total_availability_slots += totalFilteredSlots;
+        provider.total_availability_minutes += totalFilteredMinutes;
 
         if (
           !provider.earliest_availability ||
@@ -799,10 +826,16 @@ export const getProviderAvailabilityReport = async ({
   }
 };
 
-export const getPlayAndHealVisits = async () => {
-  return await getPlayAndHealVisitsQuery()
+const getVisitEvents = async (eventTypes) => {
+  return await getVisitEventsQuery({ eventTypes })
     .then((res) => res.rows || [])
     .catch((err) => {
       throw err;
     });
 };
+
+export const getPlayAndHealVisits = async () =>
+  getVisitEvents(["playandheal_visit", "playandheal_visit_qr"]);
+
+export const getHosnElHalVisits = async () =>
+  getVisitEvents(["hosnelhal_visit"]);
