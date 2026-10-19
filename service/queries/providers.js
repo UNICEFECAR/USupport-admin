@@ -163,6 +163,6 @@ export const getAllProviderNamesQuery = async ({ poolCountry, languageId }) => {
 
 export const getLanguageIdByAlpha2Query = async (alpha2) =>
   await getDBPool("masterDb").query(
-    `SELECT language_id FROM language WHERE alpha2 = $1 LIMIT 1`,
+    "SELECT language_id FROM language WHERE alpha2 = $1 LIMIT 1",
     [alpha2]
   );
