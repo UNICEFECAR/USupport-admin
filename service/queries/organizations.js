@@ -507,6 +507,9 @@ export const getProviderConsultationsForOrganizationQuery = async ({
           AND (consultation.status = 'scheduled' OR consultation.status = 'finished')
           AND consultation.time >= to_timestamp($2)
           AND consultation.time <= to_timestamp($3)
+          -- Hour buckets: startTime/endTime are whole hours, and the bounds are
+          -- inclusive, so endTime = 17 means "up to and including 17:59". With
+          -- 30-minute slots that now admits 17:30 starts, which is intended.
           AND EXTRACT(HOUR FROM consultation.time AT TIME ZONE COALESCE($8, 'UTC')) >= $4
           AND EXTRACT(HOUR FROM consultation.time AT TIME ZONE COALESCE($8, 'UTC')) <= $5
           -- Filter by weekdays/weekends based on the provided conditions

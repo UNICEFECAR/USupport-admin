@@ -55,7 +55,10 @@ export const getScheduledConsultationsWithClientIdForCountryQuery = async ({
       WHERE (status = 'scheduled' OR status = 'finished' OR status = 'late-canceled' OR status = 'canceled' OR status = 'active')
             AND ($1::double precision IS NULL OR time >= to_timestamp($1))
             AND ($2::double precision IS NULL OR time <= to_timestamp($2))
-            AND ($3::uuid[] IS NULL OR client_detail_id = ANY($3));
+            AND ($3::uuid[] IS NULL OR client_detail_id = ANY($3))
+            AND provider_detail_id NOT IN (
+            'c206912c-c5b1-4e74-8669-332b919a339b'
+            );
     `,
     [startDate, endDate, clientDetailIds]
   );
@@ -138,9 +141,10 @@ export const getProviderStatisticsQuery = async ({ poolCountry, providerId }) =>
         price,
         campaign_id,
         created_at,
-        organization_id
+        organization_id,
+        duration_minutes
       FROM consultation
-      WHERE provider_detail_id = $1 AND (status = 'finished' OR status = 'late-canceled' OR (status = 'scheduled' AND now() > time + interval '1 hour'))
+      WHERE provider_detail_id = $1 AND (status = 'finished' OR status = 'late-canceled' OR (status = 'scheduled' AND now() > time + (duration_minutes * INTERVAL '1 minute')))
     `,
     [providerId]
   );
@@ -400,6 +404,7 @@ export const getAvailabilitySlotsInRangeQuery = async ({
           a.slots,
           a.start_date,
           a.organization_slots,
+          COALESCE(a.slot_durations, '{}'::jsonb) AS slot_durations,
           CASE 
             WHEN a.campaign_slots IS NULL THEN NULL
             WHEN jsonb_typeof(a.campaign_slots) = 'array' THEN
@@ -438,6 +443,7 @@ export const getAvailabilitySlotsInRangeQuery = async ({
           csw.slots,
           csw.start_date,
           csw.campaign_slots,
+          csw.slot_durations,
           CASE 
             WHEN csw.organization_slots IS NULL THEN NULL
             WHEN jsonb_typeof(csw.organization_slots) = 'array' THEN
@@ -465,7 +471,8 @@ export const getAvailabilitySlotsInRangeQuery = async ({
         slots,
         start_date,
         campaign_slots,
-        organization_slots
+        organization_slots,
+        slot_durations
       FROM organization_slots_with_names
       ORDER BY provider_detail_id ASC, start_date ASC
     `,
@@ -487,7 +494,8 @@ export const getBookedConsultationsInRangeQuery = async ({
         c.status,
         c.campaign_id,
         c.organization_id,
-        c.created_at
+        c.created_at,
+        c.duration_minutes
       FROM consultation c
       WHERE c.time >= $1::timestamptz 
         AND c.time <= $2::timestamptz
@@ -522,13 +530,14 @@ WHERE (country_id = $1 OR event_type = 'global_visit')
   );
 };
 
-export const getPlayAndHealVisitsQuery = async () => {
+export const getVisitEventsQuery = async ({ eventTypes }) => {
   return await getDBPool("masterDb").query(
     `
         SELECT *
         FROM country_event
-        WHERE event_type IN ('playandheal_visit', 'playandheal_visit_qr')
+        WHERE event_type = ANY($1::event_type[])
         ORDER BY created_at DESC
-      `
+      `,
+    [eventTypes]
   );
 };

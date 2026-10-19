@@ -33,6 +33,7 @@
   "provider_uuid": "Консультант ID",
   "provider_email": "Консультант электрондық поштасы",
   "total_slots": "Барлығы слоттар",
+  "total_slot_hours": "Барлығы сағаттар",
   "total_slots_campaign_organization": "Барлығы слоттар (Науқан / Ұйым)",
   "slot_type": "Слот түрі",
   "organization_campaign": "Ұйым / Науқан",

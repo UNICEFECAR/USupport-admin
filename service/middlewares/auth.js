@@ -37,6 +37,7 @@ import {
   incorrectCredentials,
 } from "#utils/errors";
 import { produceRaiseNotification } from "#utils/kafkaProducers";
+import { PROGRAM_COUNTRIES } from "#utils/programCountries";
 import {
   generate4DigitCode,
   generatePassword,
@@ -414,7 +415,7 @@ passport.use(
 
         const rawJWT = req.headers.authorization.split(" ")[1];
 
-        if (country !== "global" && country !== "PS") {
+        if (country !== "global" && !PROGRAM_COUNTRIES.includes(country)) {
           const isBlacklisted = await isJwtBlacklisted({
             token: rawJWT,
             poolCountry: country,
