@@ -17,6 +17,7 @@ import {
   getBookedConsultationsInRangeQuery,
   getMoodTrackerReportQuery,
   getVisitEventsQuery,
+  getHosnElHalEngagementsQuery,
 } from "#queries/statistics";
 
 import {
@@ -839,3 +840,11 @@ export const getPlayAndHealVisits = async () =>
 
 export const getHosnElHalVisits = async () =>
   getVisitEvents(["hosnelhal_visit"]);
+
+export const getHosnElHalEngagements = async () => {
+  return await getHosnElHalEngagementsQuery()
+    .then((res) => res.rows || [])
+    .catch((err) => {
+      throw err;
+    });
+};

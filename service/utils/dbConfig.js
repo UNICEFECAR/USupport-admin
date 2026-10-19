@@ -1,7 +1,7 @@
 import pg from "pg";
 import dotenv from "dotenv";
 
-dotenv.config();
+dotenv.config({ path: ".env.local" });
 
 // Global Database connection strings
 const MASTER_PG_POOL = new pg.Pool({
