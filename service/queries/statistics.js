@@ -530,15 +530,21 @@ WHERE (country_id = $1 OR event_type = 'global_visit')
   );
 };
 
-export const getVisitEventsQuery = async ({ eventTypes }) => {
+export const getVisitEventsQuery = async ({
+  eventTypes,
+  startDate = null,
+  endDate = null,
+}) => {
   return await getDBPool("masterDb").query(
     `
         SELECT *
         FROM country_event
         WHERE event_type = ANY($1::event_type[])
+          AND ($2::timestamptz IS NULL OR created_at >= $2::timestamptz)
+          AND ($3::timestamptz IS NULL OR created_at <= $3::timestamptz)
         ORDER BY created_at DESC
       `,
-    [eventTypes]
+    [eventTypes, startDate, endDate]
   );
 };
 
@@ -546,15 +552,21 @@ export const getVisitEventsQuery = async ({ eventTypes }) => {
  * Hosn El Hal resource views (content_engagement_event).
  * Format / pillar come from CMS when the admin UI aggregates.
  */
-export const getHosnElHalEngagementsQuery = async () => {
+export const getHosnElHalEngagementsQuery = async ({
+  startDate = null,
+  endDate = null,
+} = {}) => {
   return await getDBPool("masterDb").query(
     `
         SELECT content_id, visitor_id, created_at, action, content_type
         FROM content_engagement_event
         WHERE content_type = 'hosn_asset'
           AND action = 'view'
+          AND ($1::timestamptz IS NULL OR created_at >= $1::timestamptz)
+          AND ($2::timestamptz IS NULL OR created_at <= $2::timestamptz)
         ORDER BY created_at DESC
-      `
+      `,
+    [startDate, endDate]
   );
 };
 

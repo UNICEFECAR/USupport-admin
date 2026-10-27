@@ -841,22 +841,37 @@ export const getProviderAvailabilityReport = async ({
   }
 };
 
-const getVisitEvents = async (eventTypes) => {
-  return await getVisitEventsQuery({ eventTypes })
+const getVisitEvents = async ({ eventTypes, startDate, endDate }) => {
+  return await getVisitEventsQuery({
+    eventTypes,
+    startDate: normalizeDate(startDate, "start"),
+    endDate: normalizeDate(endDate, "end"),
+  })
     .then((res) => res.rows || [])
     .catch((err) => {
       throw err;
     });
 };
 
-export const getPlayAndHealVisits = async () =>
-  getVisitEvents(["playandheal_visit", "playandheal_visit_qr"]);
+export const getPlayAndHealVisits = async ({ startDate, endDate } = {}) =>
+  getVisitEvents({
+    eventTypes: ["playandheal_visit", "playandheal_visit_qr"],
+    startDate,
+    endDate,
+  });
 
-export const getHosnElHalVisits = async () =>
-  getVisitEvents(["hosnelhal_visit"]);
+export const getHosnElHalVisits = async ({ startDate, endDate } = {}) =>
+  getVisitEvents({
+    eventTypes: ["hosnelhal_visit"],
+    startDate,
+    endDate,
+  });
 
-export const getHosnElHalEngagements = async () => {
-  return await getHosnElHalEngagementsQuery()
+export const getHosnElHalEngagements = async ({ startDate, endDate } = {}) => {
+  return await getHosnElHalEngagementsQuery({
+    startDate: normalizeDate(startDate, "start"),
+    endDate: normalizeDate(endDate, "end"),
+  })
     .then((res) => res.rows || [])
     .catch((err) => {
       throw err;
