@@ -33,6 +33,7 @@ import {
   getMoodTrackerReportSchema,
   getConsultationProblemReportsSchema,
   getConsultationProblemReportSchema,
+  getVisitEventsSchema,
 } from "#schemas/statisticsSchemas";
 
 import { securedRoute } from "#middlewares/auth";
@@ -305,11 +306,12 @@ router.get("/playandheal-visits", async (req, res, next) => {
    */
   const country = req.header("x-country-alpha-2");
   const language = req.header("x-language-alpha-2");
+  const { startDate, endDate } = req.query;
 
-  return await getStatsSchema
+  return await getVisitEventsSchema
     .noUnknown(true)
     .strict(true)
-    .validate({ country, language })
+    .validate({ country, language, startDate, endDate })
     .then(getPlayAndHealVisits)
     .then((result) => res.status(200).send(result))
     .catch(next);
@@ -322,11 +324,12 @@ router.get("/hosnelhal-visits", async (req, res, next) => {
    */
   const country = req.header("x-country-alpha-2");
   const language = req.header("x-language-alpha-2");
+  const { startDate, endDate } = req.query;
 
-  return await getStatsSchema
+  return await getVisitEventsSchema
     .noUnknown(true)
     .strict(true)
-    .validate({ country, language })
+    .validate({ country, language, startDate, endDate })
     .then(getHosnElHalVisits)
     .then((result) => res.status(200).send(result))
     .catch(next);
@@ -339,11 +342,12 @@ router.get("/hosnelhal-engagements", async (req, res, next) => {
    */
   const country = req.header("x-country-alpha-2");
   const language = req.header("x-language-alpha-2");
+  const { startDate, endDate } = req.query;
 
-  return await getStatsSchema
+  return await getVisitEventsSchema
     .noUnknown(true)
     .strict(true)
-    .validate({ country, language })
+    .validate({ country, language, startDate, endDate })
     .then(getHosnElHalEngagements)
     .then((result) => res.status(200).send(result))
     .catch(next);

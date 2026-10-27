@@ -14,6 +14,17 @@ export const getCountryStatisticsSchema = languageSchema.shape({
 
 export const getStatsSchema = languageSchema.concat(countrySchema);
 
+export const getVisitEventsSchema = getStatsSchema.shape({
+  startDate: yup
+    .string()
+    .matches(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  endDate: yup
+    .string()
+    .matches(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+});
+
 export const getProviderStatisticsSchema = getStatsSchema.shape({
   providerId: yup.string().uuid().required(),
 });
