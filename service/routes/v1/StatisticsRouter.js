@@ -17,6 +17,8 @@ import {
   getPlayAndHealVisits,
   getHosnElHalVisits,
   getHosnElHalEngagements,
+  getConsultationProblemReports,
+  getConsultationProblemReport,
 } from "#controllers/statistics";
 
 import {
@@ -29,6 +31,8 @@ import {
   getSOSCenterClicksSchema,
   getProviderAvailabilityReportSchema,
   getMoodTrackerReportSchema,
+  getConsultationProblemReportsSchema,
+  getConsultationProblemReportSchema,
 } from "#schemas/statisticsSchemas";
 
 import { securedRoute } from "#middlewares/auth";
@@ -344,5 +348,47 @@ router.get("/hosnelhal-engagements", async (req, res, next) => {
     .then((result) => res.status(200).send(result))
     .catch(next);
 });
+
+router
+  .route("/consultation-problem-reports")
+  .get(securedRoute, async (req, res, next) => {
+    /**
+     * #route   GET /admin/v1/statistics/consultation-problem-reports
+     * #desc    Get consultation problem reports for the current country admin
+     */
+    const country = req.header("x-country-alpha-2");
+    const language = req.header("x-language-alpha-2");
+    const adminId = req.user.admin_id;
+    const page = req.query.page === undefined ? 1 : Number(req.query.page);
+
+    return await getConsultationProblemReportsSchema
+      .noUnknown(true)
+      .strict(true)
+      .validate({ ...req.query, page, country, language, adminId })
+      .then(getConsultationProblemReports)
+      .then((result) => res.status(200).send(result))
+      .catch(next);
+  });
+
+router
+  .route("/consultation-problem-reports/:reportId")
+  .get(securedRoute, async (req, res, next) => {
+    /**
+     * #route   GET /admin/v1/statistics/consultation-problem-reports/:reportId
+     * #desc    Get consultation problem report details for the current country admin
+     */
+    const country = req.header("x-country-alpha-2");
+    const language = req.header("x-language-alpha-2");
+    const adminId = req.user.admin_id;
+    const reportId = req.params.reportId;
+
+    return await getConsultationProblemReportSchema
+      .noUnknown(true)
+      .strict(true)
+      .validate({ country, language, adminId, reportId })
+      .then(getConsultationProblemReport)
+      .then((result) => res.status(200).send(result))
+      .catch(next);
+  });
 
 export { router };

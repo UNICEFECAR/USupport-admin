@@ -49,5 +49,7 @@
   "unknown_organization": "Неизвестная организация",
   "provider_has_future_consultations_error": "У консультанта есть будущие консультации или слоты для этой организации",
   "translation_failed_error": "Перевод не удался. Пожалуйста, попробуйте позже.",
-  "max_pinned_articles_reached_error": "Достигнут лимит в 4 закрепленных статьи. Сначала открепите одну статью."
+  "max_pinned_articles_reached_error": "Достигнут лимит в 4 закрепленных статьи. Сначала открепите одну статью.",
+  "consultation_problem_report_access_denied_error": "У вас нет доступа к сообщениям о проблемах с консультациями в этой стране.",
+  "consultation_problem_report_not_found_error": "Сообщение о проблеме с консультацией не найдено."
 }

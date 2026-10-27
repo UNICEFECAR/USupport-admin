@@ -255,3 +255,22 @@ export const maxPinnedArticlesReached = (language) => {
   error.status = 400;
   return error;
 };
+
+export const consultationProblemReportAccessDenied = (language) => {
+  const error = new Error();
+  error.message = t(
+    "consultation_problem_report_access_denied_error",
+    language
+  );
+  error.name = "CONSULTATION PROBLEM REPORT ACCESS DENIED";
+  error.status = 403;
+  return error;
+};
+
+export const consultationProblemReportNotFound = (language) => {
+  const error = new Error();
+  error.message = t("consultation_problem_report_not_found_error", language);
+  error.name = "CONSULTATION PROBLEM REPORT NOT FOUND";
+  error.status = 404;
+  return error;
+};
