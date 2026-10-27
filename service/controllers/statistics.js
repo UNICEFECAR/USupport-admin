@@ -17,6 +17,11 @@ import {
   getBookedConsultationsInRangeQuery,
   getMoodTrackerReportQuery,
   getVisitEventsQuery,
+  getHosnElHalEngagementsQuery,
+  getConsultationProblemReportsQuery,
+  getConsultationProblemReportsCountQuery,
+  getConsultationProblemReportQuery,
+  getConsultationProblemReportBookingDetailsQuery,
 } from "#queries/statistics";
 
 import {
@@ -29,7 +34,11 @@ import {
   getMultipleClientsDataByIDs,
 } from "#queries/clients";
 
-import { getProviderDataById, getLanguageIdByAlpha2Query } from "#queries/providers";
+import {
+  getProviderDataById,
+  getLanguageIdByAlpha2Query,
+  getMultipleProvidersDataByIDs,
+} from "#queries/providers";
 import { getCampaignNamesByIds } from "#queries/sponsors";
 
 import {
@@ -38,7 +47,13 @@ import {
   getOrganizationsNoQuery,
 } from "#queries/organizations";
 
-import { countryNotFound } from "#utils/errors";
+import {
+  countryNotFound,
+  consultationProblemReportAccessDenied,
+  consultationProblemReportNotFound,
+} from "#utils/errors";
+import { getCountryAdminReportAccessQuery } from "#queries/admins";
+
 import { PROGRAM_COUNTRIES } from "#utils/programCountries";
 import { normalizeDate, getClientInitials } from "#utils/helperFunctions";
 import {
@@ -839,3 +854,121 @@ export const getPlayAndHealVisits = async () =>
 
 export const getHosnElHalVisits = async () =>
   getVisitEvents(["hosnelhal_visit"]);
+
+export const getHosnElHalEngagements = async () => {
+  return await getHosnElHalEngagementsQuery()
+    .then((res) => res.rows || [])
+    .catch((err) => {
+      throw err;
+    });
+};
+
+const getConsultationProblemReportCountryTimezone = async ({
+  adminId,
+  country,
+  language,
+}) => {
+  const result = await getCountryAdminReportAccessQuery({ adminId, country });
+  if (!result.rowCount) throw consultationProblemReportAccessDenied(language);
+  return result.rows[0].timezone || "UTC";
+};
+
+const getConsultationProblemReportParticipants = async ({
+  country,
+  clientDetailIds,
+  providerDetailIds,
+}) => {
+  const [clients, providers] = await Promise.all([
+    getMultipleClientsDataByIDs({ poolCountry: country, clientDetailIds }),
+    getMultipleProvidersDataByIDs({ poolCountry: country, providerDetailIds }),
+  ]);
+  const getName = (row) =>
+    [row.name, row.surname].filter(Boolean).join(" ") || row.nickname || null;
+  return {
+    clients: Object.fromEntries(
+      clients.rows.map((row) => [row.client_detail_id, getName(row)])
+    ),
+    providers: Object.fromEntries(
+      providers.rows.map((row) => [row.provider_detail_id, getName(row)])
+    ),
+  };
+};
+
+export const getConsultationProblemReports = async ({
+  country,
+  adminId,
+  language,
+  page,
+  ...filters
+}) => {
+  const timezone = await getConsultationProblemReportCountryTimezone({
+    adminId,
+    country,
+    language,
+  });
+  const queryArgs = { ...filters, poolCountry: country, timezone, page };
+  const [reports, count] = await Promise.all([
+    getConsultationProblemReportsQuery(queryArgs),
+    getConsultationProblemReportsCountQuery(queryArgs),
+  ]);
+  const names = await getConsultationProblemReportParticipants({
+    country,
+    clientDetailIds: reports.rows.map((report) => report.client_detail_id),
+    providerDetailIds: reports.rows.map((report) => report.provider_detail_id),
+  });
+  return {
+    reports: reports.rows.map((report) => ({
+      ...report,
+      reporter_name:
+        report.reporter_type === "client"
+          ? names.clients[report.client_detail_id]
+          : names.providers[report.provider_detail_id],
+    })),
+    total: count.rows[0].total,
+    page,
+    pageSize: 25,
+    timezone,
+  };
+};
+
+export const getConsultationProblemReport = async ({
+  country,
+  adminId,
+  language,
+  reportId,
+}) => {
+  const timezone = await getConsultationProblemReportCountryTimezone({
+    adminId,
+    country,
+    language,
+  });
+  const result = await getConsultationProblemReportQuery({
+    poolCountry: country,
+    reportId,
+  });
+  if (!result.rowCount) throw consultationProblemReportNotFound(language);
+  const report = result.rows[0];
+  const consultation = report.consultation;
+  const names = await getConsultationProblemReportParticipants({
+    country,
+    clientDetailIds: [consultation.client_detail_id],
+    providerDetailIds: [consultation.provider_detail_id],
+  });
+  const bookingDetails =
+    consultation.organization_id || consultation.campaign_id
+      ? (
+          await getConsultationProblemReportBookingDetailsQuery({
+            poolCountry: country,
+            organizationId: consultation.organization_id,
+            campaignId: consultation.campaign_id,
+          })
+        ).rows[0]
+      : { organization: null, campaign: null };
+  return {
+    ...report,
+    timezone,
+    ...bookingDetails,
+    client_name: names.clients[consultation.client_detail_id],
+    provider_name: names.providers[consultation.provider_detail_id],
+  };
+};

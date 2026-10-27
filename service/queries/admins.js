@@ -226,3 +226,13 @@ export const getPlatformAccessLogsQuery = async ({
     [startDate, endDate]
   );
 };
+
+export const getCountryAdminReportAccessQuery = async ({ adminId, country }) =>
+  await getDBPool("masterDb").query(
+    `SELECT c.timezone FROM admin a
+    JOIN admin_country_links acl ON acl.admin_id=a.admin_id
+    JOIN country c ON c.country_id=acl.country_id
+    WHERE a.admin_id=$1 AND a.role='country' AND a.is_active=true
+      AND a.deleted_at IS NULL AND c.alpha2=$2`,
+    [adminId, country]
+  );

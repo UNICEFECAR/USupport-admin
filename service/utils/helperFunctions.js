@@ -49,7 +49,12 @@ export const getYearInMilliseconds = () => {
 
 export const formatSpecializations = (specializations) => {
   if (specializations?.length > 0) {
-    return specializations.replace("{", "").replace("}", "").split(",");
+    return specializations
+      .replace("{", "")
+      .replace("}", "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
   }
 };
 

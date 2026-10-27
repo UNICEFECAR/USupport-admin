@@ -49,5 +49,7 @@
   "unknown_organization": "Белгісіз ұйым",
   "provider_has_future_consultations_error": "Консультантта бұл ұйым үшін болашақ консультациялар немесе слоттар бар",
   "translation_failed_error": "Аударма сәтсіз аяқталды. Кейінірек қайталап көріңіз.",
-  "max_pinned_articles_reached_error": "4 бекітілген мақала шегіне жеттіңіз. Алдымен біреуін бекітуден алыңыз."
+  "max_pinned_articles_reached_error": "4 бекітілген мақала шегіне жеттіңіз. Алдымен біреуін бекітуден алыңыз.",
+  "consultation_problem_report_access_denied_error": "Сізде осы елдің консультация мәселелері туралы есептеріне қол жеткізу құқығы жоқ.",
+  "consultation_problem_report_not_found_error": "Консультация мәселесі туралы есеп табылмады."
 }

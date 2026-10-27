@@ -49,5 +49,7 @@
   "unknown_organization": "Nieznana organizacja",
   "provider_has_future_consultations_error": "Konsultant ma przyszłe konsultacje lub sloty dla tej organizacji",
   "translation_failed_error": "Tłumaczenie nie powiodło się. Spróbuj ponownie później.",
-  "max_pinned_articles_reached_error": "Osiągnięto limit 4 przypiętych artykułów. Najpierw odepnij jeden artykuł."
+  "max_pinned_articles_reached_error": "Osiągnięto limit 4 przypiętych artykułów. Najpierw odepnij jeden artykuł.",
+  "consultation_problem_report_access_denied_error": "Nie masz dostępu do zgłoszeń problemów z konsultacjami w tym kraju.",
+  "consultation_problem_report_not_found_error": "Nie znaleziono zgłoszenia problemu z konsultacją."
 }
