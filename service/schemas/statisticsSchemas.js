@@ -47,3 +47,17 @@ export const getProviderAvailabilityReportSchema = yup.object().shape({
   endHour: yup.number().min(0).max(23).required(),
   timezone: yup.string().required(),
 });
+
+export const getConsultationProblemReportsSchema = getStatsSchema.shape({
+  adminId: yup.string().uuid().required(),
+  page: yup.number().integer().min(1).max(100000).required(),
+  reporterType: yup.string().oneOf(["client", "provider"]),
+  source: yup.string().oneOf(["web", "ios_app", "android_app", "unknown"]),
+  from: yup.string().matches(/^\d{4}-\d{2}-\d{2}$/),
+  to: yup.string().matches(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+export const getConsultationProblemReportSchema = getStatsSchema.shape({
+  adminId: yup.string().uuid().required(),
+  reportId: yup.string().uuid().required(),
+});

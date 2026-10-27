@@ -46,5 +46,7 @@
   "unknown_campaign": "Անհայտ արշավ",
   "unknown_organization": "Անհայտ կազմակերպություն",
   "provider_has_future_consultations_error": "Խորհրդատուն այս կազմակերպության համար ունի ապագա խորհրդատվություններ կամ ժամանակահատվածներ",
-  "translation_failed_error": "Թարգմանությունը ձախողվեց։ Խնդրում ենք փորձել ավելի ուշ։"
+  "translation_failed_error": "Թարգմանությունը ձախողվեց։ Խնդրում ենք փորձել ավելի ուշ։",
+  "consultation_problem_report_access_denied_error": "Դուք չունեք այս երկրի խորհրդատվության խնդիրների մասին հաղորդումներին հասանելիություն։",
+  "consultation_problem_report_not_found_error": "Խորհրդատվության խնդրի մասին հաղորդումը չի գտնվել։"
 }

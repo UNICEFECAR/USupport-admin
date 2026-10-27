@@ -557,3 +557,84 @@ export const getHosnElHalEngagementsQuery = async () => {
       `
   );
 };
+
+const consultationProblemReportFilters = `
+  WHERE ($1::text IS NULL OR r.reporter_type=$1)
+    AND ($2::text IS NULL OR r.source=$2)
+    AND ($3::date IS NULL OR r.submitted_at >= ($3::date::timestamp AT TIME ZONE $5))
+    AND ($4::date IS NULL OR r.submitted_at < (($4::date + 1)::timestamp AT TIME ZONE $5))
+`;
+
+export const getConsultationProblemReportsQuery = async ({
+  poolCountry,
+  reporterType,
+  source,
+  from,
+  to,
+  timezone,
+  page,
+}) =>
+  await getDBPool("clinicalDb", poolCountry).query(
+    `SELECT r.report_id,r.submitted_at,r.reporter_type,r.source,r.device_type,
+      c.consultation_id,c.time,c.client_detail_id,c.provider_detail_id
+    FROM consultation_problem_report r JOIN consultation c USING(consultation_id)
+    ${consultationProblemReportFilters}
+    ORDER BY r.submitted_at DESC,r.report_id DESC LIMIT 25 OFFSET $6`,
+    [reporterType, source, from, to, timezone, (page - 1) * 25]
+  );
+
+export const getConsultationProblemReportsCountQuery = async ({
+  poolCountry,
+  reporterType,
+  source,
+  from,
+  to,
+  timezone,
+}) =>
+  await getDBPool("clinicalDb", poolCountry).query(
+    `SELECT count(*)::int AS total FROM consultation_problem_report r
+    ${consultationProblemReportFilters}`,
+    [reporterType, source, from, to, timezone]
+  );
+
+export const getConsultationProblemReportQuery = async ({
+  poolCountry,
+  reportId,
+}) =>
+  await getDBPool("clinicalDb", poolCountry).query(
+    `SELECT r.report_id,r.consultation_id,r.reporter_type,r.submitted_at,r.source,
+      r.app_version,r.browser_name,r.browser_version,r.os_name,r.os_version,
+      r.device_type,r.interface_language,r.reporter_timezone,r.call_context,
+      jsonb_build_object(
+        'consultation_id',c.consultation_id,'client_detail_id',c.client_detail_id,
+        'provider_detail_id',c.provider_detail_id,'time',c.time,'status',c.status,
+        'duration_minutes',c.duration_minutes,'organization_id',c.organization_id,
+        'campaign_id',c.campaign_id,'created_at',c.created_at,'updated_at',c.updated_at,
+        'booked_from',c.booked_from,'client_join_time',c.client_join_time,
+        'client_leave_time',c.client_leave_time,'provider_join_time',c.provider_join_time,
+        'provider_leave_time',c.provider_leave_time,'canceled_by',c.canceled_by,
+        'canceled_at',c.canceled_at
+      ) AS consultation
+    FROM consultation_problem_report r JOIN consultation c USING(consultation_id) WHERE r.report_id=$1`,
+    [reportId]
+  );
+
+export const getConsultationProblemReportBookingDetailsQuery = async ({
+  poolCountry,
+  organizationId,
+  campaignId,
+}) =>
+  await getDBPool("piiDb", poolCountry).query(
+    `SELECT
+      CASE WHEN o.organization_id IS NOT NULL THEN
+        jsonb_build_object('organization_id',o.organization_id,'name',o.name)
+      END AS organization,
+      CASE WHEN c.campaign_id IS NOT NULL THEN
+        jsonb_build_object('campaign_id',c.campaign_id,'name',c.name,'sponsor_name',s.name)
+      END AS campaign
+    FROM (VALUES ($1::uuid,$2::text)) AS booking(organization_id,campaign_id)
+    LEFT JOIN organization o ON o.organization_id=booking.organization_id
+    LEFT JOIN campaign c ON c.campaign_id::text=booking.campaign_id
+    LEFT JOIN sponsor s ON s.sponsor_id=c.sponsor_id`,
+    [organizationId, campaignId]
+  );
