@@ -17,6 +17,7 @@ import {
   getPlayAndHealVisits,
   getHosnElHalVisits,
   getHosnElHalEngagements,
+  getHosnElHalFeedback,
   getConsultationProblemReports,
   getConsultationProblemReport,
 } from "#controllers/statistics";
@@ -331,6 +332,24 @@ router.get("/hosnelhal-visits", async (req, res, next) => {
     .strict(true)
     .validate({ country, language, startDate, endDate })
     .then(getHosnElHalVisits)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.get("/hosnelhal-feedback", securedRoute, async (req, res, next) => {
+  /**
+   * #route   GET /admin/v1/statistics/hosnelhal-feedback
+   * #desc    Get Hosn El Hal feedback card events (votes and survey clicks)
+   */
+  const country = req.header("x-country-alpha-2");
+  const language = req.header("x-language-alpha-2");
+  const { startDate, endDate } = req.query;
+
+  return await getVisitEventsSchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({ country, language, startDate, endDate })
+    .then(getHosnElHalFeedback)
     .then((result) => res.status(200).send(result))
     .catch(next);
 });
