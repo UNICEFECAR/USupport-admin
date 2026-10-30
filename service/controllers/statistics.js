@@ -867,6 +867,17 @@ export const getHosnElHalVisits = async ({ startDate, endDate } = {}) =>
     endDate,
   });
 
+export const getHosnElHalFeedback = async ({ startDate, endDate } = {}) =>
+  getVisitEvents({
+    eventTypes: [
+      "hosnelhal_feedback_up",
+      "hosnelhal_feedback_down",
+      "hosnelhal_feedback_survey_click",
+    ],
+    startDate,
+    endDate,
+  });
+
 export const getHosnElHalEngagements = async ({ startDate, endDate } = {}) => {
   return await getHosnElHalEngagementsQuery({
     startDate: normalizeDate(startDate, "start"),
