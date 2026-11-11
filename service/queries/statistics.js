@@ -650,3 +650,18 @@ export const getConsultationProblemReportBookingDetailsQuery = async ({
     LEFT JOIN sponsor s ON s.sponsor_id=c.sponsor_id`,
     [organizationId, campaignId]
   );
+
+export const getPlayAndHealWaitlistQuery = async () =>
+  await getDBPool("masterDb").query(
+    `
+      SELECT
+        playandheal_waitlist_id,
+        full_name,
+        email,
+        location,
+        language,
+        created_at
+      FROM playandheal_waitlist
+      ORDER BY created_at DESC
+    `
+  );
