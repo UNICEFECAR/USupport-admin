@@ -17,6 +17,7 @@ import {
   getBookedConsultationsInRangeQuery,
   getMoodTrackerReportQuery,
   getVisitEventsQuery,
+  getPlayAndHealWaitlistQuery,
   getHosnElHalEngagementsQuery,
   getConsultationProblemReportsQuery,
   getConsultationProblemReportsCountQuery,
@@ -859,6 +860,21 @@ export const getPlayAndHealVisits = async ({ startDate, endDate } = {}) =>
     startDate,
     endDate,
   });
+
+export const getPlayAndHealWaitlist = async ({ country }) => {
+  if (country !== "PS") {
+    const error = new Error("No permissions");
+    error.name = "NO PERMISSIONS";
+    error.status = 403;
+    throw error;
+  }
+
+  return await getPlayAndHealWaitlistQuery()
+    .then((res) => res.rows || [])
+    .catch((err) => {
+      throw err;
+    });
+};
 
 export const getHosnElHalVisits = async ({ startDate, endDate } = {}) =>
   getVisitEvents({
