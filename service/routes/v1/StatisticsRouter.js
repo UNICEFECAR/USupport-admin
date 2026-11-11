@@ -15,6 +15,7 @@ import {
   getProviderAvailabilityReport,
   getMoodTrackerReport,
   getPlayAndHealVisits,
+  getPlayAndHealWaitlist,
   getHosnElHalVisits,
   getHosnElHalEngagements,
   getHosnElHalFeedback,
@@ -314,6 +315,23 @@ router.get("/playandheal-visits", async (req, res, next) => {
     .strict(true)
     .validate({ country, language, startDate, endDate })
     .then(getPlayAndHealVisits)
+    .then((result) => res.status(200).send(result))
+    .catch(next);
+});
+
+router.get("/playandheal-waitlist", async (req, res, next) => {
+  /**
+   * #route   GET /admin/v1/statistics/playandheal-waitlist
+   * #desc    Get Play and Heal facilitators-network waiting-list signups
+   */
+  const country = req.header("x-country-alpha-2");
+  const language = req.header("x-language-alpha-2");
+
+  return await getStatsSchema
+    .noUnknown(true)
+    .strict(true)
+    .validate({ country, language })
+    .then(getPlayAndHealWaitlist)
     .then((result) => res.status(200).send(result))
     .catch(next);
 });
